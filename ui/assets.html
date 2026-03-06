@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Assets</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/app-search.css">
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+        }
+
+        .card,
+        .modal-content {
+            background-color: #161b22;
+            border-color: #30363d;
+        }
+
+        .table {
+            color: #c9d1d9;
+        }
+
+        .table-hover>tbody>tr:hover>* {
+            color: #c9d1d9;
+            background-color: rgba(88, 166, 255, 0.08);
+        }
+
+        .badge-critique {
+            background-color: #f85149;
+        }
+
+        .badge-haute,
+        .badge-haut {
+            background-color: #f0883e;
+        }
+
+        .badge-moyenne,
+        .badge-moyen {
+            background-color: #d29922;
+        }
+
+        .badge-basse,
+        .badge-bas {
+            background-color: #3fb950;
+        }
+
+        .search-wrapper {
+            position: relative;
+        }
+
+        .suggestion-box {
+            position: absolute;
+            z-index: 1055;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .suggestion-box .suggestion-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            color: #c9d1d9;
+        }
+
+        .suggestion-box .suggestion-item:hover {
+            background: rgba(88, 166, 255, 0.15);
+        }
+
+        /* Boutons d'action dans le tableau */
+        td .btn-sm {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            line-height: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ─── NAVBAR ─────────────────────────────────────────── -->
+    <nav class="navbar navbar-expand-lg navbar-dark"
+        style="background-color: #161b22 !important; border-bottom: 1px solid #30363d;">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="nav">
+                <div class="d-flex ms-auto align-items-center gap-3">
+                    <div class="position-relative am-search" data-am-search-root>
+                        <input class="form-control form-control-sm" type="search"
+                            placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
+                        <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
+                    </div>
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/clients">Clients</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/sites">Sites</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="/ui/assets">Assets</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Référentiels
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
+                                <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="/docs">API Docs</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/scripts/console">Console</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+
+    <!-- ─── CONTENU ────────────────────────────────────────── -->
+    <div class="container-fluid mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>📦 Assets</h2>
+            <button class="btn btn-primary" onclick="ouvrirModalCreation()" data-bs-toggle="modal"
+                data-bs-target="#modalAsset">
+                ➕ Nouvel asset
+            </button>
+        </div>
+
+        <!-- ─── FILTRES ────────────────────────────────────── -->
+        <div class="card p-3 mb-3">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Client</label>
+                    <div class="search-wrapper">
+                        <input type="text" class="form-control" id="filtreClientSearch"
+                            placeholder="Filtrer par client…" autocomplete="off">
+                        <input type="hidden" id="filtreClientId">
+                        <div class="suggestion-box" id="filtreClientSuggestions"></div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Site</label>
+                    <div class="search-wrapper">
+                        <input type="text" class="form-control" id="filtreSiteSearch"
+                            placeholder="Choisir d'abord un client…" autocomplete="off" disabled>
+                        <input type="hidden" id="filtreSiteId">
+                        <div class="suggestion-box" id="filtreSiteSuggestions"></div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Type</label>
+                    <select class="form-select" id="filtreType">
+                        <option value="">Tous</option>
+                        <option value="serveur">Serveur</option>
+                        <option value="nas">NAS</option>
+                        <option value="pc">PC</option>
+                        <option value="laptop">Laptop</option>
+                        <option value="lecteur_biometrique">Lecteur biométrique</option>
+                        <option value="switch">Switch</option>
+                        <option value="routeur">Routeur</option>
+                        <option value="parefeu">Pare-feu</option>
+                        <option value="camera_ip">Caméra IP</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-flex gap-2">
+                    <button class="btn btn-outline-info flex-fill" onclick="filtrerAssets()">🔍</button>
+                    <button class="btn btn-outline-secondary flex-fill" onclick="resetFiltres()">✖</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── TABLEAU ────────────────────────────────────── -->
+        <div class="card p-3">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Client</th>
+                            <th>Site</th>
+                            <th>Type</th>
+                            <th>Fabricant</th>
+                            <th>Modèle</th>
+                            <th>IP</th>
+                            <th>OS</th>
+                            <th>Criticité</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assetTableBody">
+                        <tr>
+                            <td colspan="11" class="text-center text-secondary">Chargement…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── MODAL ASSET ────────────────────────────────────── -->
+    <div class="modal fade" id="modalAsset" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalAssetLabel">Nouvel asset</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="assetId">
+
+                    <div class="row g-3">
+                        <!-- Client -->
+                        <div class="col-md-6">
+                            <label class="form-label">Client *</label>
+                            <div class="search-wrapper">
+                                <input type="text" class="form-control" id="assetClientSearch"
+                                    placeholder="Rechercher un client…" autocomplete="off">
+                                <input type="hidden" id="assetClientId">
+                                <div class="suggestion-box" id="assetClientSuggestions"></div>
+                            </div>
+                        </div>
+                        <!-- Site -->
+                        <div class="col-md-6">
+                            <label class="form-label">Site *</label>
+                            <div class="search-wrapper">
+                                <input type="text" class="form-control" id="assetSiteSearch"
+                                    placeholder="Choisir d'abord un client…" autocomplete="off" disabled>
+                                <input type="hidden" id="assetSiteId">
+                                <div class="suggestion-box" id="assetSiteSuggestions"></div>
+                            </div>
+                        </div>
+                        <!-- Nom -->
+                        <div class="col-md-6">
+                            <label class="form-label">Nom interne *</label>
+                            <input type="text" class="form-control" id="assetNom" placeholder="ex: SRV-DC01">
+                        </div>
+                        <!-- Type -->
+                        <div class="col-md-6">
+                            <label class="form-label">Type d'équipement *</label>
+                            <select class="form-select" id="assetType">
+                                <option value="">-- Choisir --</option>
+                                <option value="serveur">Serveur</option>
+                                <option value="nas">NAS</option>
+                                <option value="pc">PC</option>
+                                <option value="laptop">Laptop</option>
+                                <option value="lecteur_biometrique">Lecteur biométrique</option>
+                                <option value="switch">Switch</option>
+                                <option value="routeur">Routeur</option>
+                                <option value="parefeu">Pare-feu</option>
+                                <option value="camera_ip">Caméra IP</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                        </div>
+                        <!-- Fabricant -->
+                        <div class="col-md-6">
+                            <label class="form-label">Fabricant</label>
+                            <div class="search-wrapper">
+                                <input type="text" class="form-control" id="assetFabricantSearch"
+                                    placeholder="Rechercher un fabricant…" autocomplete="off">
+                                <input type="hidden" id="assetFabricantId">
+                                <div class="suggestion-box" id="assetFabricantSuggestions"></div>
+                            </div>
+                        </div>
+                        <!-- Modèle -->
+                        <div class="col-md-6">
+                            <label class="form-label">Modèle</label>
+                            <div class="search-wrapper">
+                                <input type="text" class="form-control" id="assetModeleSearch"
+                                    placeholder="Choisir d'abord un fabricant…" autocomplete="off" disabled>
+                                <input type="hidden" id="assetModeleId">
+                                <div class="suggestion-box" id="assetModeleSuggestions"></div>
+                            </div>
+                        </div>
+                        <!-- Numéro de série -->
+                        <div class="col-md-4">
+                            <label class="form-label">Numéro de série</label>
+                            <input type="text" class="form-control" id="assetSerie">
+                        </div>
+                        <!-- IP -->
+                        <div class="col-md-4">
+                            <label class="form-label">Adresse IP</label>
+                            <input type="text" class="form-control" id="assetIP" placeholder="192.168.1.10">
+                        </div>
+                        <!-- MAC -->
+                        <div class="col-md-4">
+                            <label class="form-label">Adresse MAC</label>
+                            <input type="text" class="form-control" id="assetMAC" placeholder="AA:BB:CC:DD:EE:FF">
+                        </div>
+                        <!-- Hostname -->
+                        <div class="col-md-4">
+                            <label class="form-label">Hostname</label>
+                            <input type="text" class="form-control" id="assetHostname">
+                        </div>
+                        <!-- OS -->
+                        <div class="col-md-4">
+                            <label class="form-label">Système d'exploitation</label>
+                            <input type="text" class="form-control" id="assetOS"
+                                placeholder="ex: Windows Server, FortiOS">
+                        </div>
+                        <!-- Version OS -->
+                        <div class="col-md-4">
+                            <label class="form-label">Version OS</label>
+                            <input type="text" class="form-control" id="assetVersionOS" placeholder="ex: 2022, 7.2.1">
+                        </div>
+                        <!-- Firmware -->
+                        <div class="col-md-4">
+                            <label class="form-label">Version firmware</label>
+                            <input type="text" class="form-control" id="assetFirmware">
+                        </div>
+                        <!-- BIOS -->
+                        <div class="col-md-4">
+                            <label class="form-label">Version BIOS</label>
+                            <input type="text" class="form-control" id="assetBios">
+                        </div>
+                        <!-- Date installation -->
+                        <div class="col-md-4">
+                            <label class="form-label">Date d'installation</label>
+                            <input type="date" class="form-control" id="assetDateInstall">
+                        </div>
+                        <!-- Fin garantie -->
+                        <div class="col-md-4">
+                            <label class="form-label">Fin de garantie</label>
+                            <input type="date" class="form-control" id="assetFinGarantie">
+                        </div>
+                        <!-- Criticité -->
+                        <div class="col-md-3">
+                            <label class="form-label">Criticité</label>
+                            <select class="form-select" id="assetCriticite">
+                                <option value="critique">Critique</option>
+                                <option value="haute">Haute</option>
+                                <option value="moyenne" selected>Moyenne</option>
+                                <option value="basse">Basse</option>
+                            </select>
+                        </div>
+                        <!-- Statut -->
+                        <div class="col-md-3">
+                            <label class="form-label">Statut</label>
+                            <select class="form-select" id="assetStatut">
+                                <option value="actif" selected>Actif</option>
+                                <option value="inactif">Inactif</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="hors_service">Hors service</option>
+                            </select>
+                        </div>
+                        <!-- Notes -->
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" id="assetNotes" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button class="btn btn-primary" onclick="sauvegarderAsset()">💾 Sauvegarder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── MODAL CONFIRMATION SUPPRESSION ─────────────────── -->
+    <div class="modal fade" id="modalSupprimer" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmer la suppression</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Supprimer l'asset <strong id="supprimerAssetNom"></strong> ?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button class="btn btn-danger" id="btnConfirmSupprimer">🗑️ Supprimer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/bootstrap.bundle.min.js"></script>
+    <script src="/static/app-search.js"></script>
+    <script>
+        // ═══════════════════════════════════════════════════════════
+        //  CONFIGURATION
+        // ═══════════════════════════════════════════════════════════
+        const API_ASSETS = '/api/assets';
+        const API_CLIENTS = '/api/clients';
+        const API_SITES = '/api/sites';
+        const API_FABRICANTS = '/api/vendors';
+        const API_MODELES = '/api/models';
+
+        const PAGE_SIZE = 20;
+        let page = 1;
+        let totalAssetsCount = 0;
+        let tousLesAssets = [];
+        let tousLesClients = [];
+        let tousLesFabricants = [];
+        let sitesDuClient = [];
+        let sitesDuFiltreClient = [];
+        let modelesDuFabricant = [];
+
+        // ═══════════════════════════════════════════════════════════
+        //  1. FONCTIONS UTILITAIRES
+        // ═══════════════════════════════════════════════════════════
+        function esc(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function badgeCriticite(criticite) {
+            const map = {
+                'critique': 'danger',
+                'eleve': 'warning',
+                'haute': 'warning',
+                'moyen': 'info',
+                'moyenne': 'info',
+                'faible': 'success',
+                'basse': 'success',
+                'bas': 'success'
+            };
+            return map[criticite] || 'secondary';
+        }
+
+        function badgeStatut(statut) {
+            const map = {
+                'actif': '<span class="badge bg-success">Actif</span>',
+                'inactif': '<span class="badge bg-secondary">Inactif</span>',
+                'maintenance': '<span class="badge bg-warning">Maintenance</span>',
+                'hors_service': '<span class="badge bg-danger">Hors service</span>'
+            };
+            return map[statut] || statut;
+        }
+
+        function supprimerAsset(id) {
+            const asset = tousLesAssets.find(a => a.id === id);
+            if (asset) {
+                confirmerSuppression(id, asset.nom_interne || asset.nom || 'Asset');
+            }
+        }
+
+        function voirAsset(id) {
+            // Pour l'instant, on ouvre juste l'édition
+            editerAsset(id);
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  2. PAGINATION
+        // ═══════════════════════════════════════════════════════════
+        function afficherPagination(currentPage, totalPages, totalAssets) {
+            let container = document.getElementById('paginationContainer');
+            if (!container) {
+                const table = document.getElementById('assetTableBody')?.closest('table');
+                if (!table) return;
+                container = document.createElement('div');
+                container.id = 'paginationContainer';
+                container.className = 'mt-3';
+                table.parentNode.insertBefore(container, table.nextSibling);
+            }
+
+            container.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted">
+                Page ${currentPage} / ${totalPages > 0 ? totalPages : 1} — ${totalAssets} asset${totalAssets > 1 ? 's' : ''} au total
+            </span>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary me-1"
+                        onclick="changerPage(${currentPage - 1})"
+                        ${currentPage <= 1 ? 'disabled' : ''}>
+                    ◀ Précédent
+                </button>
+                <button class="btn btn-sm btn-outline-secondary"
+                        onclick="changerPage(${currentPage + 1})"
+                        ${currentPage >= totalPages ? 'disabled' : ''}>
+                    Suivant ▶
+                </button>
+            </div>
+        </div>
+    `;
+            container.style.display = 'block';
+        }
+
+        function masquerPagination() {
+            const container = document.getElementById('paginationContainer');
+            if (container) container.style.display = 'none';
+        }
+
+        function changerPage(nouvellePage) {
+            page = nouvellePage;
+            // On re-fetch au lieu de juste recharger un tableau statique
+            chargerAssets();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  3. DÉTECTION FILTRE ACTIF
+        // ═══════════════════════════════════════════════════════════
+        function filtreActif() {
+            const clientId = document.getElementById('filtreClientId')?.value;
+            const siteId = document.getElementById('filtreSiteId')?.value;
+            const type = document.getElementById('filtreType')?.value;
+            return !!(clientId || siteId || type);
+        }
+        // ═══════════════════════════════════════════════════════════
+        //  4. AFFICHAGE DES ASSETS
+        // ═══════════════════════════════════════════════════════════
+        function afficherAssets(assets) {
+            const tbody = document.getElementById('assetTableBody');
+
+            if (!assets || assets.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" class="text-center text-secondary">Aucun asset trouvé</td></tr>';
+                masquerPagination();
+                return;
+            }
+
+            if (filtreActif()) {
+                masquerPagination();
+            } else {
+                const totalPages = Math.ceil(totalAssetsCount / PAGE_SIZE);
+                afficherPagination(page, totalPages, totalAssetsCount);
+            }
+
+            tbody.innerHTML = assets.map(a => `
+        <tr>
+            <td><strong>${esc(a.nom_interne || '')}</strong></td>
+            <td>${esc(a.client_nom || '')}</td>
+            <td>${esc(a.site_nom || '')}</td>
+            <td><span class="badge bg-secondary">${esc(a.type_equipement || '')}</span></td>
+            <td>${esc(a.vendor_nom || '')}</td>
+            <td>${esc(a.model_nom || '')}</td>
+            <td><code>${esc(a.adresse_ip || '')}</code></td>
+            <td>${esc(a.systeme_exploitation || '—')} ${a.version_os ? esc(a.version_os) : ''}</td>
+            <td><span class="badge bg-${badgeCriticite(a.niveau_criticite)}">${esc(a.niveau_criticite || '')}</span></td>
+            <td>${badgeStatut(a.statut_operationnel || '')}</td>
+            <td class="text-nowrap">
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="voirAsset(${a.id})" title="Voir">
+                    👁️
+                </button>
+                <button class="btn btn-sm btn-outline-warning me-1" onclick="editerAsset(${a.id})" title="Modifier">
+                    ✏️
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="supprimerAsset(${a.id})" title="Supprimer">
+                    🗑️
+                </button>
+            </td>
+        </tr>
+    `).join('');
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  5. FILTRER LES ASSETS (re-fetch avec API parameters)
+        // ═══════════════════════════════════════════════════════════
+        function filtrerAssets() {
+            page = 1;
+            chargerAssets();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  6. CHARGER LES ASSETS (fetch API SERVER-SIDE PAGINATION)
+        // ═══════════════════════════════════════════════════════════
+        async function chargerAssets() {
+            const tbody = document.getElementById('assetTableBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = '<tr><td colspan="11" class="text-center"><div class="spinner-border spinner-border-sm"></div> Chargement...</td></tr>';
+
+            const clientId = document.getElementById('filtreClientId')?.value;
+            const siteId = document.getElementById('filtreSiteId')?.value;
+            const type = document.getElementById('filtreType')?.value;
+
+            // Construct query parameters
+            let url = `${API_ASSETS}?limit=${PAGE_SIZE}&skip=${(page - 1) * PAGE_SIZE}`;
+
+            if (filtreActif()) {
+                // If filtering is active, bypass limit to get all matching results
+                url = `${API_ASSETS}?nolimit=true`;
+                if (clientId) url += `&client_id=${clientId}`;
+                if (siteId) url += `&site_id=${siteId}`;
+                if (type) url += `&type_equipement=${type}`;
+            }
+
+            try {
+                const r = await fetch(url);
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+
+                const countHeader = r.headers.get("X-Total-Count");
+                if (countHeader) totalAssetsCount = parseInt(countHeader, 10);
+
+                const payload = await r.json();
+                tousLesAssets = Array.isArray(payload) ? payload : (payload.results || payload.data || []);
+
+                if (filtreActif() && tousLesAssets.length > 0) {
+                    // Update count specifically for the search results if we bypassed the limit count headers
+                    totalAssetsCount = tousLesAssets.length;
+                }
+
+                afficherAssets(tousLesAssets);
+
+            } catch (e) {
+                console.error('Erreur chargement assets:', e);
+                tbody.innerHTML = `
+            <tr>
+                <td colspan="11" class="text-center text-danger">
+                    Erreur de chargement : ${esc(e.message)}
+                    <br/>
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="chargerAssets()">Réessayer</button>
+                </td>
+            </tr>`;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  UTILITAIRES SUGGESTION BOX
+        // ═══════════════════════════════════════════════════════════
+        function showSuggestionBox(box) { box.style.display = 'block'; }
+        function hideSuggestionBox(box) { box.style.display = 'none'; }
+
+        function renderSuggestions(box, items, labelKey, idKey, onSelect) {
+            box.innerHTML = '';
+            if (items.length === 0) {
+                box.innerHTML = '<div class="suggestion-item text-secondary">Aucun résultat</div>';
+                showSuggestionBox(box);
+                return;
+            }
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.textContent = item[labelKey];
+                div.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    onSelect(item);
+                    hideSuggestionBox(box);
+                });
+                box.appendChild(div);
+            });
+            showSuggestionBox(box);
+        }
+
+        // Fermer les suggestions quand on clique ailleurs
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.suggestion-box').forEach(b => hideSuggestionBox(b));
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        //  CHARGEMENT DONNÉES
+        // ═══════════════════════════════════════════════════════════
+        async function chargerClients() {
+            try {
+                const r = await fetch(API_CLIENTS);
+                if (!r.ok) throw new Error(`HTTP ${r.status} `);
+                tousLesClients = await r.json();
+            } catch (e) {
+                console.error('Erreur chargement clients:', e);
+                tousLesClients = [];
+            }
+        }
+
+        async function chargerFabricants() {
+            try {
+                const r = await fetch(API_FABRICANTS);
+                if (!r.ok) throw new Error(`HTTP ${r.status} `);
+                const data = await r.json();
+                tousLesFabricants = Array.isArray(data) ? data : (data.vendors || []);
+            } catch (e) {
+                console.error('Erreur chargement fabricants:', e);
+                tousLesFabricants = [];
+            }
+        }
+
+
+        async function chargerSitesDuClient() {
+            const clientId = document.getElementById('assetClientId').value;
+            const siteSearch = document.getElementById('assetSiteSearch');
+            const siteId = document.getElementById('assetSiteId');
+
+            siteId.value = '';
+            siteSearch.value = '';
+            sitesDuClient = [];
+
+            if (!clientId) {
+                siteSearch.disabled = true;
+                siteSearch.placeholder = 'Choisir d\'abord un client…';
+                return;
+            }
+
+            try {
+                const r = await fetch(`${API_SITES}?client_id = ${clientId} `);
+                if (!r.ok) throw new Error(`HTTP ${r.status} `);
+                sitesDuClient = await r.json();
+                siteSearch.disabled = false;
+                siteSearch.placeholder = 'Rechercher un site…';
+            } catch (e) {
+                console.error('Erreur chargement sites:', e);
+                sitesDuClient = [];
+                siteSearch.disabled = true;
+            }
+        }
+
+        async function chargerSitesFiltre() {
+            const clientId = document.getElementById('filtreClientId').value;
+            const siteSearch = document.getElementById('filtreSiteSearch');
+            const siteId = document.getElementById('filtreSiteId');
+
+            siteId.value = '';
+            siteSearch.value = '';
+            sitesDuFiltreClient = [];
+
+            if (!clientId) {
+                siteSearch.disabled = true;
+                siteSearch.placeholder = 'Choisir d\'abord un client…';
+                return;
+            }
+
+            try {
+                const r = await fetch(`${API_SITES}?client_id = ${clientId} `);
+                if (!r.ok) throw new Error(`HTTP ${r.status} `);
+                sitesDuFiltreClient = await r.json();
+                siteSearch.disabled = false;
+                siteSearch.placeholder = 'Rechercher un site…';
+            } catch (e) {
+                console.error('Erreur chargement sites filtre:', e);
+                sitesDuFiltreClient = [];
+                siteSearch.disabled = true;
+            }
+        }
+
+        async function chargerModelesDuFabricant(fabricantId) {
+            const modeleSearch = document.getElementById('assetModeleSearch');
+            const modeleId = document.getElementById('assetModeleId');
+
+            modeleId.value = '';
+            modeleSearch.value = '';
+            modelesDuFabricant = [];
+
+            if (!fabricantId) {
+                modeleSearch.disabled = true;
+                modeleSearch.placeholder = 'Choisir d\'abord un fabricant…';
+                return;
+            }
+
+            try {
+                const r = await fetch(`${API_MODELES}?vendor_id = ${fabricantId} `);
+                if (!r.ok) throw new Error(`HTTP ${r.status} `);
+                const data = await r.json();
+                modelesDuFabricant = Array.isArray(data) ? data : (data.models || []);
+                modeleSearch.disabled = false;
+                modeleSearch.placeholder = 'Rechercher un modèle…';
+            } catch (e) {
+                console.error('Erreur chargement modèles:', e);
+                modelesDuFabricant = [];
+                modeleSearch.disabled = true;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  TYPEAHEAD : CLIENT (FILTRE)
+        // ═══════════════════════════════════════════════════════════
+        function initFiltreClientTypeahead() {
+            const input = document.getElementById('filtreClientSearch');
+            const hidden = document.getElementById('filtreClientId');
+            const box = document.getElementById('filtreClientSuggestions');
+
+            input.addEventListener('input', () => {
+                const q = input.value.trim().toLowerCase();
+                hidden.value = '';
+
+                document.getElementById('filtreSiteSearch').disabled = true;
+                document.getElementById('filtreSiteSearch').placeholder = 'Choisir d\'abord un client…';
+                document.getElementById('filtreSiteId').value = '';
+                document.getElementById('filtreSiteSearch').value = '';
+
+                if (q.length === 0) { hideSuggestionBox(box); filtrerAssets(); return; }
+                const filtered = tousLesClients.filter(c => c.nom.toLowerCase().includes(q));
+                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
+                    input.value = item.nom;
+                    hidden.value = item.id;
+                    chargerSitesFiltre();
+                    filtrerAssets();
+                });
+            });
+
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
+        }
+
+        function initFiltreSiteTypeahead() {
+            const input = document.getElementById('filtreSiteSearch');
+            const hidden = document.getElementById('filtreSiteId');
+            const box = document.getElementById('filtreSiteSuggestions');
+
+            input.addEventListener('input', () => {
+                const q = input.value.trim().toLowerCase();
+                hidden.value = '';
+                if (q.length === 0) { hideSuggestionBox(box); filtrerAssets(); return; }
+                const filtered = sitesDuFiltreClient.filter(s => s.nom.toLowerCase().includes(q));
+                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
+                    input.value = item.nom;
+                    hidden.value = item.id;
+                    filtrerAssets();
+                });
+            });
+
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  TYPEAHEAD : CLIENT (MODAL)
+        // ═══════════════════════════════════════════════════════════
+        function initModalClientTypeahead() {
+            const input = document.getElementById('assetClientSearch');
+            const hidden = document.getElementById('assetClientId');
+            const box = document.getElementById('assetClientSuggestions');
+
+            input.addEventListener('input', () => {
+                const q = input.value.trim().toLowerCase();
+                hidden.value = '';
+                document.getElementById('assetSiteSearch').disabled = true;
+                document.getElementById('assetSiteSearch').placeholder = 'Choisir d\'abord un client…';
+                document.getElementById('assetSiteId').value = '';
+                document.getElementById('assetSiteSearch').value = '';
+
+                if (q.length === 0) { hideSuggestionBox(box); return; }
+                const filtered = tousLesClients.filter(c => c.nom.toLowerCase().includes(q));
+                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
+                    input.value = item.nom;
+                    hidden.value = item.id;
+                    chargerSitesDuClient();
+                });
+            });
+
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  TYPEAHEAD : SITE (MODAL)
+        // ═══════════════════════════════════════════════════════════
+        function initModalSiteTypeahead() {
+            const input = document.getElementById('assetSiteSearch');
+            const hidden = document.getElementById('assetSiteId');
+            const box = document.getElementById('assetSiteSuggestions');
+
+            input.addEventListener('input', () => {
+                const q = input.value.trim().toLowerCase();
+                hidden.value = '';
+                if (q.length === 0) { hideSuggestionBox(box); return; }
+                const filtered = sitesDuClient.filter(s => s.nom.toLowerCase().includes(q));
+                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
+                    input.value = item.nom;
+                    hidden.value = item.id;
+                });
+            });
+
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  TYPEAHEAD : FABRICANT (MODAL)
+        // ═══════════════════════════════════════════════════════════
+        function initFabricantTypeahead() {
+            const input = document.getElementById('assetFabricantSearch');
+            const hidden = document.getElementById('assetFabricantId');
+            const box = document.getElementById('assetFabricantSuggestions');
+
+            input.addEventListener('input', () => {
+                const q = input.value.trim().toLowerCase();
+                hidden.value = '';
+                // Reset modèle
+                document.getElementById('assetModeleSearch').disabled = true;
+                document.getElementById('assetModeleSearch').placeholder = 'Choisir d\'abord un fabricant…';
+                document.getElementById('assetModeleId').value = '';
+                document.getElementById('assetModeleSearch').value = '';
+                modelesDuFabricant = [];
+
+                if (q.length === 0) { hideSuggestionBox(box); return; }
+                const filtered = tousLesFabricants.filter(f => f.nom.toLowerCase().includes(q));
+                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
+                    input.value = item.nom;
+                    hidden.value = item.id;
+                    chargerModelesDuFabricant(item.id);
+                });
+            });
+
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  TYPEAHEAD : MODÈLE (MODAL)
+        // ═══════════════════════════════════════════════════════════
+        function initModeleTypeahead() {
+            const input = document.getElementById('assetModeleSearch');
+            const hidden = document.getElementById('assetModeleId');
+            const box = document.getElementById('assetModeleSuggestions');
+
+            input.addEventListener('input', () => {
+                const q = input.value.trim().toLowerCase();
+                hidden.value = '';
+                if (q.length === 0) { hideSuggestionBox(box); return; }
+                const filtered = modelesDuFabricant.filter(m => m.nom.toLowerCase().includes(q));
+                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
+                    input.value = item.nom;
+                    hidden.value = item.id;
+                });
+            });
+
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
+        }
+
+
+        // ═══════════════════════════════════════════════════════════
+        //  RESET FORMULAIRE
+        // ═══════════════════════════════════════════════════════════
+        function resetFormulaireAsset() {
+            document.getElementById('assetId').value = '';
+            document.getElementById('assetNom').value = '';
+            document.getElementById('assetType').value = '';
+            document.getElementById('assetSerie').value = '';
+            document.getElementById('assetIP').value = '';
+            document.getElementById('assetMAC').value = '';
+            document.getElementById('assetHostname').value = '';
+            document.getElementById('assetOS').value = '';
+            document.getElementById('assetVersionOS').value = '';
+            document.getElementById('assetFirmware').value = '';
+            document.getElementById('assetBios').value = '';
+            document.getElementById('assetDateInstall').value = '';
+            document.getElementById('assetFinGarantie').value = '';
+            document.getElementById('assetCriticite').value = 'moyenne';
+            document.getElementById('assetStatut').value = 'actif';
+            document.getElementById('assetNotes').value = '';
+
+            // Client
+            document.getElementById('assetClientSearch').value = '';
+            document.getElementById('assetClientId').value = '';
+            // Site
+            document.getElementById('assetSiteSearch').value = '';
+            document.getElementById('assetSiteId').value = '';
+            document.getElementById('assetSiteSearch').disabled = true;
+            document.getElementById('assetSiteSearch').placeholder = 'Choisir d\'abord un client…';
+            sitesDuClient = [];
+            // Fabricant
+            document.getElementById('assetFabricantSearch').value = '';
+            document.getElementById('assetFabricantId').value = '';
+            // Modèle
+            document.getElementById('assetModeleSearch').value = '';
+            document.getElementById('assetModeleId').value = '';
+            document.getElementById('assetModeleSearch').disabled = true;
+            document.getElementById('assetModeleSearch').placeholder = 'Choisir d\'abord un fabricant…';
+            modelesDuFabricant = [];
+        }
+
+        function ouvrirModalCreation() {
+            resetFormulaireAsset();
+            document.getElementById('modalAssetLabel').textContent = 'Nouvel asset';
+        }
+
+        function resetFiltres() {
+            document.getElementById('filtreClientSearch').value = '';
+            document.getElementById('filtreClientId').value = '';
+            document.getElementById('filtreSiteSearch').value = '';
+            document.getElementById('filtreSiteId').value = '';
+            document.getElementById('filtreSiteSearch').disabled = true;
+            document.getElementById('filtreSiteSearch').placeholder = 'Choisir d\'abord un client…';
+            document.getElementById('filtreType').value = '';
+            filtrerAssets();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  ÉDITION
+        // ═══════════════════════════════════════════════════════════
+        async function editerAsset(id) {
+            resetFormulaireAsset();
+
+            const resp = await fetch(`${API_ASSETS}/${id}`);
+            const a = await resp.json();
+
+            document.getElementById('assetId').value = a.id;
+            document.getElementById('assetNom').value = a.nom_interne || a.nom || '';
+            document.getElementById('assetType').value = a.type_equipement || '';
+            document.getElementById('assetSerie').value = a.numero_serie || '';
+            document.getElementById('assetIP').value = a.adresse_ip || a.ip_address || '';
+            document.getElementById('assetMAC').value = a.adresse_mac || a.mac_address || '';
+            document.getElementById('assetHostname').value = a.hostname || '';
+            document.getElementById('assetOS').value = a.systeme_exploitation || a.os_nom || '';
+            document.getElementById('assetVersionOS').value = a.version_os || a.os_version || '';
+            document.getElementById('assetFirmware').value = a.version_firmware || a.firmware_version || '';
+            document.getElementById('assetBios').value = a.version_bios || '';
+            document.getElementById('assetDateInstall').value = a.date_installation || '';
+            document.getElementById('assetFinGarantie').value = a.date_fin_garantie || a.fin_garantie || '';
+            document.getElementById('assetCriticite').value = a.niveau_criticite || a.criticite || 'moyenne';
+            document.getElementById('assetStatut').value = a.statut_operationnel || a.statut || 'actif';
+            document.getElementById('assetNotes').value = a.notes || '';
+
+            // Fabricant puis Modèle
+            document.getElementById('assetFabricantId').value = a.fabricant_id ? String(a.fabricant_id) : '';
+            document.getElementById('assetFabricantSearch').value = a.fabricant_nom || a.fabricant || '';
+            if (a.fabricant_id) {
+                await chargerModelesDuFabricant(a.fabricant_id);
+                document.getElementById('assetModeleId').value = a.modele_id ? String(a.modele_id) : '';
+                document.getElementById('assetModeleSearch').value = a.modele_nom || a.modele || '';
+            }
+
+            // Client puis Site
+            document.getElementById('assetClientId').value = String(a.client_id || '');
+            document.getElementById('assetClientSearch').value = a.client_nom || '';
+            if (a.client_id) {
+                await chargerSitesDuClient();
+                document.getElementById('assetSiteId').value = String(a.site_id || '');
+                document.getElementById('assetSiteSearch').value = a.site_nom || '';
+                document.getElementById('assetSiteSearch').disabled = false;
+            }
+
+            document.getElementById('modalAssetLabel').textContent = `Éditer : ${a.nom_interne || a.nom || ''}`;
+            new bootstrap.Modal(document.getElementById('modalAsset')).show();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  SAUVEGARDE (CRÉATION / MODIFICATION)
+        // ═══════════════════════════════════════════════════════════
+        async function sauvegarderAsset() {
+            const id = document.getElementById('assetId').value;
+            const siteId = document.getElementById('assetSiteId').value;
+
+            if (!siteId) {
+                alert('Veuillez sélectionner un client et un site.');
+                return;
+            }
+
+            const nom = document.getElementById('assetNom').value.trim();
+            if (!nom) {
+                alert('Le nom interne est obligatoire.');
+                return;
+            }
+
+            const type = document.getElementById('assetType').value;
+            if (!type) {
+                alert('Veuillez choisir un type d\'équipement.');
+                return;
+            }
+
+            const payload = {
+                site_id: parseInt(siteId),
+                nom_interne: nom,
+                type_equipement: type,
+                fabricant_id: document.getElementById('assetFabricantId').value ? parseInt(document.getElementById('assetFabricantId').value) : null,
+                modele_id: document.getElementById('assetModeleId').value ? parseInt(document.getElementById('assetModeleId').value) : null,
+                numero_serie: document.getElementById('assetSerie').value.trim() || null,
+                adresse_ip: document.getElementById('assetIP').value.trim() || null,
+                adresse_mac: document.getElementById('assetMAC').value.trim() || null,
+                hostname: document.getElementById('assetHostname').value.trim() || null,
+                systeme_exploitation: document.getElementById('assetOS').value.trim() || null,
+                version_os: document.getElementById('assetVersionOS').value.trim() || null,
+                version_firmware: document.getElementById('assetFirmware').value.trim() || null,
+                version_bios: document.getElementById('assetBios').value.trim() || null,
+                date_installation: document.getElementById('assetDateInstall').value || null,
+                date_fin_garantie: document.getElementById('assetFinGarantie').value || null,
+                niveau_criticite: document.getElementById('assetCriticite').value,
+                statut_operationnel: document.getElementById('assetStatut').value,
+                notes: document.getElementById('assetNotes').value.trim() || null
+            };
+
+            try {
+                const url = id ? `${API_ASSETS}/${id}` : API_ASSETS;
+                const method = id ? 'PUT' : 'POST';
+
+                const r = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!r.ok) {
+                    const err = await r.json();
+                    throw new Error(err.detail || `HTTP ${r.status}`);
+                }
+
+                bootstrap.Modal.getInstance(document.getElementById('modalAsset')).hide();
+                await chargerAssets();
+            } catch (e) {
+                alert('Erreur lors de la sauvegarde : ' + e.message);
+                console.error(e);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  SUPPRESSION
+        // ═══════════════════════════════════════════════════════════
+        let assetASupprimer = null;
+
+        function confirmerSuppression(id, nom) {
+            assetASupprimer = id;
+            document.getElementById('supprimerAssetNom').textContent = nom;
+            new bootstrap.Modal(document.getElementById('modalSupprimer')).show();
+        }
+
+        document.getElementById('btnConfirmSupprimer').addEventListener('click', async () => {
+            if (!assetASupprimer) return;
+            try {
+                const r = await fetch(`${API_ASSETS}/${assetASupprimer}`, { method: 'DELETE' });
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                bootstrap.Modal.getInstance(document.getElementById('modalSupprimer')).hide();
+                assetASupprimer = null;
+                await chargerAssets();
+            } catch (e) {
+                alert('Erreur suppression : ' + e.message);
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        //  INIT
+        // ═══════════════════════════════════════════════════════════
+        (async () => {
+            await chargerClients();
+            await chargerFabricants();
+
+            initFiltreClientTypeahead();
+            initFiltreSiteTypeahead();
+            initModalClientTypeahead();
+            initModalSiteTypeahead();
+            initFabricantTypeahead();
+            initModeleTypeahead();
+
+            page = 1;
+            await chargerAssets();
+
+            document.getElementById('filtreType')?.addEventListener('change', () => filtrerAssets());
+        })();
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Clients</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/app-search.css">
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+        }
+
+        .card,
+        .modal-content {
+            background-color: #161b22;
+            border-color: #30363d;
+        }
+
+        .table {
+            color: #c9d1d9;
+        }
+
+        .table-hover>tbody>tr:hover>* {
+            color: #c9d1d9;
+            background-color: rgba(88, 166, 255, 0.08);
+        }
+
+        .form-control,
+        .form-select,
+        textarea {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            border-color: #30363d;
+        }
+
+        .form-control:focus,
+        .form-select:focus,
+        textarea:focus {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 .25rem rgba(88, 166, 255, .2);
+        }
+
+        .text-muted {
+            color: #8b949e !important;
+        }
+
+        .btn-close {
+            filter: invert(1) grayscale(100%);
+        }
+
+        #filtreClientSuggestions .list-group-item {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            border-color: #30363d;
+            cursor: pointer;
+        }
+
+        #filtreClientSuggestions .list-group-item:hover {
+            background-color: rgba(88, 166, 255, 0.08);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark"
+        style="background-color: #161b22 !important; border-bottom: 1px solid #30363d;">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="nav">
+                <div class="d-flex ms-auto align-items-center gap-3">
+                    <div class="position-relative am-search" data-am-search-root>
+                        <input class="form-control form-control-sm" type="search"
+                            placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
+                        <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
+                    </div>
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="/ui/clients">Clients</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/sites">Sites</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/assets">Assets</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Référentiels
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
+                                <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="/docs">API Docs</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/scripts/console">Console</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="container-fluid py-4">
+
+        <!-- En-tête -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Gestion des clients</h1>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalClient">
+                + Nouveau client
+            </button>
+        </div>
+
+        <!-- Filtres -->
+        <div class="card mb-3">
+            <div class="card-body py-2">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-6">
+                        <input type="hidden" id="filtreClientId" value="">
+                        <div class="position-relative">
+                            <input class="form-control form-control-sm" id="filtreClientSearch" type="search"
+                                placeholder="Filtrer par client…" autocomplete="off">
+                            <div class="list-group position-absolute w-100 mt-1" id="filtreClientSuggestions"
+                                style="z-index:1070; max-height:240px; overflow:auto; display:none;"></div>
+                        </div>
+                        <div class="form-text am-search-muted">
+                            Clique un client dans la liste pour filtrer exactement.
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm" id="filtreActif" onchange="appliquerFiltres()">
+                            <option value="">Tous statuts</option>
+                            <option value="1">Actifs</option>
+                            <option value="0">Inactifs</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-sm btn-outline-secondary w-100" onclick="chargerClients()">
+                            🔄 Rafraîchir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau -->
+        <div class="card">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0" id="tableClients">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Nom</th>
+                            <th>Contact</th>
+                            <th>Email</th>
+                            <th>Téléphone</th>
+                            <th>Adresse</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyClients">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">Chargement...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal création/édition -->
+    <div class="modal fade" id="modalClient" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalClientTitre">Nouveau client</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formClient">
+                        <input type="hidden" id="clientId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nom <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="clientNom" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Contact</label>
+                                <input type="text" class="form-control" id="clientContactNom">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="clientEmail">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Téléphone</label>
+                                <input type="tel" class="form-control" id="clientTel">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Adresse</label>
+                                <textarea class="form-control" id="clientAdresse" rows="2"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Notes</label>
+                                <textarea class="form-control" id="clientNotes" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" id="clientActif" checked>
+                                    <label class="form-check-label" for="clientActif">Client actif</label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" onclick="sauvegarderClient()">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/bootstrap.bundle.min.js"></script>
+    <script src="/static/app-search.js"></script>
+    <script>
+        const API = '/api/clients';
+        let tousLesClients = [];
+        let page = 1;
+        const PAGE_SIZE = 20;
+        let totalClientsCount = 0;
+
+        function norm(v) { return String(v || '').toLowerCase().trim(); }
+
+        function showSuggestionBox(boxEl, itemsHtml) {
+            boxEl.innerHTML = itemsHtml;
+            boxEl.style.display = 'block';
+        }
+
+        function hideSuggestionBox(boxEl) {
+            boxEl.style.display = 'none';
+            boxEl.innerHTML = '';
+        }
+
+        function initClientTypeahead({ inputId, hiddenId, boxId, onSelect }) {
+            const input = document.getElementById(inputId);
+            const hidden = document.getElementById(hiddenId);
+            const box = document.getElementById(boxId);
+            if (!input || !hidden || !box) return;
+
+            const render = (q) => {
+                const query = norm(q);
+                const items = query
+                    ? tousLesClients.filter(c => norm(c.nom).startsWith(query)).slice(0, 10)
+                    : tousLesClients.slice(0, 10);
+
+                if (!items.length) {
+                    return showSuggestionBox(box, '<div class="list-group-item am-search-muted">Aucun client</div>');
+                }
+
+                showSuggestionBox(
+                    box,
+                    items.map(c => `
+                <div class="list-group-item" data-client-id="${c.id}">
+                    <div class="fw-semibold">${c.nom}</div>
+                    <div class="small am-search-muted">${[c.contact_email, c.contact_nom].filter(Boolean).join(' • ')}</div>
+                </div>
+            `).join('')
+                );
+
+                box.querySelectorAll('[data-client-id]').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const id = parseInt(el.getAttribute('data-client-id'), 10);
+                        const c = tousLesClients.find(x => x.id === id);
+                        if (!c) return;
+                        hidden.value = String(c.id);
+                        input.value = c.nom || '';
+                        hideSuggestionBox(box);
+                        onSelect?.(c);
+                    });
+                });
+            };
+
+            input.addEventListener('input', () => {
+                hidden.value = '';
+                render(input.value);
+            });
+            input.addEventListener('focus', () => render(input.value));
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 150));
+        }
+
+        function filtrerClientsParTexte(clients, q) {
+            const query = (q || '').toLowerCase().trim();
+            if (!query) return clients;
+            return clients.filter(c => {
+                const hay = [
+                    c.nom,
+                    c.contact_nom,
+                    c.contact_email,
+                    c.contact_telephone,
+                    c.adresse,
+                    c.notes
+                ].map(v => String(v || '').toLowerCase()).join(' ');
+                return hay.includes(query);
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  PAGINATION Helpers
+        // ═══════════════════════════════════════════════════════════
+        function afficherPagination(currentPage, totalPages, totalItems) {
+            let container = document.getElementById('paginationContainer');
+            if (!container) {
+                const table = document.getElementById('tbodyClients')?.closest('table');
+                if (!table) return;
+                container = document.createElement('div');
+                container.id = 'paginationContainer';
+                container.className = 'mt-3';
+                table.parentNode.insertBefore(container, table.nextSibling);
+            }
+
+            container.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted">
+                Page ${currentPage} / ${totalPages > 0 ? totalPages : 1} — ${totalItems} client${totalItems > 1 ? 's' : ''} au total
+            </span>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary me-1"
+                        onclick="changerPage(${currentPage - 1})"
+                        ${currentPage <= 1 ? 'disabled' : ''}>
+                    ◀ Précédent
+                </button>
+                <button class="btn btn-sm btn-outline-secondary"
+                        onclick="changerPage(${currentPage + 1})"
+                        ${currentPage >= totalPages ? 'disabled' : ''}>
+                    Suivant ▶
+                </button>
+            </div>
+        </div>
+    `;
+            container.style.display = 'block';
+        }
+
+        function masquerPagination() {
+            const container = document.getElementById('paginationContainer');
+            if (container) container.style.display = 'none';
+        }
+
+        function changerPage(nouvellePage) {
+            page = nouvellePage;
+            chargerClients();
+        }
+
+        function filtreActif() {
+            const actif = document.getElementById('filtreActif').value;
+            const selectedId = document.getElementById('filtreClientId').value;
+            const q = new URLSearchParams(window.location.search).get('q') || '';
+            return !!(actif || selectedId || q);
+        }
+
+        function appliquerFiltres() {
+            page = 1;
+            chargerClients();
+        }
+
+        function afficherClients(clients) {
+            const tbody = document.getElementById('tbodyClients');
+
+            if (!clients.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Aucun client</td></tr>';
+                masquerPagination();
+                return;
+            }
+
+            if (filtreActif()) {
+                masquerPagination();
+            } else {
+                const totalPages = Math.ceil(totalClientsCount / PAGE_SIZE);
+                afficherPagination(page, totalPages, totalClientsCount);
+            }
+
+            tbody.innerHTML = clients.map(c => `
+        <tr>
+            <td><strong>${c.nom}</strong></td>
+            <td>${c.contact_nom || '—'}</td>
+            <td>${c.contact_email || '—'}</td>
+            <td>${c.contact_telephone || '—'}</td>
+            <td>${c.adresse || '—'}</td>
+            <td>
+                <span class="badge ${c.actif ? 'bg-success' : 'bg-secondary'}">
+                    ${c.actif ? 'Actif' : 'Inactif'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editerClient(${c.id})">✏️</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="supprimerClient(${c.id}, '${c.nom.replace(/'/g, "\\'")}')">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+        }
+
+        // ── Chargement de la liste ─────────────────────────────────
+        async function chargerClients() {
+            const tbody = document.getElementById('tbodyClients');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm"></div> Chargement...</td></tr>';
+
+            try {
+                let url = `${API}?limit=${PAGE_SIZE}&skip=${(page - 1) * PAGE_SIZE}`;
+
+                if (filtreActif()) {
+                    url = `${API}?nolimit=true`;
+                }
+
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+                const countHeader = resp.headers.get("X-Total-Count");
+                if (countHeader) totalClientsCount = parseInt(countHeader, 10);
+
+                tousLesClients = await resp.json();
+
+                // Client-side filtering logic remains here because backend API doesn't fully support all `clients` filters yet natively,
+                // but we fetch all data if there's an active filter to not restrict the filter capability. 
+                let filteredClients = tousLesClients;
+                if (filtreActif()) {
+                    totalClientsCount = filteredClients.length;
+                    const actif = document.getElementById('filtreActif').value;
+                    const selectedId = document.getElementById('filtreClientId').value;
+                    const q = new URLSearchParams(window.location.search).get('q') || '';
+
+                    if (selectedId) filteredClients = filteredClients.filter(c => String(c.id) === String(selectedId));
+                    if (actif === '1') filteredClients = filteredClients.filter(c => !!c.actif);
+                    if (actif === '0') filteredClients = filteredClients.filter(c => !c.actif);
+                    if (q) filteredClients = filtrerClientsParTexte(filteredClients, q);
+                    totalClientsCount = filteredClients.length;
+                }
+
+                afficherClients(filteredClients);
+            } catch (e) {
+                console.error('Erreur chargement clients:', e);
+                tousLesClients = [];
+                if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Erreur de chargement</td></tr>`;
+            }
+        }
+
+
+        // ── Ouvrir modal en mode édition ───────────────────────────
+        async function editerClient(id) {
+            const resp = await fetch(`${API}/${id}`);
+            const c = await resp.json();
+
+            document.getElementById('clientId').value = c.id;
+            document.getElementById('clientNom').value = c.nom || '';
+            document.getElementById('clientContactNom').value = c.contact_nom || '';
+            document.getElementById('clientEmail').value = c.contact_email || '';
+            document.getElementById('clientTel').value = c.contact_telephone || '';
+            document.getElementById('clientAdresse').value = c.adresse || '';
+            document.getElementById('clientNotes').value = c.notes || '';
+            document.getElementById('clientActif').checked = !!c.actif;
+
+            document.getElementById('modalClientTitre').textContent = 'Modifier le client';
+            new bootstrap.Modal(document.getElementById('modalClient')).show();
+        }
+
+        // ── Réinitialiser le modal pour création ──────────────────
+        document.getElementById('modalClient').addEventListener('hidden.bs.modal', () => {
+            document.getElementById('clientId').value = '';
+            document.getElementById('clientNom').value = '';
+            document.getElementById('clientContactNom').value = '';
+            document.getElementById('clientEmail').value = '';
+            document.getElementById('clientTel').value = '';
+            document.getElementById('clientAdresse').value = '';
+            document.getElementById('clientNotes').value = '';
+            document.getElementById('clientActif').checked = true;
+            document.getElementById('modalClientTitre').textContent = 'Nouveau client';
+        });
+
+        // ── Sauvegarde (création ou mise à jour) ──────────────────
+        async function sauvegarderClient() {
+            const id = document.getElementById('clientId').value;
+
+            const payload = {
+                nom: document.getElementById('clientNom').value.trim(),
+                contact_nom: document.getElementById('clientContactNom').value.trim() || null,
+                contact_email: document.getElementById('clientEmail').value.trim() || null,
+                contact_telephone: document.getElementById('clientTel').value.trim() || null,
+                adresse: document.getElementById('clientAdresse').value.trim() || null,
+                notes: document.getElementById('clientNotes').value.trim() || null,
+                actif: document.getElementById('clientActif').checked
+            };
+
+            if (!payload.nom) {
+                alert('Le nom du client est obligatoire.');
+                return;
+            }
+
+            const url = id ? `${API}/${id}` : `${API}/`;
+            const method = id ? 'PUT' : 'POST';
+
+            const resp = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (resp.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('modalClient')).hide();
+                chargerClients();
+            } else {
+                const err = await resp.json();
+                alert('Erreur : ' + JSON.stringify(err));
+            }
+        }
+
+        // ── Suppression ────────────────────────────────────────────
+        async function supprimerClient(id, nom) {
+            if (!confirm(`Supprimer le client "${nom}" ?`)) return;
+            const resp = await fetch(`${API}/${id}`, { method: 'DELETE' });
+            if (resp.ok) {
+                chargerClients();
+            } else {
+                alert('Erreur lors de la suppression.');
+            }
+        }
+
+        // ── Init ───────────────────────────────────────────────────
+        (async () => {
+            await chargerClients(); // ne plantera plus
+
+            initClientTypeahead({
+                inputId: 'filtreClientSearch',
+                hiddenId: 'filtreClientId',
+                boxId: 'filtreClientSuggestions',
+                onSelect: () => appliquerFiltres()
+            });
+        })();
+
+    </script>
+</body>
+
+</html>

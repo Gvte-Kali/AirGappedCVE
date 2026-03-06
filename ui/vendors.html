@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fabricants — Asset Manager</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/app-search.css">
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+        }
+
+        .navbar {
+            background-color: #161b22 !important;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .card,
+        .modal-content {
+            background-color: #161b22;
+            border-color: #30363d;
+        }
+
+        .table {
+            color: #c9d1d9;
+        }
+
+        .table-hover>tbody>tr:hover>* {
+            color: #c9d1d9;
+            background-color: rgba(88, 166, 255, 0.08);
+        }
+
+        .btn-success {
+            background-color: #238636;
+            border-color: #238636;
+        }
+
+        .btn-success:hover {
+            background-color: #2ea043;
+        }
+
+        .badge-models {
+            background-color: #1f6feb;
+        }
+
+        .form-control,
+        .form-select {
+            background-color: #0d1117;
+            border-color: #30363d;
+            color: #c9d1d9;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background-color: #0d1117;
+            border-color: #58a6ff;
+            color: #c9d1d9;
+        }
+
+        .page-title {
+            color: #58a6ff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark"
+        style="background-color: #161b22 !important; border-bottom: 1px solid #30363d;">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="nav">
+                <div class="d-flex ms-auto align-items-center gap-3">
+                    <div class="position-relative am-search" data-am-search-root>
+                        <input class="form-control form-control-sm" type="search"
+                            placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
+                        <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
+                    </div>
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/clients">Clients</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/sites">Sites</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/assets">Assets</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
+                                Référentiels
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item active" href="/ui/vendors">🏭 Fabricants</a></li>
+                                <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="/docs">API Docs</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/scripts/console">Console</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="page-title mb-0">🏭 Fabricants</h2>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalVendor">
+                ＋ Nouveau fabricant
+            </button>
+        </div>
+
+        <!-- Recherche -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" id="searchInput" placeholder="Rechercher un fabricant…">
+            </div>
+        </div>
+
+        <!-- Tableau -->
+        <div class="card p-3">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Identifiant NVD</th>
+                        <th>Modèles</th>
+                        <th>Notes</th>
+                        <th style="width:120px">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="vendorTableBody">
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">Chargement…</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Création -->
+    <div class="modal fade" id="modalVendor" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">Nouveau fabricant</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nom affiché *</label>
+                        <input type="text" class="form-control" id="vendorNom"
+                            placeholder="Ex : Microsoft, Synology, D-Link">
+                        <div class="form-text">Le nom tel que vous voulez le voir dans l'interface.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Identifiant NVD *</label>
+                        <input type="text" class="form-control" id="vendorNvd"
+                            placeholder="Ex : microsoft, synology, d-link">
+                        <div class="form-text">
+                            Le nom exact utilisé par le NVD dans les CPE. Sera converti en minuscules automatiquement.
+                            Vérifiable sur <a href="https://nvd.nist.gov/products/cpe/search" target="_blank"
+                                class="text-info">nvd.nist.gov</a>.
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="vendorNotes" rows="2"></textarea>
+                    </div>
+                    <div id="vendorError" class="alert alert-danger d-none"></div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-success" id="btnSaveVendor">Créer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmation Suppression -->
+    <div class="modal fade" id="modalDelete" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">Confirmer la suppression</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Supprimer le fabricant <strong id="deleteVendorName"></strong> ?</p>
+                    <div id="deleteError" class="alert alert-danger d-none"></div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmDelete">Supprimer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/bootstrap.bundle.min.js"></script>
+    <script src="/static/app-search.js"></script>
+    <script>
+        const API = '/api/vendors';
+        let allVendors = [];
+        let deleteTargetId = null;
+        let page = 1;
+        const PAGE_SIZE = 20;
+        let totalVendorsCount = 0;
+
+        // ═══════════════════════════════════════════════════════════
+        //  PAGINATION Helpers
+        // ═══════════════════════════════════════════════════════════
+        function afficherPagination(currentPage, totalPages, totalItems) {
+            let container = document.getElementById('paginationContainer');
+            if (!container) {
+                const table = document.getElementById('vendorTableBody')?.closest('table');
+                if (!table) return;
+                container = document.createElement('div');
+                container.id = 'paginationContainer';
+                container.className = 'mt-3';
+                table.parentNode.insertBefore(container, table.nextSibling);
+            }
+
+            container.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted">
+                Page ${currentPage} / ${totalPages > 0 ? totalPages : 1} — ${totalItems} fabricant${totalItems > 1 ? 's' : ''} au total
+            </span>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary me-1"
+                        onclick="changerPage(${currentPage - 1})"
+                        ${currentPage <= 1 ? 'disabled' : ''}>
+                    ◀ Précédent
+                </button>
+                <button class="btn btn-sm btn-outline-secondary"
+                        onclick="changerPage(${currentPage + 1})"
+                        ${currentPage >= totalPages ? 'disabled' : ''}>
+                    Suivant ▶
+                </button>
+            </div>
+        </div>
+    `;
+            container.style.display = 'block';
+        }
+
+        function masquerPagination() {
+            const container = document.getElementById('paginationContainer');
+            if (container) container.style.display = 'none';
+        }
+
+        function changerPage(nouvellePage) {
+            page = nouvellePage;
+            loadVendors();
+        }
+
+        // ── Charger les fabricants ──
+        async function loadVendors() {
+            const tbody = document.getElementById('vendorTableBody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted"><div class="spinner-border spinner-border-sm"></div> Chargement...</td></tr>';
+
+            try {
+                const queryParams = new URLSearchParams();
+                queryParams.append('limit', PAGE_SIZE);
+                queryParams.append('skip', (page - 1) * PAGE_SIZE);
+
+                const q = document.getElementById('searchInput')?.value.trim() || '';
+                if (q) {
+                    queryParams.append('search', q);
+                    queryParams.append('nolimit', 'true'); // Search bypasses pagination limit if desired, based on the requirements!
+                }
+
+                const res = await fetch(`${API}?${queryParams.toString()}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                const countHeader = res.headers.get("X-Total-Count");
+                if (countHeader) totalVendorsCount = parseInt(countHeader, 10);
+
+                const data = await res.json();
+                allVendors = data.vendors || [];
+
+                if (q) {
+                    // Update total count accurately to match search results count
+                    totalVendorsCount = allVendors.length;
+                }
+
+                renderTable(allVendors);
+            } catch (e) {
+                console.error(e);
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erreur de chargement</td></tr>';
+            }
+        }
+
+        // ── Afficher le tableau ──
+        function renderTable(vendors) {
+            const tbody = document.getElementById('vendorTableBody');
+            if (vendors.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Aucun fabricant</td></tr>';
+                masquerPagination();
+                return;
+            }
+
+            const q = document.getElementById('searchInput')?.value.trim() || '';
+            if (q) {
+                masquerPagination();
+            } else {
+                const totalPages = Math.ceil(totalVendorsCount / PAGE_SIZE);
+                afficherPagination(page, totalPages, totalVendorsCount);
+            }
+            tbody.innerHTML = vendors.map(v => `
+        <tr>
+            <td><strong>${esc(v.nom)}</strong></td>
+            <td><code>${esc(v.nvd_vendor)}</code></td>
+            <td><span class="badge badge-models">${v.model_count} modèle(s)</span></td>
+            <td class="text-muted">${esc(v.notes || '')}</td>
+            <td>
+                <a href="/ui/models?vendor=${v.id}" class="btn btn-sm btn-outline-info me-1"
+                   title="Voir les modèles">📦</a>
+                <button class="btn btn-sm btn-outline-danger" title="Supprimer"
+                        onclick="openDelete(${v.id}, '${esc(v.nom)}')">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+        }
+
+        // ── Recherche ──
+        let searchTimeout;
+        document.getElementById('searchInput').addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                page = 1;
+                loadVendors();
+            }, 300);
+        });
+
+        // ── Création ──
+        document.getElementById('btnSaveVendor').addEventListener('click', async () => {
+            const nom = document.getElementById('vendorNom').value.trim();
+            const nvd = document.getElementById('vendorNvd').value.trim();
+            const notes = document.getElementById('vendorNotes').value.trim();
+            const errDiv = document.getElementById('vendorError');
+            errDiv.classList.add('d-none');
+
+            if (!nom || !nvd) {
+                errDiv.textContent = 'Le nom et l\'identifiant NVD sont obligatoires.';
+                errDiv.classList.remove('d-none');
+                return;
+            }
+
+            try {
+                const res = await fetch(API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nom, nvd_vendor: nvd, notes: notes || null })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Erreur serveur');
+                }
+
+                bootstrap.Modal.getInstance(document.getElementById('modalVendor')).hide();
+                document.getElementById('vendorNom').value = '';
+                document.getElementById('vendorNvd').value = '';
+                document.getElementById('vendorNotes').value = '';
+                loadVendors();
+            } catch (e) {
+                errDiv.textContent = e.message;
+                errDiv.classList.remove('d-none');
+            }
+        });
+
+        // ── Suppression ──
+        function openDelete(id, nom) {
+            deleteTargetId = id;
+            document.getElementById('deleteVendorName').textContent = nom;
+            document.getElementById('deleteError').classList.add('d-none');
+            new bootstrap.Modal(document.getElementById('modalDelete')).show();
+        }
+
+        document.getElementById('btnConfirmDelete').addEventListener('click', async () => {
+            const errDiv = document.getElementById('deleteError');
+            errDiv.classList.add('d-none');
+
+            try {
+                const res = await fetch(`${API}/${deleteTargetId}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Erreur serveur');
+                }
+                bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
+                loadVendors();
+            } catch (e) {
+                errDiv.textContent = e.message;
+                errDiv.classList.remove('d-none');
+            }
+        });
+
+        // ── Utilitaire ──
+        function esc(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        // ── Init ──
+        loadVendors();
+    </script>
+</body>
+
+</html>

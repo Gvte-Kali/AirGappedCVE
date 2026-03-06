@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modèles — Asset Manager</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/app-search.css">
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+        }
+
+        .navbar {
+            background-color: #161b22 !important;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .card,
+        .modal-content {
+            background-color: #161b22;
+            border-color: #30363d;
+        }
+
+        .table {
+            color: #c9d1d9;
+        }
+
+        .table-hover>tbody>tr:hover>* {
+            color: #c9d1d9;
+            background-color: rgba(88, 166, 255, 0.08);
+        }
+
+        .btn-success {
+            background-color: #238636;
+            border-color: #238636;
+        }
+
+        .btn-success:hover {
+            background-color: #2ea043;
+        }
+
+        .form-control,
+        .form-select {
+            background-color: #0d1117;
+            border-color: #30363d;
+            color: #c9d1d9;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background-color: #0d1117;
+            border-color: #58a6ff;
+            color: #c9d1d9;
+        }
+
+        .page-title {
+            color: #58a6ff;
+        }
+
+        code {
+            color: #f0883e;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark"
+        style="background-color: #161b22 !important; border-bottom: 1px solid #30363d;">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="nav">
+                <div class="d-flex ms-auto align-items-center gap-3">
+                    <div class="position-relative am-search" data-am-search-root>
+                        <input class="form-control form-control-sm" type="search"
+                            placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
+                        <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
+                    </div>
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/clients">Clients</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/sites">Sites</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/assets">Assets</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
+                                Référentiels
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
+                                <li><a class="dropdown-item active" href="/ui/models">📦 Modèles</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="/docs">API Docs</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/scripts/console">Console</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="page-title mb-0">📦 Modèles / Produits</h2>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalModel">
+                ＋ Nouveau modèle
+            </button>
+        </div>
+
+        <!-- Filtres -->
+        <div class="row mb-3 g-2">
+            <div class="col-md-3">
+                <input type="text" class="form-control" id="searchInput" placeholder="Rechercher…">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="filterVendor">
+                    <option value="">Tous les fabricants</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="filterType">
+                    <option value="">Tous les types</option>
+                    <option value="os">OS</option>
+                    <option value="firmware">Firmware</option>
+                    <option value="application">Application</option>
+                    <option value="hardware">Hardware</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tableau -->
+        <div class="card p-3">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Fabricant</th>
+                        <th>Nom</th>
+                        <th>Produit NVD</th>
+                        <th>Type</th>
+                        <th>CPE de base</th>
+                        <th>Assets</th>
+                        <th style="width:80px">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="modelTableBody">
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">Chargement…</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Création -->
+    <div class="modal fade" id="modalModel" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">Nouveau modèle</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Fabricant *</label>
+                            <select class="form-select" id="modelVendorId">
+                                <option value="">— Choisir —</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Type de produit *</label>
+                            <select class="form-select" id="modelType">
+                                <option value="os">OS</option>
+                                <option value="firmware">Firmware</option>
+                                <option value="application">Application</option>
+                                <option value="hardware">Hardware</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nom affiché *</label>
+                            <input type="text" class="form-control" id="modelNom"
+                                placeholder="Ex : Windows 11, DSM, FortiOS">
+                            <div class="form-text">Le nom lisible dans l'interface.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Produit NVD *</label>
+                            <input type="text" class="form-control" id="modelNvdProduct"
+                                placeholder="Ex : windows_11, diskstation_manager">
+                            <div class="form-text">
+                                Le nom exact utilisé par le NVD dans les CPE.
+                                Converti en minuscules automatiquement.
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">CPE de base (optionnel)</label>
+                            <input type="text" class="form-control" id="modelCpe"
+                                placeholder="Ex : cpe:2.3:o:microsoft:windows_11">
+                            <div class="form-text">Généré automatiquement si laissé vide.</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" id="modelNotes" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div id="modelError" class="alert alert-danger d-none mt-3"></div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-success" id="btnSaveModel">Créer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmation Suppression -->
+    <div class="modal fade" id="modalDelete" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">Confirmer la suppression</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Supprimer le modèle <strong id="deleteModelName"></strong> ?</p>
+                    <div id="deleteError" class="alert alert-danger d-none"></div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmDelete">Supprimer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/bootstrap.bundle.min.js"></script>
+    <script src="/static/app-search.js"></script>
+    <script>
+        const API_MODELS = '/api/models';
+        const API_VENDORS = '/api/vendors';
+
+        let allModels = [];
+        let allVendors = [];
+        let deleteTargetId = null;
+        let page = 1;
+        const PAGE_SIZE = 20;
+        let totalModelsCount = 0;
+
+        // ── Charger les vendors (pour filtres + modal) ──
+        async function loadVendors() {
+            const res = await fetch(API_VENDORS);
+            const data = await res.json();
+            allVendors = data.vendors || [];
+
+            // Filtre tableau
+            const filterSel = document.getElementById('filterVendor');
+            filterSel.innerHTML = '<option value="">Tous les fabricants</option>' +
+                allVendors.map(v => `<option value="${v.id}">${esc(v.nom)}</option>`).join('');
+
+            // Select modal
+            const modalSel = document.getElementById('modelVendorId');
+            modalSel.innerHTML = '<option value="">— Choisir —</option>' +
+                allVendors.map(v => `<option value="${v.id}">${esc(v.nom)} (${v.nvd_vendor})</option>`).join('');
+
+            // Pré-sélection si ?vendor=X dans l'URL
+            const params = new URLSearchParams(window.location.search);
+            const vendorParam = params.get('vendor');
+            if (vendorParam) {
+                filterSel.value = vendorParam;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  PAGINATION Helpers
+        // ═══════════════════════════════════════════════════════════
+        function afficherPagination(currentPage, totalPages, totalItems) {
+            let container = document.getElementById('paginationContainer');
+            if (!container) {
+                const table = document.getElementById('modelTableBody')?.closest('table');
+                if (!table) return;
+                container = document.createElement('div');
+                container.id = 'paginationContainer';
+                container.className = 'mt-3';
+                table.parentNode.insertBefore(container, table.nextSibling);
+            }
+
+            container.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted">
+                Page ${currentPage} / ${totalPages > 0 ? totalPages : 1} — ${totalItems} modèle${totalItems > 1 ? 's' : ''} au total
+            </span>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary me-1"
+                        onclick="changerPage(${currentPage - 1})"
+                        ${currentPage <= 1 ? 'disabled' : ''}>
+                    ◀ Précédent
+                </button>
+                <button class="btn btn-sm btn-outline-secondary"
+                        onclick="changerPage(${currentPage + 1})"
+                        ${currentPage >= totalPages ? 'disabled' : ''}>
+                    Suivant ▶
+                </button>
+            </div>
+        </div>
+    `;
+            container.style.display = 'block';
+        }
+
+        function masquerPagination() {
+            const container = document.getElementById('paginationContainer');
+            if (container) container.style.display = 'none';
+        }
+
+        function changerPage(nouvellePage) {
+            page = nouvellePage;
+            loadModels();
+        }
+
+        function filtreActif() {
+            const q = document.getElementById('searchInput')?.value.trim() || '';
+            const vendorFilter = document.getElementById('filterVendor')?.value || '';
+            const typeFilter = document.getElementById('filterType')?.value || '';
+            return !!(q || vendorFilter || typeFilter);
+        }
+
+        // ── Charger les modèles ──
+        async function loadModels() {
+            const tbody = document.getElementById('modelTableBody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted"><div class="spinner-border spinner-border-sm"></div> Chargement...</td></tr>';
+
+            try {
+                const queryParams = new URLSearchParams();
+                queryParams.append('limit', PAGE_SIZE);
+                queryParams.append('skip', (page - 1) * PAGE_SIZE);
+
+                const q = document.getElementById('searchInput')?.value.trim() || '';
+                const vendorFilter = document.getElementById('filterVendor')?.value || '';
+                const typeFilter = document.getElementById('filterType')?.value || '';
+
+                if (filtreActif()) {
+                    queryParams.append('nolimit', 'true');
+                    if (q) queryParams.append('search', q);
+                    if (vendorFilter) queryParams.append('vendor_id', vendorFilter);
+                    if (typeFilter) queryParams.append('type_produit', typeFilter);
+                }
+
+                const res = await fetch(`${API_MODELS}?${queryParams.toString()}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                const countHeader = res.headers.get("X-Total-Count");
+                if (countHeader) totalModelsCount = parseInt(countHeader, 10);
+
+                const data = await res.json();
+                allModels = data.models || [];
+
+                if (filtreActif()) {
+                    // Adjust count accurately based on filtered results
+                    totalModelsCount = allModels.length;
+                }
+
+                renderTable(allModels);
+            } catch (e) {
+                console.error(e);
+                if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Erreur de chargement</td></tr>';
+            }
+        }
+
+        // ── Filtres ──
+        let filterTimeout;
+        function applyFilters() {
+            clearTimeout(filterTimeout);
+            filterTimeout = setTimeout(() => {
+                page = 1;
+                loadModels();
+            }, 300);
+        }
+
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        document.getElementById('filterVendor').addEventListener('change', applyFilters);
+        document.getElementById('filterType').addEventListener('change', applyFilters);
+
+        // ── Afficher le tableau ──
+        function renderTable(models) {
+            const tbody = document.getElementById('modelTableBody');
+            if (models.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Aucun modèle</td></tr>';
+                masquerPagination();
+                return;
+            }
+
+            if (filtreActif()) {
+                masquerPagination();
+            } else {
+                const totalPages = Math.ceil(totalModelsCount / PAGE_SIZE);
+                afficherPagination(page, totalPages, totalModelsCount);
+            }
+
+            const typeBadge = {
+                os: 'bg-primary',
+                firmware: 'bg-info',
+                application: 'bg-warning text-dark',
+                hardware: 'bg-secondary'
+            };
+
+            tbody.innerHTML = models.map(m => `
+        <tr>
+            <td>${esc(m.vendor_nom)}</td>
+            <td><strong>${esc(m.nom)}</strong></td>
+            <td><code>${esc(m.nvd_product)}</code></td>
+            <td><span class="badge ${typeBadge[m.type_produit] || 'bg-secondary'}">${m.type_produit}</span></td>
+            <td><code class="small">${esc(m.cpe_base || '—')}</code></td>
+            <td>${m.asset_count}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-danger" title="Supprimer"
+                        onclick="openDelete(${m.id}, '${esc(m.nom)}')">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+        }
+
+        // ── Création ──
+        document.getElementById('btnSaveModel').addEventListener('click', async () => {
+            const vendor_id = document.getElementById('modelVendorId').value;
+            const nom = document.getElementById('modelNom').value.trim();
+            const nvd_product = document.getElementById('modelNvdProduct').value.trim();
+            const type_produit = document.getElementById('modelType').value;
+            const cpe_base = document.getElementById('modelCpe').value.trim();
+            const notes = document.getElementById('modelNotes').value.trim();
+            const errDiv = document.getElementById('modelError');
+            errDiv.classList.add('d-none');
+
+            if (!vendor_id || !nom || !nvd_product) {
+                errDiv.textContent = 'Fabricant, nom et produit NVD sont obligatoires.';
+                errDiv.classList.remove('d-none');
+                return;
+            }
+
+            try {
+                const res = await fetch(API_MODELS, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        vendor_id: parseInt(vendor_id),
+                        nom,
+                        nvd_product,
+                        type_produit,
+                        cpe_base: cpe_base || null,
+                        notes: notes || null
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Erreur serveur');
+                }
+
+                bootstrap.Modal.getInstance(document.getElementById('modalModel')).hide();
+                // Reset form
+                ['modelVendorId', 'modelNom', 'modelNvdProduct', 'modelCpe', 'modelNotes'].forEach(id => {
+                    document.getElementById(id).value = '';
+                });
+                document.getElementById('modelType').value = 'os';
+                loadModels();
+            } catch (e) {
+                errDiv.textContent = e.message;
+                errDiv.classList.remove('d-none');
+            }
+        });
+
+        // ── Suppression ──
+        function openDelete(id, nom) {
+            deleteTargetId = id;
+            document.getElementById('deleteModelName').textContent = nom;
+            document.getElementById('deleteError').classList.add('d-none');
+            new bootstrap.Modal(document.getElementById('modalDelete')).show();
+        }
+
+        document.getElementById('btnConfirmDelete').addEventListener('click', async () => {
+            const errDiv = document.getElementById('deleteError');
+            errDiv.classList.add('d-none');
+
+            try {
+                const res = await fetch(`${API_MODELS}/${deleteTargetId}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Erreur serveur');
+                }
+                bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
+                loadModels();
+            } catch (e) {
+                errDiv.textContent = e.message;
+                errDiv.classList.remove('d-none');
+            }
+        });
+
+        // ── Utilitaire ──
+        function esc(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        // ── Init ──
+        (async () => {
+            await loadVendors();
+            await loadModels();
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1302 @@
+bash: /opt/asset-manager/start.sh: No such file or directory
+bash: /opt/asset-manager/start.sh: No such file or directory
+bash: /opt/asset-manager/start.sh: No such file or directory
+INFO:     Will watch for changes in these directories: ['/opt/asset-manager']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [13442] using StatReload
+INFO:     Started server process [13465]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Will watch for changes in these directories: ['/opt/asset-manager']
+ERROR:    [Errno 98] Address already in use
+INFO:     192.168.1.247:42069 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:42069 - "GET /static/bootstrap.min.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:13595 - "GET /static/bootstrap.bundle.min.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:13595 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62782 - "GET /api/assets/ HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1134, in __call__
+    await super().__call__(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 119, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 105, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 424, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 314, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/concurrency.py", line 32, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/routers/assets.py", line 112, in list_assets
+    cursor.execute(query, params)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/cursors.py", line 153, in execute
+    result = self._query(query)
+             ^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/cursors.py", line 322, in _query
+    conn.query(q)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 575, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 826, in _read_query_result
+    result.read()
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 1203, in read
+    first_packet = self.connection._read_packet()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 782, in _read_packet
+    packet.raise_for_error()
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'a.nom' in 'ORDER BY'")
+INFO:     192.168.1.247:42069 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:44473 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:48596 - "GET /api/assets/ HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1134, in __call__
+    await super().__call__(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 119, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 105, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 424, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 314, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/concurrency.py", line 32, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/routers/assets.py", line 112, in list_assets
+    cursor.execute(query, params)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/cursors.py", line 153, in execute
+    result = self._query(query)
+             ^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/cursors.py", line 322, in _query
+    conn.query(q)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 575, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 826, in _read_query_result
+    result.read()
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 1203, in read
+    first_packet = self.connection._read_packet()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 782, in _read_packet
+    packet.raise_for_error()
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'a.nom' in 'ORDER BY'")
+INFO:     192.168.1.247:41856 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:41856 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:41856 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:41856 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2537 - "POST /api/clients/ HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1134, in __call__
+    await super().__call__(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 119, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 105, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 424, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 314, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/concurrency.py", line 32, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/routers/clients.py", line 64, in create_client
+    cursor.execute(
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/cursors.py", line 153, in execute
+    result = self._query(query)
+             ^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/cursors.py", line 322, in _query
+    conn.query(q)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 575, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 826, in _read_query_result
+    result.read()
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 1203, in read
+    first_packet = self.connection._read_packet()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 782, in _read_packet
+    packet.raise_for_error()
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'contact_tel' in 'INSERT INTO'")
+WARNING:  StatReload detected changes in 'routers/clients.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [13465]
+INFO:     Started server process [15261]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'routers/assets.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [15261]
+INFO:     Started server process [15304]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     192.168.1.247:60327 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:60327 - "GET /static/bootstrap.min.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:50476 - "GET /static/bootstrap.bundle.min.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:50476 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:65339 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:65339 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:5602 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62192 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62192 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62192 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34471 - "POST /api/clients/ HTTP/1.1" 201 Created
+INFO:     192.168.1.247:28806 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28806 - "GET /api/clients/1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20941 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20941 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:31969 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:31969 - "GET /static/bootstrap.min.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:23421 - "GET /static/app-search.js HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34042 - "GET /static/app-search.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:10447 - "GET /static/bootstrap.bundle.min.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:34042 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34042 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:23421 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:10447 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19006 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19006 - "GET /static/app-search.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:19006 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:36423 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:40079 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:40079 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:40079 - "GET /static/app-search.css HTTP/1.1" 304 Not Modified
+WARNING:  StatReload detected changes in 'routers/sites.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [15304]
+INFO:     Started server process [16571]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     192.168.1.247:58163 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:58163 - "GET /static/bootstrap.min.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:11020 - "GET /static/app-search.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:64583 - "GET /static/app-search.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:56604 - "GET /static/bootstrap.bundle.min.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:39199 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:39199 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:39199 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:9478 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:9478 - "GET /static/app-search.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:62300 - "GET /static/app-search.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:25694 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:9478 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62300 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47592 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47592 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47592 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47592 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47592 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47592 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47592 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47592 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47592 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47592 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47592 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47592 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:51094 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:58924 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:29091 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:29091 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:29091 - "GET /static/app-search.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:29091 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:58924 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:51094 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25237 - "GET /docs HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25237 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4179 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4179 - "GET /static/app-search.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:29248 - "GET /static/app-search.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:4179 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:29248 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20781 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20781 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:29157 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:46315 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:52659 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:41262 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:49986 - "GET /static/app-search.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:41262 - "GET /static/bootstrap.min.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:18586 - "GET /static/bootstrap.bundle.min.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:51223 - "GET /static/app-search.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:51223 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:18586 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:41262 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:32409 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:32409 - "GET /static/app-search.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:65435 - "GET /static/app-search.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:65435 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57768 - "POST /api/clients/ HTTP/1.1" 201 Created
+INFO:     192.168.1.247:12929 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:12929 - "GET /api/clients/1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:12929 - "PUT /api/clients/1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57768 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57768 - "GET /api/clients/1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57768 - "PUT /api/clients/1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:12929 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:12929 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62285 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62285 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62285 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:23224 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:54753 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:54753 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:54753 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:54753 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:54753 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:54753 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62411 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62411 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62411 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62411 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:32993 - "POST /api/sites/ HTTP/1.1" 201 Created
+INFO:     192.168.1.247:30845 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:60198 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:60198 - "GET /static/app-search.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:58222 - "GET /static/app-search.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:58222 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:58222 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56711 - "GET /api/sites/?client_id=1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:50060 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:50060 - "GET /static/bootstrap.min.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:20724 - "GET /static/bootstrap.bundle.min.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:50060 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20724 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59716 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:65031 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:65031 - "GET /static/app-search.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:19131 - "GET /static/app-search.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:19131 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19131 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19131 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:21463 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:14671 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:14671 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:14671 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19131 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:21463 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35135 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35135 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35135 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35135 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35135 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35135 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35135 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:14097 - "GET /api/sites/?client_id=1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:9956 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:9956 - "GET /static/app-search.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:24032 - "GET /static/app-search.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:24032 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2375 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:18587 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:37478 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:64647 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:64647 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52090 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52090 - "GET /static/bootstrap.min.css HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52091 - "GET /static/app-search.css HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52092 - "GET /static/bootstrap.bundle.min.js HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52093 - "GET /static/app-search.js HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52091 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.1.32:52090 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52092 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52093 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52105 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52105 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52105 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52174 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52174 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52175 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.32:52177 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:52047 - "GET /api/sites/?client_id=1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:41920 - "POST /api/assets/ HTTP/1.1" 201 Created
+INFO:     192.168.1.247:21458 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:60064 - "GET /api/sites/?client_id=1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:21129 - "POST /api/assets/ HTTP/1.1" 201 Created
+INFO:     192.168.1.247:57739 - "GET /api/assets/ HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [16571]
+INFO:     Started server process [20025]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'routers/assets.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [20025]
+INFO:     Started server process [20062]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     192.168.1.247:9971 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:9971 - "GET /static/bootstrap.min.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:62518 - "GET /static/app-search.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:21888 - "GET /static/bootstrap.bundle.min.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:16518 - "GET /static/app-search.js HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:16518 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:16518 - "GET /api/assets/ HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1134, in __call__
+    await super().__call__(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 119, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 105, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 424, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 314, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/concurrency.py", line 32, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/routers/assets.py", line 55, in list_assets
+    cursor.execute("""
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/cursors.py", line 153, in execute
+    result = self._query(query)
+             ^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/cursors.py", line 322, in _query
+    conn.query(q)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 575, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 826, in _read_query_result
+    result.read()
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 1203, in read
+    first_packet = self.connection._read_packet()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/connections.py", line 782, in _read_packet
+    packet.raise_for_error()
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/pymysql/err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'a.modele_id' in 'SELECT'")
+INFO:     192.168.1.247:54321 - "GET /api/modeles-assets/?limit=20 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25929 - "GET /ui/assets HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/responses.py", line 349, in __call__
+    stat_result = await anyio.to_thread.run_sync(os.stat, self.path)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'ui/assets.html'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1134, in __call__
+    await super().__call__(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 119, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 106, in app
+    await response(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/responses.py", line 352, in __call__
+    raise RuntimeError(f"File at path {self.path} does not exist.")
+RuntimeError: File at path ui/assets.html does not exist.
+INFO:     192.168.1.247:44262 - "GET /ui/assets HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/responses.py", line 349, in __call__
+    stat_result = await anyio.to_thread.run_sync(os.stat, self.path)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'ui/assets.html'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1134, in __call__
+    await super().__call__(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 119, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 106, in app
+    await response(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/responses.py", line 352, in __call__
+    raise RuntimeError(f"File at path {self.path} does not exist.")
+RuntimeError: File at path ui/assets.html does not exist.
+INFO:     192.168.1.247:10473 - "GET /ui/assets HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/responses.py", line 349, in __call__
+    stat_result = await anyio.to_thread.run_sync(os.stat, self.path)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'ui/assets.html'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1134, in __call__
+    await super().__call__(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 119, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 106, in app
+    await response(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/responses.py", line 352, in __call__
+    raise RuntimeError(f"File at path {self.path} does not exist.")
+RuntimeError: File at path ui/assets.html does not exist.
+INFO:     192.168.1.247:10475 - "GET /ui/assets HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/responses.py", line 349, in __call__
+    stat_result = await anyio.to_thread.run_sync(os.stat, self.path)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'ui/assets.html'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1134, in __call__
+    await super().__call__(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 119, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 106, in app
+    await response(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/responses.py", line 352, in __call__
+    raise RuntimeError(f"File at path {self.path} does not exist.")
+RuntimeError: File at path ui/assets.html does not exist.
+INFO:     192.168.1.247:63198 - "GET /ui/assets HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/responses.py", line 349, in __call__
+    stat_result = await anyio.to_thread.run_sync(os.stat, self.path)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'ui/assets.html'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1134, in __call__
+    await super().__call__(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 119, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 106, in app
+    await response(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/responses.py", line 352, in __call__
+    raise RuntimeError(f"File at path {self.path} does not exist.")
+RuntimeError: File at path ui/assets.html does not exist.
+INFO:     192.168.1.247:44215 - "GET /ui/assets HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/responses.py", line 349, in __call__
+    stat_result = await anyio.to_thread.run_sync(os.stat, self.path)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'ui/assets.html'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1134, in __call__
+    await super().__call__(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 119, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 106, in app
+    await response(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/responses.py", line 352, in __call__
+    raise RuntimeError(f"File at path {self.path} does not exist.")
+RuntimeError: File at path ui/assets.html does not exist.
+INFO:     192.168.1.247:27646 - "GET /ui/assets HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/responses.py", line 349, in __call__
+    stat_result = await anyio.to_thread.run_sync(os.stat, self.path)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2502, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 986, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'ui/assets.html'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1134, in __call__
+    await super().__call__(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 119, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/fastapi/routing.py", line 106, in app
+    await response(scope, receive, send)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/starlette/responses.py", line 352, in __call__
+    raise RuntimeError(f"File at path {self.path} does not exist.")
+RuntimeError: File at path ui/assets.html does not exist.
+WARNING:  StatReload detected changes in 'routers/__pycache__/sites.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [20062]
+ERROR:    Error loading ASGI app. Could not import module "main".
+WARNING:  StatReload detected changes in 'routers/sites.py'. Reloading...
+ERROR:    Error loading ASGI app. Attribute "app" not found in module "main".
+WARNING:  StatReload detected changes in 'main.py'. Reloading...
+Process SpawnProcess-9:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/opt/asset-manager/main.py", line 7, in <module>
+    from routers import clients, sites, assets, modeles_assets
+  File "/opt/asset-manager/routers/sites.py", line 4, in <module>
+    from database import get_connection
+ImportError: cannot import name 'get_connection' from 'database' (/opt/asset-manager/database.py)
+WARNING:  StatReload detected changes in 'routers/assets.py'. Reloading...
+Process SpawnProcess-10:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/opt/asset-manager/main.py", line 7, in <module>
+    from routers import clients, sites, assets, modeles_assets
+  File "/opt/asset-manager/routers/sites.py", line 4, in <module>
+    from database import get_connection
+ImportError: cannot import name 'get_connection' from 'database' (/opt/asset-manager/database.py)
+WARNING:  StatReload detected changes in 'database.py'. Reloading...
+Process SpawnProcess-11:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/opt/asset-manager/main.py", line 21, in <module>
+    app.include_router(clients.router, prefix="/api/clients", tags=["Clients"])
+                       ^^^^^^^^^^^^^^
+AttributeError: module 'routers.clients' has no attribute 'router'
+WARNING:  StatReload detected changes in 'database.py'. Reloading...
+WARNING:  StatReload detected changes in 'database.py'. Reloading...
+Process SpawnProcess-12:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/opt/asset-manager/main.py", line 21, in <module>
+    app.include_router(clients.router, prefix="/api/clients", tags=["Clients"])
+                       ^^^^^^^^^^^^^^
+AttributeError: module 'routers.clients' has no attribute 'router'
+Process SpawnProcess-13:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/opt/asset-manager/main.py", line 21, in <module>
+    app.include_router(clients.router, prefix="/api/clients", tags=["Clients"])
+                       ^^^^^^^^^^^^^^
+AttributeError: module 'routers.clients' has no attribute 'router'
+WARNING:  StatReload detected changes in 'routers/clients.py'. Reloading...
+Process SpawnProcess-14:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/asset-manager/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/opt/asset-manager/main.py", line 24, in <module>
+    app.include_router(modeles_assets.router, prefix="/api/modeles-assets", tags=["Modèles assets"])
+                       ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'routers.modeles_assets' has no attribute 'router'
+WARNING:  StatReload detected changes in 'main.py'. Reloading...
+WARNING:  StatReload detected changes in 'main.py'. Reloading...
+INFO:     Started server process [24933]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [24933]
+INFO:     Started server process [24981]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'routers/assets.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [24981]
+INFO:     Started server process [25025]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [25025]
+INFO:     Stopping reloader process [13442]

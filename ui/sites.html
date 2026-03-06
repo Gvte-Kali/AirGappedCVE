@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sites</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/app-search.css">
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+        }
+
+        .card {
+            background-color: #161b22;
+            border-color: #30363d;
+        }
+
+        .text-muted {
+            color: #8b949e !important;
+        }
+
+        .form-control,
+        .form-select,
+        textarea {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            border-color: #30363d;
+        }
+
+        .form-control:focus,
+        .form-select:focus,
+        textarea:focus {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 .25rem rgba(88, 166, 255, .2);
+        }
+
+        .modal-content {
+            background-color: #161b22;
+            border-color: #30363d;
+        }
+
+        .table {
+            color: #c9d1d9;
+        }
+
+        .table-hover>tbody>tr:hover>* {
+            color: #c9d1d9;
+            background-color: rgba(88, 166, 255, 0.08);
+        }
+
+        .btn-close {
+            filter: invert(1) grayscale(100%);
+        }
+
+        #siteClientSuggestions .list-group-item,
+        #filtreClientSuggestions .list-group-item {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            border-color: #30363d;
+            cursor: pointer;
+        }
+
+        #siteClientSuggestions .list-group-item:hover,
+        #filtreClientSuggestions .list-group-item:hover {
+            background-color: rgba(88, 166, 255, 0.08);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark"
+        style="background-color: #161b22 !important; border-bottom: 1px solid #30363d;">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="nav">
+                <div class="d-flex ms-auto align-items-center gap-3">
+                    <div class="position-relative am-search" data-am-search-root>
+                        <input class="form-control form-control-sm" type="search"
+                            placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
+                        <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
+                    </div>
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/clients">Clients</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="/ui/sites">Sites</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/assets">Assets</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Référentiels
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
+                                <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="/docs">API Docs</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/scripts/console">Console</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="container-fluid py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Gestion des sites</h1>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSite">
+                + Nouveau site
+            </button>
+        </div>
+
+        <!-- Filtres -->
+        <div class="card mb-3">
+            <div class="card-body py-2">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-4">
+                        <input type="hidden" id="filtreClientId" value="">
+                        <div class="position-relative">
+                            <input class="form-control form-control-sm" id="filtreClientSearch" type="search"
+                                placeholder="Filtrer par client…" autocomplete="off">
+                            <div class="list-group position-absolute w-100 mt-1" id="filtreClientSuggestions"
+                                style="z-index:1070; max-height:240px; overflow:auto; display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select form-select-sm" id="filtreActif" onchange="page = 1; chargerSites()">
+                            <option value="">Tous statuts</option>
+                            <option value="1">Actifs</option>
+                            <option value="0">Inactifs</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="page = 1; chargerSites()">
+                            🔄 Rafraîchir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau -->
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0" id="tableSites">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Client</th>
+                                <th>Nom</th>
+                                <th>Adresse</th>
+                                <th>Ville</th>
+                                <th>CP</th>
+                                <th>Pays</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodySites">
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">Chargement...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal création/édition -->
+    <div class="modal fade" id="modalSite" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalSiteTitre">Nouveau site</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formSite">
+                        <input type="hidden" id="siteId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Client <span class="text-danger">*</span></label>
+                                <input type="hidden" id="siteClientId">
+                                <div class="position-relative">
+                                    <input type="text" class="form-control" id="siteClientSearch"
+                                        placeholder="Tape le nom du client…" autocomplete="off" required>
+                                    <div class="list-group position-absolute w-100 mt-1" id="siteClientSuggestions"
+                                        style="z-index:1080; max-height:240px; overflow:auto; display:none;"></div>
+                                </div>
+                                <div class="form-text am-search-muted">
+                                    Sélectionne un client dans la liste (sinon l’ID restera vide).
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nom du site <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="siteNom" required>
+                            </div>
+
+                            <div class="col-12">
+                                <h6 class="text-muted border-bottom pb-1 mt-2">Localisation</h6>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Adresse</label>
+                                <textarea class="form-control" id="siteAdresse" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Ville</label>
+                                <input type="text" class="form-control" id="siteVille">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Code postal</label>
+                                <input type="text" class="form-control" id="siteCodePostal">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Pays</label>
+                                <input type="text" class="form-control" id="sitePays" value="France">
+                            </div>
+
+                            <div class="col-12">
+                                <h6 class="text-muted border-bottom pb-1 mt-2">Contact local</h6>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Nom</label>
+                                <input type="text" class="form-control" id="siteContactNom">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="siteContactEmail">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Téléphone</label>
+                                <input type="tel" class="form-control" id="siteContactTel">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Notes</label>
+                                <textarea class="form-control" id="siteNotes" rows="2"></textarea>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" id="siteActif" checked>
+                                    <label class="form-check-label" for="siteActif">Site actif</label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" onclick="sauvegarderSite()">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/bootstrap.bundle.min.js"></script>
+    <script src="/static/app-search.js"></script>
+    <script>
+        const API_SITES = '/api/sites';
+        const API_CLIENTS = '/api/clients';
+
+        let tousLesClients = [];
+        let tousLesSites = [];
+        let page = 1;
+        const PAGE_SIZE = 20;
+        let totalSitesCount = 0;
+
+        function norm(v) { return String(v || '').toLowerCase().trim(); }
+
+        function escSingleQuoteJsString(v) {
+            return String(v ?? '')
+                .replaceAll('\\', '\\\\')
+                .replaceAll("'", "\\'");
+        }
+
+        function filtrerSitesParTexte(sites, q) {
+            const query = norm(q);
+            if (!query) return sites;
+            return sites.filter(s => {
+                const hay = [
+                    s.client_nom,
+                    s.nom,
+                    s.adresse,
+                    s.ville,
+                    s.code_postal,
+                    s.pays,
+                    s.contact_local_nom,
+                    s.contact_local_email,
+                    s.contact_local_telephone,
+                    s.notes
+                ].map(norm).join(' ');
+                return hay.includes(query);
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  PAGINATION Helpers
+        // ═══════════════════════════════════════════════════════════
+        function afficherPagination(currentPage, totalPages, totalItems) {
+            let container = document.getElementById('paginationContainer');
+            if (!container) {
+                const table = document.getElementById('tbodySites')?.closest('table');
+                if (!table) return;
+                container = document.createElement('div');
+                container.id = 'paginationContainer';
+                container.className = 'mt-3';
+                table.parentNode.insertBefore(container, table.nextSibling);
+            }
+
+            container.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted">
+                Page ${currentPage} / ${totalPages > 0 ? totalPages : 1} — ${totalItems} site${totalItems > 1 ? 's' : ''} au total
+            </span>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary me-1"
+                        onclick="changerPage(${currentPage - 1})"
+                        ${currentPage <= 1 ? 'disabled' : ''}>
+                    ◀ Précédent
+                </button>
+                <button class="btn btn-sm btn-outline-secondary"
+                        onclick="changerPage(${currentPage + 1})"
+                        ${currentPage >= totalPages ? 'disabled' : ''}>
+                    Suivant ▶
+                </button>
+            </div>
+        </div>
+    `;
+            container.style.display = 'block';
+        }
+
+        function masquerPagination() {
+            const container = document.getElementById('paginationContainer');
+            if (container) container.style.display = 'none';
+        }
+
+        function changerPage(nouvellePage) {
+            page = nouvellePage;
+            chargerSites();
+        }
+
+        function filtreActif() {
+            const clientId = document.getElementById('filtreClientId')?.value || '';
+            const actif = document.getElementById('filtreActif')?.value || '';
+            const q = new URLSearchParams(window.location.search).get('q') || '';
+            return !!(clientId || actif || q);
+        }
+
+        function afficherSites(sites) {
+            const tbody = document.getElementById('tbodySites');
+
+            if (!sites.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Aucun site</td></tr>';
+                masquerPagination();
+                return;
+            }
+
+            if (filtreActif()) {
+                masquerPagination();
+            } else {
+                const totalPages = Math.ceil(totalSitesCount / PAGE_SIZE);
+                afficherPagination(page, totalPages, totalSitesCount);
+            }
+
+            tbody.innerHTML = sites.map(s => `
+        <tr>
+            <td><strong>${s.client_nom || '—'}</strong></td>
+            <td>${s.nom || '—'}</td>
+            <td>${s.adresse || '—'}</td>
+            <td>${s.ville || '—'}</td>
+            <td>${s.code_postal || '—'}</td>
+            <td>${s.pays || '—'}</td>
+            <td>
+                <span class="badge ${s.actif ? 'bg-success' : 'bg-secondary'}">
+                    ${s.actif ? 'Actif' : 'Inactif'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editerSite(${s.id})">✏️</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="supprimerSite(${s.id}, '${escSingleQuoteJsString(s.nom)}')">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+        }
+
+        async function chargerClients() {
+            try {
+                const resp = await fetch(API_CLIENTS + '/');
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                tousLesClients = await resp.json();
+            } catch (e) {
+                console.error('Erreur chargement clients:', e);
+                const tbody = document.getElementById('tbodySites');
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Erreur chargement clients (voir console)</td></tr>';
+                tousLesClients = [];
+            }
+        }
+
+        async function chargerSites() {
+            const tbody = document.getElementById('tbodySites');
+
+            // Affiche un spinner pendant le chargement
+            tbody.innerHTML = `
+        <tr>
+            <td colspan="8" class="text-center py-4 text-secondary">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                Chargement des sites...
+            </td>
+        </tr>`;
+
+            try {
+                // Récupère les filtres
+                const clientId = document.getElementById('filtreClientId')?.value || '';
+                const actif = document.getElementById('filtreActif')?.value || '';
+
+                // Construit l'URL avec les paramètres de pagination
+                let url = `${API_SITES}?limit=${PAGE_SIZE}&skip=${(page - 1) * PAGE_SIZE}`;
+
+                if (filtreActif()) {
+                    url = `${API_SITES}?nolimit=true`;
+                    if (clientId) url += `&client_id=${encodeURIComponent(clientId)}`;
+                }
+
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status} — ${resp.statusText}`);
+
+                const countHeader = resp.headers.get("X-Total-Count");
+                if (countHeader) totalSitesCount = parseInt(countHeader, 10);
+
+                tousLesSites = await resp.json();
+
+                // Applique les filtres front-end additionnels sur tousLesSites fetché en nolimit
+                let filteredSites = tousLesSites;
+                if (filtreActif()) {
+                    totalSitesCount = filteredSites.length;
+
+                    if (actif === '1') filteredSites = filteredSites.filter(s => !!s.actif);
+                    if (actif === '0') filteredSites = filteredSites.filter(s => !s.actif);
+
+                    // Applique le filtre texte depuis l'URL (?q=...)
+                    const q = new URLSearchParams(window.location.search).get('q') || '';
+                    if (q) filteredSites = filtrerSitesParTexte(filteredSites, q);
+
+                    totalSitesCount = filteredSites.length;
+                }
+
+                // Affiche un message si aucun résultat
+                if (filteredSites.length === 0) {
+                    tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-secondary">
+                        Aucun site trouvé.
+                    </td>
+                </tr>`;
+                    masquerPagination();
+                    return;
+                }
+
+                // Affiche les sites
+                afficherSites(filteredSites);
+
+            } catch (e) {
+                console.error('Erreur chargement sites:', e);
+                tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-danger py-4">
+                    ⚠️ Erreur chargement sites : ${e.message}<br>
+                    <small class="text-secondary">Vérifie que l'API est démarrée et que la base de données est accessible.</small>
+                </td>
+            </tr>`;
+                tousLesSites = [];
+            }
+        }
+
+
+        function showSuggestionBox(boxEl, itemsHtml) {
+            boxEl.innerHTML = itemsHtml;
+            boxEl.style.display = 'block';
+        }
+
+        function hideSuggestionBox(boxEl) {
+            boxEl.style.display = 'none';
+            boxEl.innerHTML = '';
+        }
+
+        function initClientTypeahead({ inputId, hiddenId, boxId, onSelect }) {
+            const input = document.getElementById(inputId);
+            const hidden = document.getElementById(hiddenId);
+            const box = document.getElementById(boxId);
+            if (!input || !hidden || !box) return;
+
+            const render = (q) => {
+                const query = norm(q);
+                const items = query
+                    ? tousLesClients.filter(c => norm(c.nom).startsWith(query)).slice(0, 10)
+                    : tousLesClients.slice(0, 10);
+
+                if (!items.length) {
+                    return showSuggestionBox(box, '<div class="list-group-item am-search-muted">Aucun client</div>');
+                }
+
+                showSuggestionBox(
+                    box,
+                    items.map(c => `
+                <div class="list-group-item" data-client-id="${c.id}">
+                    <div class="fw-semibold">${c.nom}</div>
+                </div>
+            `).join('')
+                );
+
+                box.querySelectorAll('[data-client-id]').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const id = parseInt(el.getAttribute('data-client-id'), 10);
+                        const c = tousLesClients.find(x => x.id === id);
+                        if (!c) return;
+                        hidden.value = String(c.id);
+                        input.value = c.nom || '';
+                        hideSuggestionBox(box);
+                        onSelect?.(c);
+                    });
+                });
+            };
+
+            input.addEventListener('input', () => {
+                hidden.value = '';
+                render(input.value);
+            });
+            input.addEventListener('focus', () => render(input.value));
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 150));
+        }
+
+        function setClientSelection(client) {
+            document.getElementById('siteClientId').value = client ? String(client.id) : '';
+            document.getElementById('siteClientSearch').value = client ? (client.nom || '') : '';
+            hideClientSuggestions();
+        }
+
+        function showClientSuggestions(items) {
+            const box = document.getElementById('siteClientSuggestions');
+            if (!items.length) {
+                box.innerHTML = '<div class="list-group-item am-search-muted">Aucun client</div>';
+                box.style.display = 'block';
+                return;
+            }
+            box.innerHTML = items.map(c => `
+        <div class="list-group-item" data-client-id="${c.id}">
+            <div class="fw-semibold">${c.nom}</div>
+            <div class="small am-search-muted">${[c.contact_email, c.contact_nom].filter(Boolean).join(' • ')}</div>
+        </div>
+    `).join('');
+            box.style.display = 'block';
+
+            box.querySelectorAll('[data-client-id]').forEach(el => {
+                el.addEventListener('click', () => {
+                    const id = parseInt(el.getAttribute('data-client-id'), 10);
+                    const c = tousLesClients.find(x => x.id === id);
+                    if (c) setClientSelection(c);
+                });
+            });
+        }
+
+        function hideClientSuggestions() {
+            const box = document.getElementById('siteClientSuggestions');
+            hideSuggestionBox(box);
+        }
+
+        function initClientSearch() {
+            const input = document.getElementById('siteClientSearch');
+            if (!input) return;
+
+            input.addEventListener('input', () => {
+                // dès qu'on retape, on invalide l'id sélectionné
+                document.getElementById('siteClientId').value = '';
+                const q = norm(input.value);
+                if (!q) return hideClientSuggestions();
+                const items = tousLesClients
+                    .filter(c => norm(c.nom).includes(q))
+                    .slice(0, 10);
+                showClientSuggestions(items);
+            });
+
+            input.addEventListener('focus', () => {
+                const q = norm(input.value);
+                if (!q) return;
+                const items = tousLesClients
+                    .filter(c => norm(c.nom).includes(q))
+                    .slice(0, 10);
+                showClientSuggestions(items);
+            });
+
+            // petit délai pour permettre le click sur une suggestion
+            input.addEventListener('blur', () => setTimeout(hideClientSuggestions, 150));
+        }
+
+        async function editerSite(id) {
+            const resp = await fetch(`${API_SITES}/${id}`);
+            const s = await resp.json();
+
+            document.getElementById('siteId').value = s.id;
+            document.getElementById('siteClientId').value = String(s.client_id || '');
+            document.getElementById('siteClientSearch').value = s.client_nom || '';
+            document.getElementById('siteNom').value = s.nom || '';
+            document.getElementById('siteAdresse').value = s.adresse || '';
+            document.getElementById('siteVille').value = s.ville || '';
+            document.getElementById('siteCodePostal').value = s.code_postal || '';
+            document.getElementById('sitePays').value = s.pays || 'France';
+            document.getElementById('siteContactNom').value = s.contact_local_nom || '';
+            document.getElementById('siteContactEmail').value = s.contact_local_email || '';
+            document.getElementById('siteContactTel').value = s.contact_local_telephone || '';
+            document.getElementById('siteNotes').value = s.notes || '';
+            document.getElementById('siteActif').checked = !!s.actif;
+
+            document.getElementById('modalSiteTitre').textContent = 'Modifier le site';
+            new bootstrap.Modal(document.getElementById('modalSite')).show();
+        }
+
+        document.getElementById('modalSite').addEventListener('hidden.bs.modal', () => {
+            document.getElementById('siteId').value = '';
+            document.getElementById('siteClientId').value = '';
+            document.getElementById('siteClientSearch').value = '';
+            hideClientSuggestions();
+            document.getElementById('siteNom').value = '';
+            document.getElementById('siteAdresse').value = '';
+            document.getElementById('siteVille').value = '';
+            document.getElementById('siteCodePostal').value = '';
+            document.getElementById('sitePays').value = 'France';
+            document.getElementById('siteContactNom').value = '';
+            document.getElementById('siteContactEmail').value = '';
+            document.getElementById('siteContactTel').value = '';
+            document.getElementById('siteNotes').value = '';
+            document.getElementById('siteActif').checked = true;
+            document.getElementById('modalSiteTitre').textContent = 'Nouveau site';
+        });
+
+        async function sauvegarderSite() {
+            const id = document.getElementById('siteId').value;
+
+            const payload = {
+                client_id: parseInt(document.getElementById('siteClientId').value, 10),
+                nom: document.getElementById('siteNom').value.trim(),
+                adresse: document.getElementById('siteAdresse').value.trim() || null,
+                ville: document.getElementById('siteVille').value.trim() || null,
+                code_postal: document.getElementById('siteCodePostal').value.trim() || null,
+                pays: document.getElementById('sitePays').value.trim() || 'France',
+                contact_local_nom: document.getElementById('siteContactNom').value.trim() || null,
+                contact_local_email: document.getElementById('siteContactEmail').value.trim() || null,
+                contact_local_telephone: document.getElementById('siteContactTel').value.trim() || null,
+                notes: document.getElementById('siteNotes').value.trim() || null,
+                actif: document.getElementById('siteActif').checked
+            };
+
+            if (!payload.nom) {
+                alert('Le nom du site est obligatoire.');
+                return;
+            }
+            if (!payload.client_id || Number.isNaN(payload.client_id)) {
+                alert('Sélectionne un client existant (via la recherche).');
+                return;
+            }
+
+            const url = id ? `${API_SITES}/${id}` : `${API_SITES}/`;
+            const method = id ? 'PUT' : 'POST';
+
+            const resp = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (resp.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('modalSite')).hide();
+                await chargerSites();
+            } else {
+                let errText = 'Erreur lors de la sauvegarde.';
+                try {
+                    const err = await resp.json();
+                    errText = 'Erreur : ' + JSON.stringify(err);
+                } catch { }
+                alert(errText);
+            }
+        }
+
+        async function supprimerSite(id, nom) {
+            if (!confirm(`Supprimer le site "${nom}" ?`)) return;
+            const resp = await fetch(`${API_SITES}/${id}`, { method: 'DELETE' });
+            if (resp.ok) {
+                await chargerSites();
+            } else {
+                alert('Erreur lors de la suppression.');
+            }
+        }
+
+        (async () => {
+            await chargerClients();
+            initClientSearch();
+            initClientTypeahead({
+                inputId: 'filtreClientSearch',
+                hiddenId: 'filtreClientId',
+                boxId: 'filtreClientSuggestions',
+                onSelect: () => {
+                    page = 1;
+                    chargerSites();
+                }
+            });
+            await chargerSites();
+        })();
+    </script>
+</body>
+
+</html>

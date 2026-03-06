@@ -1,0 +1,43 @@
+# ── Dépendances directes ──────────────────────────────────────────────────────
+
+# API web
+fastapi==0.135.1
+uvicorn==0.41.0
+starlette==0.52.1
+websockets==16.0
+
+# Validation des données
+pydantic==2.12.5
+
+# Base de données
+PyMySQL==1.1.2
+
+# Variables d'environnement
+python-dotenv==1.2.2
+
+# IA / Mistral
+mistralai
+
+# Génération de PDF
+reportlab
+
+# Requêtes HTTP
+requests
+
+# CLI
+typer
+
+# Progression en console
+tqdm
+
+# ── Dépendances transitives (installées automatiquement) ─────────────────────
+
+annotated-doc==0.0.4
+annotated-types==0.7.0
+anyio==4.12.1
+click==8.3.1
+h11==0.16.0
+idna==3.11
+pydantic_core==2.41.5
+typing-inspection==0.4.2
+typing_extensions==4.15.0
