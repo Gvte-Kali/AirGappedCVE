@@ -7,85 +7,13 @@
     <title>Asset & Vulnerability Manager</title>
     <link rel="stylesheet" href="/static/bootstrap.min.css">
     <link rel="stylesheet" href="/static/app-search.css">
-    <style>
-        body {
-            background-color: #0d1117;
-            color: #c9d1d9;
-        }
-
-        .navbar {
-            background-color: #161b22 !important;
-            border-bottom: 1px solid #30363d;
-        }
-
-        .card {
-            background-color: #161b22;
-            border: 1px solid #30363d;
-        }
-
-        .card:hover {
-            border-color: #58a6ff;
-            transform: translateY(-2px);
-            transition: all 0.2s;
-        }
-
-        .card.am-clickable {
-            cursor: pointer;
-        }
-
-        .card-title {
-            color: #58a6ff;
-        }
-
-        .btn-primary {
-            background-color: #238636;
-            border-color: #238636;
-        }
-
-        .btn-primary:hover {
-            background-color: #2ea043;
-            border-color: #2ea043;
-        }
-
-        .hero {
-            padding: 60px 0;
-            text-align: center;
-        }
-
-        .hero h1 {
-            color: #58a6ff;
-            font-size: 2.5rem;
-        }
-
-        .hero p {
-            color: #8b949e;
-            font-size: 1.1rem;
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #58a6ff;
-        }
-
-        .stat-label {
-            color: #8b949e;
-            font-size: 0.9rem;
-        }
-
-        .section-title {
-            color: #58a6ff;
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/app-premium.css">
 </head>
 
 <body>
 
     <!-- ─── NAVBAR ─────────────────────────────────────────── -->
-    <nav class="navbar navbar-expand-lg navbar-dark"
-        style="background-color: #161b22 !important; border-bottom: 1px solid #30363d;">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
@@ -99,15 +27,17 @@
                         <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
                     </div>
                     <ul class="navbar-nav ms-auto">
-                        <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/clients">Clients</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/sites">Sites</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/assets">Assets</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="/">Accueil</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/vulns">Vulnérabilités</a></li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 Référentiels
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
+                                <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
+                                <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
                             </ul>
@@ -120,100 +50,118 @@
         </div>
     </nav>
 
-    <!-- Hero -->
-    <div class="hero">
-        <div class="container">
-            <h1>🛡️ Asset & Vulnerability Manager</h1>
-            <p>Gestion centralisée des assets informatiques et des vulnérabilités de sécurité</p>
+    <div class="container py-5">
+        <!-- Dashboards Principal -->
+        <h6 class="section-title">📊 Vue d'ensemble</h6>
+        <div class="row g-4 mb-5">
+            <div class="col-lg-8">
+                <div class="card p-4 h-100 am-clickable" onclick="window.location.href='/ui/vulns'">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="card-title mb-1 text-uppercase small" style="letter-spacing: 0.1em;">Sécurité</h5>
+                                <h3 class="fw-bold">VULNÉRABILITÉS</h3>
+                            </div>
+                            <span class="fs-2">🛡️</span>
+                        </div>
+                        <p class="text-muted mb-4" style="max-width: 400px;">Gérez vos corrélations CVE, lancez des analyses Mistral et suivez la résolution de vos vulnérabilités critiques.</p>
+                        <div class="d-flex align-items-baseline gap-2">
+                            <span class="stat-number text-warning" id="stat-vulns">—</span>
+                            <span class="stat-label">Vulnérabilités confirmées</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card p-4 h-100 am-clickable" style="opacity: 0.7;" onclick="alert('Dashboard analytique à venir')">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="card-title mb-1 text-uppercase small" style="letter-spacing: 0.1em;">Analytique</h5>
+                                <h3 class="fw-bold">STATISTIQUES</h3>
+                            </div>
+                            <span class="fs-2">📈</span>
+                        </div>
+                        <p class="text-muted mb-4 small">Vue consolidée de l'état du parc et des tendances de remédiation.</p>
+                        <div class="mt-auto">
+                            <span class="badge bg-secondary opacity-50 px-3 py-2">BIENTÔT DISPONIBLE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Référentiels -->
+        <h6 class="section-title">🗃️ RÉFÉRENTIELS ET DONNÉES</h6>
+        <div class="row g-4">
+            <!-- Client -->
+            <div class="col-md-4 col-lg-3">
+                <div class="card h-100 am-clickable" onclick="window.location.href='/ui/clients'">
+                    <div class="card-body p-4">
+                        <h6 class="text-muted text-uppercase mb-3 small fw-bold">Portefeuille</h6>
+                        <h5 class="fw-bold mb-3">CLIENTS</h5>
+                        <div class="stat-number fs-2" id="stat-clients">—</div>
+                        <p class="stat-label mt-1">Sociétés actives</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Sites -->
+            <div class="col-md-4 col-lg-3">
+                <div class="card h-100 am-clickable" onclick="window.location.href='/ui/sites'">
+                    <div class="card-body p-4">
+                        <h6 class="text-muted text-uppercase mb-3 small fw-bold">Géographie</h6>
+                        <h5 class="fw-bold mb-3">SITES</h5>
+                        <div class="stat-number fs-2" id="stat-sites">—</div>
+                        <p class="stat-label mt-1">Établissements</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Assets -->
+            <div class="col-md-4 col-lg-3">
+                <div class="card h-100 am-clickable" onclick="window.location.href='/ui/assets'">
+                    <div class="card-body p-4">
+                        <h6 class="text-muted text-uppercase mb-3 small fw-bold">Inventaire</h6>
+                        <h5 class="fw-bold mb-3">ASSETS</h5>
+                        <div class="stat-number fs-2" id="stat-assets">—</div>
+                        <p class="stat-label mt-1">Équipements</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Fabricants -->
+            <div class="col-md-4 col-lg-3">
+                <div class="card h-100 am-clickable" onclick="window.location.href='/ui/vendors'">
+                    <div class="card-body p-4">
+                        <h6 class="text-muted text-uppercase mb-3 small fw-bold">Marché</h6>
+                        <h5 class="fw-bold mb-3">FABRICANTS</h5>
+                        <div class="stat-number fs-3" id="stat-vendors">—</div>
+                        <p class="stat-label mt-1">Sources NVD</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Modèles -->
+            <div class="col-md-4 col-lg-3">
+                <div class="card h-100 am-clickable" onclick="window.location.href='/ui/models'">
+                    <div class="card-body p-4">
+                        <h6 class="text-muted text-uppercase mb-3 small fw-bold">Catalogue</h6>
+                        <h5 class="fw-bold mb-3">MODÈLES</h5>
+                        <div class="stat-number fs-3" id="stat-models">—</div>
+                        <p class="stat-label mt-1">Produits référencés</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Documents -->
+            <div class="col-md-4 col-lg-3">
+                <div class="card h-100 am-clickable" onclick="window.location.href='/ui/documents'">
+                    <div class="card-body p-4">
+                        <h6 class="text-muted text-uppercase mb-3 small fw-bold">Savoir</h6>
+                        <h5 class="fw-bold mb-3">DOCUMENTS</h5>
+                        <div class="stat-number fs-3">📄</div>
+                        <p class="stat-label mt-1">Base documentaire</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <!-- Stats -->
-    <div class="container mb-5">
-        <div class="row g-4 text-center mb-5">
-            <div class="col-md-3">
-                <div class="card p-4">
-                    <div class="stat-number" id="stat-clients">—</div>
-                    <div class="stat-label">Clients</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card p-4">
-                    <div class="stat-number" id="stat-sites">—</div>
-                    <div class="stat-label">Sites</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card p-4">
-                    <div class="stat-number" id="stat-assets">—</div>
-                    <div class="stat-label">Assets</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card p-4">
-                    <div class="stat-number text-warning" id="stat-critiques">—</div>
-                    <div class="stat-label">Assets critiques</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Navigation — Gestion -->
-        <h6 class="section-title">📋 Gestion</h6>
-        <div class="row g-4 mb-4">
-            <div class="col-md-4">
-                <div class="card p-4 h-100 am-clickable" onclick="window.location.href='/ui/clients'">
-                    <div class="card-body">
-                        <h5 class="card-title">👥 Clients</h5>
-                        <p class="text-muted">Gérez les sociétés clientes et leurs informations de contact.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 h-100 am-clickable" onclick="window.location.href='/ui/sites'">
-                    <div class="card-body">
-                        <h5 class="card-title">🏢 Sites</h5>
-                        <p class="text-muted">Gérez les établissements physiques de chaque client.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 h-100 am-clickable" onclick="window.location.href='/ui/assets'">
-                    <div class="card-body">
-                        <h5 class="card-title">💻 Assets</h5>
-                        <p class="text-muted">Inventaire complet des équipements informatiques.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Navigation — Référentiels -->
-        <h6 class="section-title">🗃️ Référentiels</h6>
-        <div class="row g-4 mb-4">
-            <div class="col-md-4">
-                <div class="card p-4 h-100 am-clickable" onclick="window.location.href='/ui/vendors'">
-                    <div class="card-body">
-                        <h5 class="card-title">🏭 Fabricants</h5>
-                        <p class="text-muted">Référentiel des fabricants avec correspondance NVD.</p>
-                        <div class="mt-2">
-                            <span class="stat-number fs-4" id="stat-vendors">—</span>
-                            <span class="stat-label ms-1">fabricants</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 h-100 am-clickable" onclick="window.location.href='/ui/models'">
-                    <div class="card-body">
-                        <h5 class="card-title">📦 Modèles</h5>
-                        <p class="text-muted">Référentiel des produits/modèles avec CPE NVD.</p>
-                        <div class="mt-2">
-                            <span class="stat-number fs-4" id="stat-models">—</span>
-                            <span class="stat-label ms-1">modèles</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script src="/static/bootstrap.bundle.min.js"></script>
@@ -221,20 +169,21 @@
     <script>
         async function loadStats() {
             try {
-                const [clients, sites, assets, vendors, models] = await Promise.all([
+                const [clients, sites, assets, vendors, models, vulns] = await Promise.all([
                     fetch('/api/clients/?nolimit=true').then(r => r.json()),
                     fetch('/api/sites/?nolimit=true').then(r => r.json()),
                     fetch('/api/assets/?nolimit=true').then(r => r.json()),
                     fetch('/api/vendors').then(r => r.json()),
                     fetch('/api/models').then(r => r.json()),
+                    fetch('/api/correlations/stats').then(r => r.json()),
                 ]);
 
                 document.getElementById('stat-clients').textContent = clients.length;
                 document.getElementById('stat-sites').textContent = sites.length;
                 document.getElementById('stat-assets').textContent = assets.length;
-                document.getElementById('stat-critiques').textContent = assets.filter(a => a.niveau_criticite === 'critique').length;
                 document.getElementById('stat-vendors').textContent = vendors.total || 0;
                 document.getElementById('stat-models').textContent = models.total || 0;
+                document.getElementById('stat-vulns').textContent = vulns.confirme || 0;
             } catch (e) {
                 console.error('Erreur chargement stats:', e);
             }

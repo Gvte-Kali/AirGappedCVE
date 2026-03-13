@@ -7,61 +7,12 @@
     <title>Fabricants — Asset Manager</title>
     <link rel="stylesheet" href="/static/bootstrap.min.css">
     <link rel="stylesheet" href="/static/app-search.css">
+    <link rel="stylesheet" href="/static/app-premium.css">
     <style>
-        body {
-            background-color: #0d1117;
-            color: #c9d1d9;
-        }
-
-        .navbar {
-            background-color: #161b22 !important;
-            border-bottom: 1px solid #30363d;
-        }
-
-        .card,
-        .modal-content {
-            background-color: #161b22;
-            border-color: #30363d;
-        }
-
-        .table {
-            color: #c9d1d9;
-        }
-
-        .table-hover>tbody>tr:hover>* {
-            color: #c9d1d9;
-            background-color: rgba(88, 166, 255, 0.08);
-        }
-
-        .btn-success {
-            background-color: #238636;
-            border-color: #238636;
-        }
-
-        .btn-success:hover {
-            background-color: #2ea043;
-        }
-
         .badge-models {
-            background-color: #1f6feb;
-        }
-
-        .form-control,
-        .form-select {
-            background-color: #0d1117;
-            border-color: #30363d;
-            color: #c9d1d9;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            background-color: #0d1117;
-            border-color: #58a6ff;
-            color: #c9d1d9;
-        }
-
-        .page-title {
+            background-color: rgba(31, 111, 235, 0.2);
             color: #58a6ff;
+            border: 1px solid rgba(31, 111, 235, 0.4);
         }
     </style>
 </head>
@@ -69,8 +20,7 @@
 <body>
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark"
-        style="background-color: #161b22 !important; border-bottom: 1px solid #30363d;">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
@@ -85,14 +35,16 @@
                     </div>
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/clients">Clients</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/sites">Sites</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/assets">Assets</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/vulns">Vulnérabilités</a></li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
                                 Référentiels
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
+                                <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
+                                <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item active" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
                             </ul>
@@ -105,39 +57,49 @@
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="page-title mb-0">🏭 Fabricants</h2>
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalVendor">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <h6 class="section-title mb-2">Base de Référence</h6>
+                <h1 class="fw-bold m-0 stat-number">FABRICANTS</h1>
+            </div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalVendor">
                 ＋ Nouveau fabricant
             </button>
         </div>
 
-        <!-- Recherche -->
-        <div class="row mb-3">
-            <div class="col-md-4">
-                <input type="text" class="form-control" id="searchInput" placeholder="Rechercher un fabricant…">
+        <!-- Filtres -->
+        <div class="card p-4 mb-5">
+            <h6 class="section-title">🔍 RECHERCHE</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Nom ou identifiant NVD…">
+                </div>
             </div>
         </div>
 
-        <!-- Tableau -->
-        <div class="card p-3">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th>Nom</th>
-                        <th>Identifiant NVD</th>
-                        <th>Modèles</th>
-                        <th>Notes</th>
-                        <th style="width:120px">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="vendorTableBody">
-                    <tr>
-                        <td colspan="5" class="text-center text-muted">Chargement…</td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- Main Data Table -->
+        <div class="card overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-black bg-opacity-25">
+                        <tr>
+                            <th class="ps-4">Nom</th>
+                            <th>Identifiant NVD</th>
+                            <th>Modèles</th>
+                            <th>Notes</th>
+                            <th class="pe-4" style="width:120px">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vendorTableBody" class="border-top-0">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-5">
+                                <div class="spinner-border spinner-border-sm text-primary"></div> Chargement…
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -311,11 +273,11 @@
             }
             tbody.innerHTML = vendors.map(v => `
         <tr>
-            <td><strong>${esc(v.nom)}</strong></td>
+            <td class="ps-4"><strong>${esc(v.nom)}</strong></td>
             <td><code>${esc(v.nvd_vendor)}</code></td>
             <td><span class="badge badge-models">${v.model_count} modèle(s)</span></td>
-            <td class="text-muted">${esc(v.notes || '')}</td>
-            <td>
+            <td class="text-muted"><small>${esc(v.notes || '')}</small></td>
+            <td class="pe-4">
                 <a href="/ui/models?vendor=${v.id}" class="btn btn-sm btn-outline-info me-1"
                    title="Voir les modèles">📦</a>
                 <button class="btn btn-sm btn-outline-danger" title="Supprimer"

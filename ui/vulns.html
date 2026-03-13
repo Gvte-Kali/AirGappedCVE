@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Vulnérabilités</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/app-search.css">
+    <link rel="stylesheet" href="/static/app-premium.css">
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+        }
+
+        .card,
+        .modal-content {
+            background-color: #161b22;
+            border-color: #30363d;
+        }
+
+        .table {
+            color: #c9d1d9;
+        }
+
+        .table-hover>tbody>tr:hover>* {
+            color: #c9d1d9;
+            background-color: rgba(88, 166, 255, 0.08);
+        }
+
+        .badge-critique {
+            background-color: #f85149;
+        }
+
+        .badge-haute {
+            background-color: #f0883e;
+        }
+
+        .badge-moyenne {
+            background-color: #d29922;
+        }
+
+        .badge-basse {
+            background-color: #3fb950;
+        }
+
+        .badge-confirme {
+            background-color: #f85149;
+        }
+
+        .badge-mitige {
+            background-color: #f0883e;
+        }
+
+        .badge-nouveau {
+            background-color: #58a6ff;
+        }
+
+        .badge-en_analyse {
+            background-color: #d29922;
+        }
+
+        .badge-faux_positif {
+            background-color: #6e7681;
+        }
+
+        .badge-patche {
+            background-color: #3fb950;
+        }
+
+        .badge-affirme {
+            background-color: #f85149;
+            border: 2px solid #ff7b72;
+        }
+
+        .badge-informatif {
+            background-color: #6e7681;
+        }
+
+        td .btn-sm {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .text-air-gap {
+            color: #f85149;
+        }
+
+        .text-no-air-gap {
+            color: #3fb950;
+        }
+
+        #logsContainer {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ─── NAVBAR ─────────────────────────────────────────── -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="nav">
+                <div class="d-flex ms-auto align-items-center gap-3">
+                    <div class="position-relative am-search" data-am-search-root>
+                        <input class="form-control form-control-sm" type="search"
+                            placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
+                        <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
+                    </div>
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="/ui/vulns">Vulnérabilités</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Référentiels
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
+                                <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
+                                <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
+                                <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="/docs">API Docs</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/scripts/console">Console</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+
+    <!-- ─── CONTENU ────────────────────────────────────────── -->
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <h6 class="section-title mb-2">Sécurité & Risques</h6>
+                <h1 class="fw-bold m-0 stat-number">VULNÉRABILITÉS</h1>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-light" onclick="lancerCorrelation('correlate')">🔄 Corrélation</button>
+                <button class="btn btn-outline-light" onclick="lancerCorrelation('analyze')">🤖 Analyse Mistral</button>
+                <button class="btn btn-primary" onclick="lancerCorrelation('run-all')">⚡ Tout exécuter</button>
+            </div>
+        </div>
+
+        <!-- Stats Cards Layout -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-3">
+                <div class="card p-4 h-100">
+                    <div class="stat-label">Total Détectées</div>
+                    <div class="stat-number" id="stat-total">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-4 h-100">
+                    <div class="stat-label">Critiques</div>
+                    <div class="stat-number text-warning" id="stat-critique">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-4 h-100">
+                    <div class="stat-label">Impact Haut</div>
+                    <div class="stat-number text-warning" style="background: linear-gradient(135deg, #f0883e 0%, #ffc107 100%); background-clip: text; -webkit-background-clip: text;" id="stat-haute">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-4 h-100">
+                    <div class="stat-label">Référentiel</div>
+                    <div class="stat-number" style="background: linear-gradient(135deg, #3fb950 0%, #b8ffbd 100%); background-clip: text; -webkit-background-clip: text;">CVE</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Operations Card -->
+        <div class="card p-4 mb-5" id="progressCard" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    <h6 class="m-0 fw-bold" id="progressMessage text-uppercase small" style="letter-spacing: 0.1em;">Opération en cours</h6>
+                </div>
+                <button class="btn btn-sm btn-link text-muted" onclick="fermerProgress()">Masquer</button>
+            </div>
+            <div class="progress mb-4" style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar" role="progressbar" style="width: 0%"></div>
+            </div>
+            <div class="bg-black bg-opacity-25 p-3 rounded" id="logsContainer" style="max-height: 250px; overflow-y: auto;">
+                <div id="logsContent"></div>
+            </div>
+        </div>
+
+        <!-- Filtres Redesign -->
+        <div class="card p-4 mb-5">
+            <h6 class="section-title">🔍 CRITÈRES DE RECHERCHE</h6>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label stat-label">Client</label>
+                    <div class="position-relative">
+                        <input type="text" class="form-control" id="filtreClientSearch" placeholder="Ex: Acme Corp…" autocomplete="off">
+                        <input type="hidden" id="filtreClientId">
+                        <div class="suggestion-box" id="filtreClientSuggestions"></div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label stat-label">Site</label>
+                    <div class="position-relative">
+                        <input type="text" class="form-control" id="filtreSiteSearch" placeholder="Ex: Paris…" autocomplete="off">
+                        <input type="hidden" id="filtreSiteId">
+                        <div class="suggestion-box" id="filtreSiteSuggestions"></div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label stat-label">Statut</label>
+                    <select class="form-select" id="filtreStatut">
+                        <option value="">Tous les statuts</option>
+                        <option value="nouveau">Nouveau</option>
+                        <option value="en_analyse">En analyse</option>
+                        <option value="confirme">Confirmé</option>
+                        <option value="mitige">Mitigé</option>
+                        <option value="faux_positif">Faux positif</option>
+                        <option value="patche">Patché</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label stat-label">Priorité</label>
+                    <select class="form-select" id="filtrePriorite">
+                        <option value="">Toutes priorités</option>
+                        <option value="critique">Critique</option>
+                        <option value="haute">Haute</option>
+                        <option value="moyenne">Moyenne</option>
+                        <option value="basse">Basse</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button class="btn btn-primary w-100" onclick="chargerVulnerabilites()">🔍</button>
+                    <button class="btn btn-outline-secondary" onclick="reinitialiserFiltres()">🔄</button>
+                </div>
+            </div>
+            <div class="row g-3 mt-1">
+                <div class="col-md-6">
+                    <label class="form-label stat-label">Nom d'Asset</label>
+                    <input type="text" class="form-control" id="filtreAsset" placeholder="Filtrer par nom de machine…">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label stat-label">Identifiant CVE</label>
+                    <input type="text" class="form-control" id="filtreCVE" placeholder="Ex: CVE-2024-...">
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Data Table Container -->
+        <div class="card overflow-hidden mb-5">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-black bg-opacity-25">
+                        <tr>
+                            <th class="ps-4">CVE</th>
+                            <th>Asset / IP</th>
+                            <th>Localisation</th>
+                            <th>Statut</th>
+                            <th>Priorité</th>
+                            <th>Détection</th>
+                            <th class="pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="border-top-0">
+                        <!-- Data rows -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <nav id="paginationContainer">
+            <ul class="pagination justify-content-center" id="pagination"></ul>
+        </nav>
+    </div>
+    </div>
+
+    <!-- ─── MODAL DÉTAILS ─────────────────────────────────── -->
+    <div class="modal fade" id="modalDetails" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Détails de la vulnérabilité</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Contenu chargé dynamiquement -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="button" class="btn btn-primary" onclick="sauvegarderModification()">💾 Sauvegarder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/bootstrap.bundle.min.js"></script>
+    <script src="/static/app-search.js"></script>
+    <script>
+        let pageActuelle = 1;
+        const itemsParPage = 50;
+        let correlationEnCours = null;
+        let tousLesClients = [];
+        let tousLesSites = [];
+
+        // ═══════════════════════════════════════════════════════════
+        //  UTILITAIRES SUGGESTION BOX
+        // ═══════════════════════════════════════════════════════════
+        function showSuggestionBox(box) { box.style.display = 'block'; }
+        function hideSuggestionBox(box) { box.style.display = 'none'; }
+
+        function renderSuggestions(box, items, labelKey, idKey, onSelect) {
+            box.innerHTML = '';
+            if (items.length === 0) {
+                box.innerHTML = '<div class="suggestion-item text-secondary">Aucun résultat</div>';
+                showSuggestionBox(box);
+                return;
+            }
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.textContent = item[labelKey];
+                div.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    onSelect(item);
+                    hideSuggestionBox(box);
+                });
+                box.appendChild(div);
+            });
+            showSuggestionBox(box);
+        }
+
+        // Fermer les suggestions quand on clique ailleurs
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.suggestion-box').forEach(b => hideSuggestionBox(b));
+        });
+
+        async function chargerVulnerabilites(page = 1) {
+            pageActuelle = page;
+            const skip = (page - 1) * itemsParPage;
+
+            const statut = document.getElementById('filtreStatut').value;
+            const priorite = document.getElementById('filtrePriorite').value;
+            const clientId = document.getElementById('filtreClientId').value;
+            const siteId = document.getElementById('filtreSiteId').value;
+
+            let url = `/api/correlations/?limit=${itemsParPage}&skip=${skip}`;
+            if (statut) url += `&statut=${statut}`;
+            if (priorite) url += `&priorite=${priorite}`;
+            if (clientId) url += `&client_id=${clientId}`;
+            if (siteId) url += `&site_id=${siteId}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const total = parseInt(response.headers.get('X-Total-Count') || '0');
+
+                afficherTableau(data);
+                afficherPagination(total);
+                chargerStats();
+            } catch (e) {
+                console.error('Erreur:', e);
+                document.getElementById('tableBody').innerHTML =
+                    '<tr><td colspan="11" class="text-center text-danger">Erreur de chargement</td></tr>';
+            }
+        }
+
+        async function chargerClients() {
+            try {
+                const response = await fetch('/api/clients/?nolimit=true');
+                tousLesClients = await response.json();
+            } catch (e) {
+                console.error('Erreur chargement clients:', e);
+            }
+        }
+
+        async function chargerSites() {
+            try {
+                const response = await fetch(`/api/sites/?nolimit=true`);
+                tousLesSites = await response.json();
+            } catch (e) {
+                console.error('Erreur chargement sites:', e);
+            }
+        }
+
+        function initFiltreClientTypeahead() {
+            const input = document.getElementById('filtreClientSearch');
+            const hidden = document.getElementById('filtreClientId');
+            const box = document.getElementById('filtreClientSuggestions');
+
+            input.addEventListener('input', () => {
+                const q = input.value.trim().toLowerCase();
+                hidden.value = '';
+                if (q.length === 0) { hideSuggestionBox(box); chargerVulnerabilites(); return; }
+                const filtered = tousLesClients.filter(c => c.nom.toLowerCase().includes(q));
+                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
+                    input.value = item.nom;
+                    hidden.value = item.id;
+                    chargerVulnerabilites();
+                });
+            });
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
+        }
+
+        function initFiltreSiteTypeahead() {
+            const input = document.getElementById('filtreSiteSearch');
+            const hidden = document.getElementById('filtreSiteId');
+            const box = document.getElementById('filtreSiteSuggestions');
+
+            input.addEventListener('input', () => {
+                const q = input.value.trim().toLowerCase();
+                hidden.value = '';
+                if (q.length === 0) { hideSuggestionBox(box); chargerVulnerabilites(); return; }
+                const filtered = tousLesSites.filter(s => s.nom.toLowerCase().includes(q));
+                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
+                    input.value = item.nom;
+                    hidden.value = item.id;
+                    chargerVulnerabilites();
+                });
+            });
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
+        }
+
+        function reinitialiserFiltres() {
+            document.getElementById('filtreClientSearch').value = '';
+            document.getElementById('filtreClientId').value = '';
+            document.getElementById('filtreSiteSearch').value = '';
+            document.getElementById('filtreSiteId').value = '';
+            document.getElementById('filtreStatut').value = '';
+            document.getElementById('filtrePriorite').value = '';
+            document.getElementById('filtreAsset').value = '';
+            document.getElementById('filtreCVE').value = '';
+            chargerVulnerabilites();
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', async () => {
+            await Promise.all([chargerClients(), chargerSites()]);
+            initFiltreClientTypeahead();
+            initFiltreSiteTypeahead();
+            chargerVulnerabilites();
+        });
+
+        async function chargerStats() {
+            try {
+                const response = await fetch('/api/correlations/stats');
+                const stats = await response.json();
+
+                document.getElementById('stat-total').textContent = stats.total || 0;
+                document.getElementById('stat-critique').textContent = stats.critique || 0;
+                document.getElementById('stat-haute').textContent = stats.haute || 0;
+            } catch (e) {
+                console.error('Erreur stats:', e);
+            }
+        }
+
+        function afficherTableau(data) {
+            const tbody = document.getElementById('tableBody');
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" class="text-center">Aucune vulnérabilité trouvée</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(v => `
+                <tr>
+                    <td><code>${v.cve_id || 'N/A'}</code></td>
+                    <td>
+                        <strong>${v.asset_nom || 'N/A'}</strong><br>
+                        <small class="text-muted">${v.type_equipement || ''}</small>
+                    </td>
+                    <td>
+                        <small>
+                            ${v.client_nom || 'N/A'}<br>
+                            📍 ${v.site_nom || 'N/A'}
+                        </small>
+                    </td>
+                    <td><span class="badge badge-${v.statut || 'nouveau'}">${formatStatut(v.statut)}</span></td>
+                    <td><span class="badge badge-${v.priorite || 'basse'}">${(v.priorite || 'N/A').toUpperCase()}</span></td>
+                    <td><span class="badge badge-${v.type_correlation || 'informatif'}">${formatTypeCorrelation(v.type_correlation)}</span></td>
+                    <td><strong>${v.score_contextuel !== null ? v.score_contextuel : 'N/A'}</strong></td>
+                    <td>
+                        <span class="badge bg-secondary">${v.cvss_v3_score || 'N/A'}</span>
+                        <small>${v.cvss_v3_severity || ''}</small>
+                    </td>
+                    <td>
+                        ${v.exploitable_air_gap === 1
+                            ? '<span class="text-air-gap">⚠️ Oui</span>'
+                            : v.exploitable_air_gap === 0
+                            ? '<span class="text-no-air-gap">✓ Non</span>'
+                            : '<span class="text-muted">?</span>'}
+                    </td>
+                    <td><small>${formatDate(v.date_detection)}</small></td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-info" onclick="afficherDetails(${v.id})" title="Détails">
+                                👁️
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="changerStatut(${v.id}, 'faux_positif')" title="Faux Positif">
+                                ❌
+                            </button>
+                            <button class="btn btn-sm btn-success" onclick="changerStatut(${v.id}, 'confirme')" title="Patch">
+                                🩹
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function formatStatut(statut) {
+            const labels = {
+                'nouveau': 'Nouveau',
+                'en_analyse': 'En analyse',
+                'confirme': 'Confirmé',
+                'mitige': 'Mitigé',
+                'faux_positif': 'Faux positif',
+                'patche': 'Patché'
+            };
+            return labels[statut] || statut || 'N/A';
+        }
+
+        function formatTypeCorrelation(type) {
+            const labels = {
+                'affirme': 'Affirmé',
+                'informatif': 'Informatif'
+            };
+            return labels[type] || type || 'N/A';
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function afficherPagination(total) {
+            const nbPages = Math.ceil(total / itemsParPage);
+            const pagination = document.getElementById('pagination');
+
+            if (nbPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+
+            // Bouton précédent
+            html += `<li class="page-item ${pageActuelle === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="chargerVulnerabilites(${pageActuelle - 1}); return false;">‹</a>
+                     </li>`;
+
+            // Pages
+            const debut = Math.max(1, pageActuelle - 2);
+            const fin = Math.min(nbPages, pageActuelle + 2);
+
+            for (let i = debut; i <= fin; i++) {
+                html += `<li class="page-item ${i === pageActuelle ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="chargerVulnerabilites(${i}); return false;">${i}</a>
+                         </li>`;
+            }
+
+            // Bouton suivant
+            html += `<li class="page-item ${pageActuelle === nbPages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="chargerVulnerabilites(${pageActuelle + 1}); return false;">›</a>
+                     </li>`;
+
+            pagination.innerHTML = html;
+        }
+
+        async function afficherDetails(id) {
+            try {
+                const response = await fetch(`/api/correlations/${id}`);
+                const v = await response.json();
+                correlationEnCours = v;
+
+                const modal = new bootstrap.Modal(document.getElementById('modalDetails'));
+                document.getElementById('modalTitle').textContent = `${v.cve_id} — ${v.asset_nom}`;
+
+                document.getElementById('modalBody').innerHTML = `
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Asset</h6>
+                            <p>
+                                <strong>${v.asset_nom}</strong><br>
+                                Type: ${v.type_equipement || 'N/A'}<br>
+                                OS: ${v.systeme_exploitation || 'N/A'} ${v.version_os || ''}<br>
+                                Firmware: ${v.version_firmware || 'N/A'}<br>
+                                Criticité: ${v.niveau_criticite || 'N/A'}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Localisation</h6>
+                            <p>
+                                Client: ${v.client_nom || 'N/A'}<br>
+                                Site: ${v.site_nom || 'N/A'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <h6 class="text-primary">CVE ${v.cve_id}</h6>
+                    <p><small>${v.cve_description || 'N/A'}</small></p>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>CVSS v3:</strong> ${v.cvss_v3_score || 'N/A'} (${v.cvss_v3_severity || 'N/A'})<br>
+                            <strong>Vecteur:</strong> <code>${v.cvss_v3_vector || 'N/A'}</code><br>
+                            <strong>Fabricant:</strong> ${v.fabricant || 'N/A'}<br>
+                            <strong>Produit:</strong> ${v.produit || 'N/A'}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Score contextuel:</strong> ${v.score_contextuel || 'N/A'}<br>
+                            <strong>Air-gap:</strong> ${v.exploitable_air_gap === 1 ? '⚠️ Exploitable' : v.exploitable_air_gap === 0 ? '✓ Non exploitable' : '?'}<br>
+                            <strong>Type:</strong> <span class="badge badge-${v.type_correlation}">${formatTypeCorrelation(v.type_correlation)}</span>
+                        </div>
+                    </div>
+
+                    <h6 class="text-primary">Analyse Mistral</h6>
+                    <div class="card bg-dark p-3 mb-3">
+                        <small>${v.analyse_mistral ? v.analyse_mistral.replace(/\n/g, '<br>') : 'Non disponible'}</small>
+                    </div>
+
+                    <h6 class="text-primary">Risque réel</h6>
+                    <p><small>${v.risque_reel || 'N/A'}</small></p>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Statut</label>
+                            <select class="form-select" id="editStatut">
+                                <option value="nouveau" ${v.statut === 'nouveau' ? 'selected' : ''}>Nouveau</option>
+                                <option value="en_analyse" ${v.statut === 'en_analyse' ? 'selected' : ''}>En analyse</option>
+                                <option value="confirme" ${v.statut === 'confirme' ? 'selected' : ''}>Confirmé</option>
+                                <option value="mitige" ${v.statut === 'mitige' ? 'selected' : ''}>Mitigé</option>
+                                <option value="faux_positif" ${v.statut === 'faux_positif' ? 'selected' : ''}>Faux positif</option>
+                                <option value="patche" ${v.statut === 'patche' ? 'selected' : ''}>Patché</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Priorité</label>
+                            <select class="form-select" id="editPriorite">
+                                <option value="critique" ${v.priorite === 'critique' ? 'selected' : ''}>Critique</option>
+                                <option value="haute" ${v.priorite === 'haute' ? 'selected' : ''}>Haute</option>
+                                <option value="moyenne" ${v.priorite === 'moyenne' ? 'selected' : ''}>Moyenne</option>
+                                <option value="basse" ${v.priorite === 'basse' ? 'selected' : ''}>Basse</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Override utilisateur</label>
+                            <select class="form-select" id="editOverride">
+                                <option value="">Aucun</option>
+                                <option value="a_patcher" ${v.override_utilisateur === 'a_patcher' ? 'selected' : ''}>À patcher</option>
+                                <option value="informatif" ${v.override_utilisateur === 'informatif' ? 'selected' : ''}>Informatif</option>
+                                <option value="faux_positif" ${v.override_utilisateur === 'faux_positif' ? 'selected' : ''}>Faux positif</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="editNotes" rows="3">${v.notes || ''}</textarea>
+                    </div>
+                `;
+
+                modal.show();
+            } catch (e) {
+                console.error('Erreur:', e);
+                alert('Erreur lors du chargement des détails');
+            }
+        }
+
+        async function sauvegarderModification() {
+            if (!correlationEnCours) return;
+
+            const data = {
+                statut: document.getElementById('editStatut').value,
+                priorite: document.getElementById('editPriorite').value,
+                override_utilisateur: document.getElementById('editOverride').value || null,
+                notes: document.getElementById('editNotes').value
+            };
+
+            try {
+                const response = await fetch(`/api/correlations/${correlationEnCours.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('modalDetails')).hide();
+                    chargerVulnerabilites(pageActuelle);
+                } else {
+                    alert('Erreur lors de la sauvegarde');
+                }
+            } catch (e) {
+                console.error('Erreur:', e);
+                alert('Erreur lors de la sauvegarde');
+            }
+        }
+
+        async function changerStatut(id, nouveauStatut) {
+            try {
+                const response = await fetch(`/api/correlations/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ statut: nouveauStatut })
+                });
+
+                if (response.ok) {
+                    chargerVulnerabilites(pageActuelle);
+                } else {
+                    alert('Erreur lors du changement de statut');
+                }
+            } catch (e) {
+                console.error('Erreur:', e);
+                alert('Erreur lors du changement de statut');
+            }
+        }
+
+        // Filtrage en temps réel sur le tableau
+        document.getElementById('filtreAsset').addEventListener('input', filtrerTableau);
+        document.getElementById('filtreCVE').addEventListener('input', filtrerTableau);
+
+        function filtrerTableau() {
+            const assetFilter = document.getElementById('filtreAsset').value.toLowerCase();
+            const cveFilter = document.getElementById('filtreCVE').value.toLowerCase();
+            const rows = document.querySelectorAll('#tableBody tr');
+
+            rows.forEach(row => {
+                const assetText = row.cells[1]?.textContent.toLowerCase() || '';
+                const cveText = row.cells[0]?.textContent.toLowerCase() || '';
+
+                const matchAsset = assetFilter === '' || assetText.includes(assetFilter);
+                const matchCVE = cveFilter === '' || cveText.includes(cveFilter);
+
+                row.style.display = matchAsset && matchCVE ? '' : 'none';
+            });
+        }
+
+        // ─── Gestion de la corrélation ─────────────────────────
+        let intervalProgress = null;
+
+        async function lancerCorrelation(mode) {
+            const modeLabels = {
+                'correlate': 'Corrélation CVE',
+                'analyze': 'Analyse Mistral',
+                'run-all': 'Pipeline complet'
+            };
+
+            if (!confirm(`Lancer : ${modeLabels[mode]} ?\n\nCela peut prendre plusieurs minutes.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/correlations/run-correlation?mode=${mode}`, {
+                    method: 'POST'
+                });
+
+                if (response.status === 409) {
+                    alert('Une corrélation est déjà en cours. Veuillez patienter.');
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Erreur lors du lancement');
+                }
+
+                // Afficher la barre de progression
+                document.getElementById('progressCard').style.display = 'block';
+                document.getElementById('progressMessage').textContent = `${modeLabels[mode]} en cours...`;
+                document.getElementById('progressBar').style.width = '10%';
+                document.getElementById('progressBar').textContent = '10%';
+
+                // Nettoyer les logs
+                document.getElementById('logsContent').innerHTML = '';
+                document.getElementById('logsContainer').scrollTop = 0;
+
+                // Polling pour suivre la progression
+                intervalProgress = setInterval(verifierProgression, 2000);
+
+            } catch (e) {
+                console.error('Erreur:', e);
+                alert('Erreur lors du lancement de la corrélation');
+            }
+        }
+
+        async function verifierProgression() {
+            try {
+                const response = await fetch('/api/correlations/run-status');
+                const status = await response.json();
+                console.log("Correlation Status:", status);
+
+                document.getElementById('progressMessage').textContent = status.message || 'En cours...';
+
+                if (status.running) {
+                    // Mise à jour des logs
+                    const logsContent = document.getElementById('logsContent');
+                    const logsContainer = document.getElementById('logsContainer');
+                    
+                    if (status.logs && status.logs.length > 0) {
+                        logsContent.innerHTML = status.logs.join('<br>');
+                        // Auto-scroll si on est proche du bas
+                        logsContainer.scrollTop = logsContainer.scrollHeight;
+                    }
+
+                    // Simulation de progression (on ne peut pas récupérer la vraie progression facilement)
+                    const currentWidth = parseFloat(document.getElementById('progressBar').style.width) || 10;
+                    const newWidth = Math.min(currentWidth + 5, 90);
+                    document.getElementById('progressBar').style.width = newWidth + '%';
+                    document.getElementById('progressBar').textContent = Math.round(newWidth) + '%';
+                } else {
+                    // Terminé
+                    clearInterval(intervalProgress);
+
+                    // Mise à jour finale des logs
+                    if (status.logs && status.logs.length > 0) {
+                        document.getElementById('logsContent').innerHTML = status.logs.join('<br>');
+                        document.getElementById('logsContainer').scrollTop = document.getElementById('logsContainer').scrollHeight;
+                    }
+
+                    document.getElementById('progressBar').style.width = '100%';
+                    document.getElementById('progressBar').textContent = '100%';
+                    document.getElementById('progressBar').classList.remove('progress-bar-animated');
+
+                    if (status.message.includes('succès')) {
+                        document.getElementById('progressBar').classList.remove('bg-danger');
+                        document.getElementById('progressBar').classList.add('bg-success');
+                    } else {
+                        document.getElementById('progressBar').classList.remove('bg-success');
+                        document.getElementById('progressBar').classList.add('bg-danger');
+                    }
+
+                    // Recharger les vulnérabilités
+                    setTimeout(() => {
+                        chargerVulnerabilites();
+                    }, 1000);
+                }
+            } catch (e) {
+                console.error('Erreur vérification:', e);
+            }
+        }
+
+        function fermerProgress() {
+            document.getElementById('progressCard').style.display = 'none';
+            document.getElementById('progressBar').classList.add('progress-bar-animated');
+            document.getElementById('progressBar').classList.remove('bg-danger');
+            document.getElementById('progressBar').classList.add('bg-success');
+            if (intervalProgress) {
+                clearInterval(intervalProgress);
+            }
+        }
+
+        // Chargement initial
+        chargerVulnerabilites();
+    </script>
+</body>
+
+</html>

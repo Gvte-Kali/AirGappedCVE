@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from routers import clients, sites, assets, vendors, models, documents
+from routers import clients, sites, assets, vendors, models, documents, correlations
 from routers.scripts import router as scripts_router
 
 app = FastAPI(
@@ -15,11 +15,12 @@ app = FastAPI(
 )
 
 # ── Routers API ──
-app.include_router(clients.router, prefix="/api/clients", tags=["Clients"])
-app.include_router(sites.router,   prefix="/api/sites",   tags=["Sites"])
-app.include_router(assets.router,  prefix="/api/assets",  tags=["Assets"])
-app.include_router(vendors.router, prefix="/api",          tags=["Fabricants"])
-app.include_router(models.router,  prefix="/api",          tags=["Modèles"])
+app.include_router(clients.router,      prefix="/api/clients",      tags=["Clients"])
+app.include_router(sites.router,        prefix="/api/sites",        tags=["Sites"])
+app.include_router(assets.router,       prefix="/api/assets",       tags=["Assets"])
+app.include_router(correlations.router, prefix="/api/correlations", tags=["Vulnérabilités"])
+app.include_router(vendors.router,      prefix="/api",              tags=["Fabricants"])
+app.include_router(models.router,       prefix="/api")
 
 # Router Scripts
 app.include_router(scripts_router)
@@ -55,6 +56,10 @@ def ui_models():
 @app.get("/ui/documents")
 def ui_documents():
     return FileResponse("ui/documents.html")
+
+@app.get("/ui/vulns")
+def ui_vulns():
+    return FileResponse("ui/vulns.html")
 
 @app.get("/health")
 def health():

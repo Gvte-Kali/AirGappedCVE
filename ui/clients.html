@@ -6,68 +6,35 @@
     <title>Clients</title>
     <link rel="stylesheet" href="/static/bootstrap.min.css">
     <link rel="stylesheet" href="/static/app-search.css">
+    <link rel="stylesheet" href="/static/app-premium.css">
     <style>
-        body {
-            background-color: #0d1117;
-            color: #c9d1d9;
+        .suggestion-box {
+            position: absolute;
+            z-index: 1055;
+            background: #161b22;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
         }
 
-        .card,
-        .modal-content {
-            background-color: #161b22;
-            border-color: #30363d;
-        }
-
-        .table {
-            color: #c9d1d9;
-        }
-
-        .table-hover>tbody>tr:hover>* {
-            color: #c9d1d9;
-            background-color: rgba(88, 166, 255, 0.08);
-        }
-
-        .form-control,
-        .form-select,
-        textarea {
-            background-color: #0d1117;
-            color: #c9d1d9;
-            border-color: #30363d;
-        }
-
-        .form-control:focus,
-        .form-select:focus,
-        textarea:focus {
-            background-color: #0d1117;
-            color: #c9d1d9;
-            border-color: #58a6ff;
-            box-shadow: 0 0 0 .25rem rgba(88, 166, 255, .2);
-        }
-
-        .text-muted {
-            color: #8b949e !important;
-        }
-
-        .btn-close {
-            filter: invert(1) grayscale(100%);
-        }
-
-        #filtreClientSuggestions .list-group-item {
-            background-color: #0d1117;
-            color: #c9d1d9;
-            border-color: #30363d;
+        .suggestion-item {
+            padding: 8px 12px;
             cursor: pointer;
+            color: #c9d1d9;
         }
 
-        #filtreClientSuggestions .list-group-item:hover {
-            background-color: rgba(88, 166, 255, 0.08);
+        .suggestion-item:hover {
+            background: rgba(88, 166, 255, 0.15);
         }
     </style>
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark"
-        style="background-color: #161b22 !important; border-bottom: 1px solid #30363d;">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
@@ -82,14 +49,16 @@
                     </div>
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
-                        <li class="nav-item"><a class="nav-link active" href="/ui/clients">Clients</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/sites">Sites</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/assets">Assets</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/vulns">Vulnérabilités</a></li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
                                 Référentiels
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item active" href="/ui/clients">👥 Clients</a></li>
+                                <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
+                                <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
                             </ul>
@@ -101,32 +70,30 @@
             </div>
         </div>
     </nav>
-    <div class="container-fluid py-4">
-
-        <!-- En-tête -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h3">Gestion des clients</h1>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <h6 class="section-title mb-2">Partenaires & Comptes</h6>
+                <h1 class="fw-bold m-0 stat-number">CLIENTS</h1>
+            </div>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalClient">
                 + Nouveau client
             </button>
         </div>
 
         <!-- Filtres -->
-        <div class="card mb-3">
-            <div class="card-body py-2">
-                <div class="row g-2 align-items-center">
-                    <div class="col-md-6">
-                        <input type="hidden" id="filtreClientId" value="">
-                        <div class="position-relative">
-                            <input class="form-control form-control-sm" id="filtreClientSearch" type="search"
-                                placeholder="Filtrer par client…" autocomplete="off">
-                            <div class="list-group position-absolute w-100 mt-1" id="filtreClientSuggestions"
-                                style="z-index:1070; max-height:240px; overflow:auto; display:none;"></div>
-                        </div>
-                        <div class="form-text am-search-muted">
-                            Clique un client dans la liste pour filtrer exactement.
-                        </div>
+        <div class="card p-4 mb-5">
+            <h6 class="section-title">🔍 RECHERCHE</h6>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label stat-label">Nom du client</label>
+                    <input type="hidden" id="filtreClientId" value="">
+                    <div class="position-relative">
+                        <input class="form-control" id="filtreClientSearch" type="search"
+                            placeholder="Ex: Acme Corp…" autocomplete="off">
+                        <div class="suggestion-box mt-1" id="filtreClientSuggestions"></div>
                     </div>
+                </div>
                     <div class="col-md-3">
                         <select class="form-select form-select-sm" id="filtreActif" onchange="appliquerFiltres()">
                             <option value="">Tous statuts</option>
@@ -144,23 +111,24 @@
         </div>
 
         <!-- Tableau -->
-        <div class="card">
-            <div class="card-body p-0">
-                <table class="table table-hover mb-0" id="tableClients">
-                    <thead class="table-dark">
+        <div class="card overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="tableClients">
+                    <thead class="bg-black bg-opacity-25">
                         <tr>
-                            <th>Nom</th>
+                            <th class="ps-4">Nom</th>
                             <th>Contact</th>
-                            <th>Email</th>
-                            <th>Téléphone</th>
+                            <th>Email / Tel</th>
                             <th>Adresse</th>
                             <th>Statut</th>
-                            <th>Actions</th>
+                            <th class="pe-4">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="tbodyClients">
+                    <tbody id="tbodyClients" class="border-top-0">
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">Chargement...</td>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <div class="spinner-border spinner-border-sm text-primary"></div> Chargement...
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -261,9 +229,9 @@
                 showSuggestionBox(
                     box,
                     items.map(c => `
-                <div class="list-group-item" data-client-id="${c.id}">
+                <div class="suggestion-item" data-client-id="${c.id}">
                     <div class="fw-semibold">${c.nom}</div>
-                    <div class="small am-search-muted">${[c.contact_email, c.contact_nom].filter(Boolean).join(' • ')}</div>
+                    <div class="small text-muted">${[c.contact_email, c.contact_nom].filter(Boolean).join(' • ')}</div>
                 </div>
             `).join('')
                 );
@@ -381,17 +349,19 @@
 
             tbody.innerHTML = clients.map(c => `
         <tr>
-            <td><strong>${c.nom}</strong></td>
+            <td class="ps-4"><strong>${c.nom}</strong></td>
             <td>${c.contact_nom || '—'}</td>
-            <td>${c.contact_email || '—'}</td>
-            <td>${c.contact_telephone || '—'}</td>
-            <td>${c.adresse || '—'}</td>
+            <td>
+                <small>${c.contact_email || '—'}</small><br>
+                <small class="text-muted">${c.contact_telephone || ''}</small>
+            </td>
+            <td><small>${c.adresse || '—'}</small></td>
             <td>
                 <span class="badge ${c.actif ? 'bg-success' : 'bg-secondary'}">
                     ${c.actif ? 'Actif' : 'Inactif'}
                 </span>
             </td>
-            <td>
+            <td class="pe-4">
                 <button class="btn btn-sm btn-outline-primary me-1" onclick="editerClient(${c.id})">✏️</button>
                 <button class="btn btn-sm btn-outline-danger" onclick="supprimerClient(${c.id}, '${c.nom.replace(/'/g, "\\'")}')">🗑️</button>
             </td>

@@ -1,0 +1,172 @@
+=== Table: asset_software ===
+Field	Type	Null	Key	Default	Extra
+id	int(11)	NO	PRI	NULL	auto_increment
+asset_id	int(11)	NO	MUL	NULL	
+nom	varchar(255)	NO	MUL	NULL	
+version	varchar(100)	YES		NULL	
+editeur	varchar(255)	YES	MUL	NULL	
+cpe_string	varchar(500)	YES		NULL	
+date_installation	date	YES		NULL	
+notes	text	YES		NULL	
+date_creation	timestamp	YES		current_timestamp()	
+date_modification	timestamp	YES		current_timestamp()	on update current_timestamp()
+
+=== Table: assets ===
+Field	Type	Null	Key	Default	Extra
+id	int(11)	NO	PRI	NULL	auto_increment
+site_id	int(11)	NO	MUL	NULL	
+vendor_id	int(11)	YES	MUL	NULL	
+model_id	int(11)	YES	MUL	NULL	
+nom_interne	varchar(255)	NO		NULL	
+type_equipement	enum('serveur','pc','laptop','switch','nas','raspberry_pi','lecteur_biometrique','camera_axis','camera_hikvision','ugl','utl','lecteur_cartes','routeur','pare_feu','imprimante','autre')	NO	MUL	NULL	
+numero_serie	varchar(255)	YES		NULL	
+adresse_ip	varchar(45)	YES	MUL	NULL	
+adresse_mac	varchar(17)	YES		NULL	
+hostname	varchar(255)	YES		NULL	
+systeme_exploitation	varchar(255)	YES		NULL	
+version_os	varchar(100)	YES		NULL	
+version_firmware	varchar(100)	YES		NULL	
+version_bios	varchar(100)	YES		NULL	
+date_installation	date	YES		NULL	
+date_fin_garantie	date	YES		NULL	
+niveau_criticite	enum('faible','moyen','eleve','critique')	YES	MUL	moyen	
+statut_operationnel	enum('actif','inactif','maintenance','hors_service')	YES		actif	
+proprietes_specifiques	longtext	YES		NULL	
+notes	text	YES		NULL	
+date_creation	timestamp	YES		current_timestamp()	
+date_modification	timestamp	YES		current_timestamp()	on update current_timestamp()
+
+=== Table: clients ===
+Field	Type	Null	Key	Default	Extra
+id	int(11)	NO	PRI	NULL	auto_increment
+nom	varchar(255)	NO	MUL	NULL	
+contact_nom	varchar(255)	YES		NULL	
+contact_email	varchar(255)	YES		NULL	
+contact_telephone	varchar(50)	YES		NULL	
+adresse	text	YES		NULL	
+notes	text	YES		NULL	
+actif	tinyint(1)	YES		1	
+date_creation	timestamp	YES		current_timestamp()	
+date_modification	timestamp	YES		current_timestamp()	on update current_timestamp()
+
+=== Table: correlations ===
+Field	Type	Null	Key	Default	Extra
+id	int(11)	NO	PRI	NULL	auto_increment
+asset_id	int(11)	NO	MUL	NULL	
+cve_id	varchar(20)	NO	MUL	NULL	
+statut	enum('nouveau','en_analyse','confirme','faux_positif','mitige','patche')	YES	MUL	nouveau	
+priorite	enum('critique','haute','moyenne','basse')	YES	MUL	NULL	
+exploitable_air_gap	tinyint(1)	YES		NULL	
+analyse_mistral	text	YES		NULL	
+risque_reel	text	YES		NULL	
+score_contextuel	decimal(3,1)	YES		NULL	
+date_detection	timestamp	YES		current_timestamp()	
+date_analyse	timestamp	YES		NULL	
+date_resolution	timestamp	YES		NULL	
+notes	text	YES		NULL	
+date_creation	timestamp	YES		current_timestamp()	
+date_modification	timestamp	YES		current_timestamp()	on update current_timestamp()
+
+=== Table: cve ===
+Field	Type	Null	Key	Default	Extra
+id	int(11)	NO	PRI	NULL	auto_increment
+cve_id	varchar(20)	NO	UNI	NULL	
+description	text	YES		NULL	
+cvss_v2_score	decimal(3,1)	YES		NULL	
+cvss_v2_vector	varchar(100)	YES		NULL	
+cvss_v3_score	decimal(3,1)	YES	MUL	NULL	
+cvss_v3_vector	varchar(100)	YES		NULL	
+cvss_v3_severity	enum('CRITICAL','HIGH','MEDIUM','LOW','NONE')	YES	MUL	NULL	
+fabricant	varchar(255)	YES	MUL	NULL	
+produit	varchar(255)	YES		NULL	
+versions_affectees	longtext	YES		NULL	
+cpe_affected	longtext	YES		NULL	
+date_publication	date	YES		NULL	
+date_modification	date	YES		NULL	
+source_url	varchar(500)	YES		NULL	
+created_at	datetime	YES		current_timestamp()	
+updated_at	timestamp	YES		current_timestamp()	on update current_timestamp()
+
+=== Table: cve_cwe ===
+Field	Type	Null	Key	Default	Extra
+id	int(11)	NO	PRI	NULL	auto_increment
+cve_id	varchar(20)	NO	MUL	NULL	
+cwe_id	varchar(20)	NO	MUL	NULL	
+
+=== Table: cwe ===
+Field	Type	Null	Key	Default	Extra
+id	int(11)	NO	PRI	NULL	auto_increment
+cwe_id	varchar(20)	NO	UNI	NULL	
+nom	varchar(500)	YES		NULL	
+description	text	YES		NULL	
+description_etendue	longtext	YES		NULL	
+consequences	text	YES		NULL	
+methodes_detection	text	YES		NULL	
+remediations	text	YES		NULL	
+cwe_parent	varchar(20)	YES	MUL	NULL	
+date_creation	timestamp	YES		current_timestamp()	
+date_modification	timestamp	YES		current_timestamp()	on update current_timestamp()
+
+=== Table: historique_analyses ===
+Field	Type	Null	Key	Default	Extra
+id	int(11)	NO	PRI	NULL	auto_increment
+type_analyse	enum('sync_cve','sync_cwe','correlation','analyse_mistral')	NO	MUL	NULL	
+statut	enum('succes','echec','partiel')	NO		NULL	
+nb_elements_traites	int(11)	YES		0	
+nb_nouveaux	int(11)	YES		0	
+nb_mis_a_jour	int(11)	YES		0	
+duree_secondes	int(11)	YES		NULL	
+message_erreur	text	YES		NULL	
+details_json	longtext	YES		NULL	
+date_execution	timestamp	YES	MUL	current_timestamp()	
+
+=== Table: product_models ===
+Field	Type	Null	Key	Default	Extra
+id	int(11)	NO	PRI	NULL	auto_increment
+vendor_id	int(11)	NO	MUL	NULL	
+nom	varchar(255)	NO		NULL	
+nvd_product	varchar(255)	NO		NULL	
+cpe_part	char(1)	YES		a	
+type_produit	enum('os','firmware','application','hardware')	YES		os	
+cpe_base	varchar(500)	YES		NULL	
+notes	text	YES		NULL	
+created_at	datetime	YES		current_timestamp()	
+updated_at	datetime	YES		current_timestamp()	on update current_timestamp()
+
+=== Table: product_vendors ===
+Field	Type	Null	Key	Default	Extra
+id	int(11)	NO	PRI	NULL	auto_increment
+nom	varchar(255)	NO		NULL	
+nvd_vendor	varchar(255)	NO	UNI	NULL	
+notes	text	YES		NULL	
+created_at	datetime	YES		current_timestamp()	
+updated_at	datetime	YES		current_timestamp()	on update current_timestamp()
+
+=== Table: sites ===
+Field	Type	Null	Key	Default	Extra
+id	int(11)	NO	PRI	NULL	auto_increment
+client_id	int(11)	NO	MUL	NULL	
+nom	varchar(255)	NO	MUL	NULL	
+adresse	text	YES		NULL	
+ville	varchar(100)	YES		NULL	
+code_postal	varchar(20)	YES		NULL	
+pays	varchar(100)	YES		France	
+contact_local_nom	varchar(255)	YES		NULL	
+contact_local_email	varchar(255)	YES		NULL	
+contact_local_telephone	varchar(50)	YES		NULL	
+notes	text	YES		NULL	
+actif	tinyint(1)	YES		1	
+date_creation	timestamp	YES		current_timestamp()	
+date_modification	timestamp	YES		current_timestamp()	on update current_timestamp()
+
+=== Table: utilisateurs ===
+Field	Type	Null	Key	Default	Extra
+id	int(11)	NO	PRI	NULL	auto_increment
+username	varchar(100)	NO	UNI	NULL	
+nom_complet	varchar(255)	YES		NULL	
+email	varchar(255)	YES		NULL	
+role	enum('admin','analyste','lecteur')	YES		lecteur	
+actif	tinyint(1)	YES		1	
+date_creation	timestamp	YES		current_timestamp()	
+derniere_connexion	timestamp	YES		NULL	
+

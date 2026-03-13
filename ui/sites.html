@@ -6,74 +6,35 @@
     <title>Sites</title>
     <link rel="stylesheet" href="/static/bootstrap.min.css">
     <link rel="stylesheet" href="/static/app-search.css">
+    <link rel="stylesheet" href="/static/app-premium.css">
     <style>
-        body {
-            background-color: #0d1117;
-            color: #c9d1d9;
+        .suggestion-box {
+            position: absolute;
+            z-index: 1055;
+            background: #161b22;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
         }
 
-        .card {
-            background-color: #161b22;
-            border-color: #30363d;
-        }
-
-        .text-muted {
-            color: #8b949e !important;
-        }
-
-        .form-control,
-        .form-select,
-        textarea {
-            background-color: #0d1117;
-            color: #c9d1d9;
-            border-color: #30363d;
-        }
-
-        .form-control:focus,
-        .form-select:focus,
-        textarea:focus {
-            background-color: #0d1117;
-            color: #c9d1d9;
-            border-color: #58a6ff;
-            box-shadow: 0 0 0 .25rem rgba(88, 166, 255, .2);
-        }
-
-        .modal-content {
-            background-color: #161b22;
-            border-color: #30363d;
-        }
-
-        .table {
-            color: #c9d1d9;
-        }
-
-        .table-hover>tbody>tr:hover>* {
-            color: #c9d1d9;
-            background-color: rgba(88, 166, 255, 0.08);
-        }
-
-        .btn-close {
-            filter: invert(1) grayscale(100%);
-        }
-
-        #siteClientSuggestions .list-group-item,
-        #filtreClientSuggestions .list-group-item {
-            background-color: #0d1117;
-            color: #c9d1d9;
-            border-color: #30363d;
+        .suggestion-item {
+            padding: 8px 12px;
             cursor: pointer;
+            color: #c9d1d9;
         }
 
-        #siteClientSuggestions .list-group-item:hover,
-        #filtreClientSuggestions .list-group-item:hover {
-            background-color: rgba(88, 166, 255, 0.08);
+        .suggestion-item:hover {
+            background: rgba(88, 166, 255, 0.15);
         }
     </style>
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark"
-        style="background-color: #161b22 !important; border-bottom: 1px solid #30363d;">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
@@ -88,14 +49,16 @@
                     </div>
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/clients">Clients</a></li>
-                        <li class="nav-item"><a class="nav-link active" href="/ui/sites">Sites</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/assets">Assets</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/vulns">Vulnérabilités</a></li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
                                 Référentiels
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
+                                <li><a class="dropdown-item active" href="/ui/sites">🏢 Sites</a></li>
+                                <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
                             </ul>
@@ -107,67 +70,68 @@
             </div>
         </div>
     </nav>
-    <div class="container-fluid py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h3">Gestion des sites</h1>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <h6 class="section-title mb-2">Cartographie Réseau</h6>
+                <h1 class="fw-bold m-0 stat-number">SITES</h1>
+            </div>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSite">
                 + Nouveau site
             </button>
         </div>
 
-        <!-- Filtres -->
-        <div class="card mb-3">
-            <div class="card-body py-2">
-                <div class="row g-2 align-items-center">
-                    <div class="col-md-4">
-                        <input type="hidden" id="filtreClientId" value="">
-                        <div class="position-relative">
-                            <input class="form-control form-control-sm" id="filtreClientSearch" type="search"
-                                placeholder="Filtrer par client…" autocomplete="off">
-                            <div class="list-group position-absolute w-100 mt-1" id="filtreClientSuggestions"
-                                style="z-index:1070; max-height:240px; overflow:auto; display:none;"></div>
-                        </div>
+        <!-- Filtres Redesign -->
+        <div class="card p-4 mb-5">
+            <h6 class="section-title">🔍 RECHERCHE</h6>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label stat-label">Client</label>
+                    <input type="hidden" id="filtreClientId" value="">
+                    <div class="position-relative">
+                        <input class="form-control" id="filtreClientSearch" type="search"
+                            placeholder="Ex: Acme Corp…" autocomplete="off">
+                        <div class="suggestion-box mt-1" id="filtreClientSuggestions"></div>
                     </div>
-                    <div class="col-md-4">
-                        <select class="form-select form-select-sm" id="filtreActif" onchange="page = 1; chargerSites()">
-                            <option value="">Tous statuts</option>
-                            <option value="1">Actifs</option>
-                            <option value="0">Inactifs</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <button class="btn btn-sm btn-outline-secondary" onclick="page = 1; chargerSites()">
-                            🔄 Rafraîchir
-                        </button>
-                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label stat-label">Statut</label>
+                    <select class="form-select" id="filtreActif" onchange="page = 1; chargerSites()">
+                        <option value="">Tous les statuts</option>
+                        <option value="1">Actifs</option>
+                        <option value="0">Inactifs</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary w-100" onclick="page = 1; chargerSites()">
+                        🔄 Rafraîchir
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Tableau -->
-        <div class="card">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover table-sm mb-0" id="tableSites">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Client</th>
-                                <th>Nom</th>
-                                <th>Adresse</th>
-                                <th>Ville</th>
-                                <th>CP</th>
-                                <th>Pays</th>
-                                <th>Statut</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodySites">
-                            <tr>
-                                <td colspan="8" class="text-center text-muted py-4">Chargement...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        <!-- Main Data Table -->
+        <div class="card overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="tableSites">
+                    <thead class="bg-black bg-opacity-25">
+                        <tr>
+                            <th class="ps-4">Client</th>
+                            <th>Nom</th>
+                            <th>Localisation</th>
+                            <th>Ville / Pays</th>
+                            <th>Statut</th>
+                            <th class="pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodySites" class="border-top-0">
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <div class="spinner-border spinner-border-sm text-primary"></div> Chargement...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -190,8 +154,7 @@
                                 <div class="position-relative">
                                     <input type="text" class="form-control" id="siteClientSearch"
                                         placeholder="Tape le nom du client…" autocomplete="off" required>
-                                    <div class="list-group position-absolute w-100 mt-1" id="siteClientSuggestions"
-                                        style="z-index:1080; max-height:240px; overflow:auto; display:none;"></div>
+                                    <div class="suggestion-box mt-1" id="siteClientSuggestions"></div>
                                 </div>
                                 <div class="form-text am-search-muted">
                                     Sélectionne un client dans la liste (sinon l’ID restera vide).
@@ -373,18 +336,19 @@
 
             tbody.innerHTML = sites.map(s => `
         <tr>
-            <td><strong>${s.client_nom || '—'}</strong></td>
+            <td class="ps-4"><strong>${s.client_nom || '—'}</strong></td>
             <td>${s.nom || '—'}</td>
-            <td>${s.adresse || '—'}</td>
-            <td>${s.ville || '—'}</td>
-            <td>${s.code_postal || '—'}</td>
-            <td>${s.pays || '—'}</td>
+            <td><small>${s.adresse || '—'}</small></td>
+            <td>
+                ${s.ville || '—'}<br>
+                <small class="text-muted">${[s.code_postal, s.pays].filter(Boolean).join(', ')}</small>
+            </td>
             <td>
                 <span class="badge ${s.actif ? 'bg-success' : 'bg-secondary'}">
                     ${s.actif ? 'Actif' : 'Inactif'}
                 </span>
             </td>
-            <td>
+            <td class="pe-4">
                 <button class="btn btn-sm btn-outline-primary me-1" onclick="editerSite(${s.id})">✏️</button>
                 <button class="btn btn-sm btn-outline-danger" onclick="supprimerSite(${s.id}, '${escSingleQuoteJsString(s.nom)}')">🗑️</button>
             </td>
@@ -511,7 +475,7 @@
                 showSuggestionBox(
                     box,
                     items.map(c => `
-                <div class="list-group-item" data-client-id="${c.id}">
+                <div class="suggestion-item" data-client-id="${c.id}">
                     <div class="fw-semibold">${c.nom}</div>
                 </div>
             `).join('')
@@ -552,9 +516,9 @@
                 return;
             }
             box.innerHTML = items.map(c => `
-        <div class="list-group-item" data-client-id="${c.id}">
+        <div class="suggestion-item" data-client-id="${c.id}">
             <div class="fw-semibold">${c.nom}</div>
-            <div class="small am-search-muted">${[c.contact_email, c.contact_nom].filter(Boolean).join(' • ')}</div>
+            <div class="small text-muted">${[c.contact_email, c.contact_nom].filter(Boolean).join(' • ')}</div>
         </div>
     `).join('');
             box.style.display = 'block';

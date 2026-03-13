@@ -6,73 +6,13 @@
     <title>Assets</title>
     <link rel="stylesheet" href="/static/bootstrap.min.css">
     <link rel="stylesheet" href="/static/app-search.css">
+    <link rel="stylesheet" href="/static/app-premium.css">
     <style>
-        body {
-            background-color: #0d1117;
-            color: #c9d1d9;
-        }
+        .badge-critique { background-color: #f85149; }
+        .badge-haute { background-color: #f0883e; }
+        .badge-moyenne { background-color: #d29922; }
+        .badge-basse { background-color: #3fb950; }
 
-        .card,
-        .modal-content {
-            background-color: #161b22;
-            border-color: #30363d;
-        }
-
-        .table {
-            color: #c9d1d9;
-        }
-
-        .table-hover>tbody>tr:hover>* {
-            color: #c9d1d9;
-            background-color: rgba(88, 166, 255, 0.08);
-        }
-
-        .badge-critique {
-            background-color: #f85149;
-        }
-
-        .badge-haute,
-        .badge-haut {
-            background-color: #f0883e;
-        }
-
-        .badge-moyenne,
-        .badge-moyen {
-            background-color: #d29922;
-        }
-
-        .badge-basse,
-        .badge-bas {
-            background-color: #3fb950;
-        }
-
-        .search-wrapper {
-            position: relative;
-        }
-
-        .suggestion-box {
-            position: absolute;
-            z-index: 1055;
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            width: 100%;
-            max-height: 200px;
-            overflow-y: auto;
-            display: none;
-        }
-
-        .suggestion-box .suggestion-item {
-            padding: 8px 12px;
-            cursor: pointer;
-            color: #c9d1d9;
-        }
-
-        .suggestion-box .suggestion-item:hover {
-            background: rgba(88, 166, 255, 0.15);
-        }
-
-        /* Boutons d'action dans le tableau */
         td .btn-sm {
             width: 32px;
             height: 32px;
@@ -89,8 +29,7 @@
 <body>
 
     <!-- ─── NAVBAR ─────────────────────────────────────────── -->
-    <nav class="navbar navbar-expand-lg navbar-dark"
-        style="background-color: #161b22 !important; border-bottom: 1px solid #30363d;">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
@@ -105,14 +44,16 @@
                     </div>
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/clients">Clients</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/sites">Sites</a></li>
-                        <li class="nav-item"><a class="nav-link active" href="/ui/assets">Assets</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/vulns">Vulnérabilités</a></li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
                                 Référentiels
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
+                                <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
+                                <li><a class="dropdown-item active" href="/ui/assets">💻 Assets</a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
                             </ul>
@@ -127,9 +68,12 @@
 
 
     <!-- ─── CONTENU ────────────────────────────────────────── -->
-    <div class="container-fluid mt-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2>📦 Assets</h2>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <h6 class="section-title mb-2">Inventaire Matériel</h6>
+                <h1 class="fw-bold m-0 stat-number">ASSETS</h1>
+            </div>
             <button class="btn btn-primary" onclick="ouvrirModalCreation()" data-bs-toggle="modal"
                 data-bs-target="#modalAsset">
                 ➕ Nouvel asset

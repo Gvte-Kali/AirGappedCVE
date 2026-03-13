@@ -356,14 +356,21 @@ def correlate(
                     skipped += 1
                     continue
 
+                # === Calcul du type_correlation ===
+                # Affirme si version connue ET versions_data non vide ET version affectée
+                if asset_version and versions_data and is_version_affected(asset_version, versions_data):
+                    type_corr = 'affirme'
+                else:
+                    type_corr = 'informatif'
+
                 # === Insertion ===
                 if not dry_run:
                     cur.execute("""
                         INSERT INTO correlations
-                            (asset_id, cve_id, statut, date_detection)
+                            (asset_id, cve_id, statut, type_correlation, date_detection)
                         VALUES
-                            (%s, %s, 'nouveau', NOW())
-                    """, (asset["asset_id"], cve["cve_id"]))
+                            (%s, %s, 'nouveau', %s, NOW())
+                    """, (asset["asset_id"], cve["cve_id"], type_corr))
 
                 inserted += 1
                 asset_new += 1
@@ -447,6 +454,7 @@ QUESTIONS CRITIQUES :
 Réponds avec ce JSON exact :
 {{
   "asset_concerne": true|false,
+  "confirmation_version": true|false,
   "confidence": "haute"|"moyenne"|"faible",
   "raison_inclusion_exclusion": "Explication PATCH MANAGEMENT : OS/firmware affecté ou pas",
   "exploitable_air_gap": true|false|null,
@@ -470,6 +478,10 @@ RÈGLES PRIORITÉ :
 - score >= 7.0 → haute (patch prioritaire)
 - score >= 4.0 → moyenne (patch planifié)
 - score < 4.0 → basse (surveiller)
+
+RÈGLES CONFIRMATION_VERSION :
+- confirmation_version = true si la version actuelle de l'asset est explicitement dans le range des versions vulnérables de la CVE
+- confirmation_version = false sinon (version inconnue, range absent, ou version non affectée)
 
 IMPORTANT : Si la CVE ne nécessite PAS de patch OS/firmware patchable → asset_concerne = false
 """
@@ -711,6 +723,20 @@ def analyze(
                 score,
                 corr["correlation_id"],
             ))
+
+            # Mise à jour de type_correlation basée sur l'analyse Mistral
+            if statut_final == 'confirme' and result.get("confirmation_version") is True:
+                cur.execute("""
+                    UPDATE correlations SET type_correlation = 'affirme'
+                    WHERE id = %s
+                """, (corr["correlation_id"],))
+            elif statut_final == 'faux_positif':
+                cur.execute("""
+                    UPDATE correlations SET type_correlation = 'informatif'
+                    WHERE id = %s
+                """, (corr["correlation_id"],))
+            # Sinon, ne pas toucher type_correlation (garde la valeur initiale de correlate())
+
             conn.commit()
 
             processed += 1
@@ -1290,19 +1316,15 @@ def report(
 
 @app.command("run-all")
 def run_all(
-    output_dir: str           = typer.Option("/opt/asset-manager/documents", "--output-dir", "-d"),
-    client_id:  Optional[int] = typer.Option(None, "--client-id"),
     batch_max:  int           = typer.Option(MISTRAL_BATCH_MAX, "--batch-max"),
 ):
-    """Lance corrélation → analyse → rapport en une seule commande."""
+    """Lance corrélation → analyse en une seule commande."""
     print("\n" + "=" * 70)
-    print("  PIPELINE COMPLET : CORRÉLATION → ANALYSE → RAPPORTS")
+    print("  PIPELINE COMPLET : CORRÉLATION → ANALYSE")
     print("=" * 70)
 
     correlate()
     analyze(batch_max=batch_max, asset_id=None, force=False)
-    report(output_dir=output_dir, client_id=client_id, asset_id=None,
-           statuts="confirme,mitige", min_score=0.0)
 
     print("=" * 70)
     print("  ✅ PIPELINE TERMINÉ")

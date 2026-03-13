@@ -46347,3 +46347,876 @@ INFO:     10.0.0.15:40169 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
 INFO:     10.0.0.15:45947 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
 INFO:     10.0.0.15:31549 - "GET /api/vendors HTTP/1.1" 200 OK
 INFO:     10.0.0.15:52987 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     Started server process [1104]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     192.168.1.247:55416 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:55416 - "GET /static/bootstrap.min.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:44444 - "GET /static/app-search.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28243 - "GET /static/bootstrap.bundle.min.js HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45722 - "GET /static/app-search.js HTTP/1.1" 200 OK
+INFO:     192.168.1.247:52893 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.1.247:28243 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:55416 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45722 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:44444 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:61559 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:40576 - "GET /docs HTTP/1.1" 200 OK
+INFO:     192.168.1.247:40576 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28005 - "GET /api/clients/?limit=20&skip=0&nolimit=false HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33008 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33008 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2320 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:60762 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:48085 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:11292 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:27012 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     192.168.1.247:64613 - "GET /api/models?limit=20&skip=0&nolimit=false HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1104]
+INFO:     Started server process [12203]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     192.168.1.247:56007 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56007 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19525 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4653 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:44886 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15905 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35417 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35417 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35417 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35417 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26484 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26484 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:26484 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26484 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26484 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:26484 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:36501 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:36501 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:36501 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35293 - "POST /api/correlations/run-correlation?mode=correlate HTTP/1.1" 405 Method Not Allowed
+INFO:     192.168.1.247:35293 - "POST /api/correlations/run-correlation?mode=correlate HTTP/1.1" 405 Method Not Allowed
+INFO:     192.168.1.247:15276 - "GET /docs HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15276 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [12203]
+INFO:     Started server process [14641]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     192.168.1.247:53614 - "GET /docs HTTP/1.1" 200 OK
+INFO:     192.168.1.247:53614 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34629 - "GET /health HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45404 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45404 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:41506 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:7767 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:55368 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25891 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/clients?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:45178 - "GET /api/clients/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/sites?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:45178 - "GET /api/sites/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:45178 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:45178 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /ui/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/vendors?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /ui/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/models?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:45178 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45178 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:45178 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:17009 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:17009 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57506 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:17009 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33277 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24896 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62308 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62308 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62308 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62308 - "GET /api/sites?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:62308 - "GET /api/sites/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62308 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62308 - "GET /api/clients?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:62308 - "GET /api/clients/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62308 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24896 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33277 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:64170 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:17009 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57506 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57506 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:57506 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57506 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57506 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:57506 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57506 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57506 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:17009 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62308 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33277 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:64170 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24896 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:64170 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33277 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24896 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:22000 - "GET /ui/sites?q=rei HTTP/1.1" 200 OK
+INFO:     192.168.1.247:22000 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:22000 - "GET /api/sites?nolimit=true HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:22000 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:22000 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:5940 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59159 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59370 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59370 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59354 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59370 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:27374 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57582 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:58811 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57582 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57582 - "GET /api/clients?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:57582 - "GET /api/clients/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57582 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57582 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57582 - "GET /api/sites?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:57582 - "GET /api/sites/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57582 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57582 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:58811 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59370 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59354 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:27374 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [14641]
+INFO:     Started server process [15230]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     192.168.1.247:13091 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:13091 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24724 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:22090 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25000 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:60178 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28197 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28197 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:28197 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28197 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28197 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:28197 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:60178 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28197 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:60178 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28197 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25000 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:22090 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:22524 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:22524 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:22524 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19707 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19707 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:18309 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:31383 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:37066 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:49849 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34905 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33282 - "GET /docs HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33282 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     192.168.1.247:32035 - "GET /api/clients/?limit=20&skip=0&nolimit=false HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:57731 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:57731 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/clients?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:57731 - "GET /api/clients/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/sites?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:57731 - "GET /api/sites/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:57731 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:57731 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /ui/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/vendors?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /ui/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/models?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:57731 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:57731 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:57731 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:38842 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:38842 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:7708 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:7649 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:11962 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:38842 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33109 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:64408 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:64408 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:64408 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:64408 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:64408 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [15230]
+INFO:     Started server process [17130]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     192.168.1.247:8000 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:8000 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:8000 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:8000 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:8000 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:8000 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3218 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3218 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3218 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3218 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3218 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:21794 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:32550 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4362 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62992 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4725 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:41731 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:41731 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:41731 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:22644 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33563 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:41731 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:22644 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33563 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33563 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33563 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33563 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33563 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15359 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33563 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:41731 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:22644 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:22644 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:22644 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:40859 - "POST /api/correlations/run-correlation?mode=correlate HTTP/1.1" 200 OK
+INFO:     192.168.1.247:40859 - "GET /api/correlations/run-status HTTP/1.1" 422 Unprocessable Entity
+INFO:     192.168.1.247:3046 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3046 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28746 - "GET /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:31050 - "POST /api/correlations/run-correlation?mode=analyze HTTP/1.1" 200 OK
+INFO:     192.168.1.247:31050 - "GET /api/correlations/run-status HTTP/1.1" 422 Unprocessable Entity
+INFO:     192.168.1.247:32101 - "GET /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25037 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25037 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25037 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45659 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45659 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45659 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45659 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45659 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45659 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45659 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45659 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45659 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45659 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45659 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45659 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45659 - "GET /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3221 - "GET /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20980 - "PATCH /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20980 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20980 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20980 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20980 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20980 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20980 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20980 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20980 - "GET /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:51893 - "POST /api/correlations/run-correlation?mode=correlate HTTP/1.1" 200 OK
+INFO:     192.168.1.247:51893 - "GET /api/correlations/run-status HTTP/1.1" 422 Unprocessable Entity
+INFO:     192.168.1.247:35458 - "POST /api/correlations/run-correlation?mode=analyze HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35458 - "GET /api/correlations/run-status HTTP/1.1" 422 Unprocessable Entity
+INFO:     192.168.1.247:53414 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:53414 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:5738 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:53414 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4752 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28633 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45959 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45959 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45959 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45959 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45959 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45959 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45959 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45959 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45959 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45959 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45959 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45959 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19449 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19449 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19449 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19449 - "POST /api/correlations/run-correlation?mode=correlate HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19449 - "GET /api/correlations/run-status HTTP/1.1" 422 Unprocessable Entity
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [17130]
+INFO:     Started server process [20975]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     192.168.1.247:4494 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4494 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4494 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4494 - "POST /api/correlations/run-correlation?mode=correlate HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4494 - "GET /api/correlations/run-status HTTP/1.1" 422 Unprocessable Entity
+INFO:     192.168.1.247:49345 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:49345 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:16054 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:16054 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:16054 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:16054 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:16054 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:16054 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:16054 - "GET /api/sites?client_id%20=%201 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:52367 - "GET /api/assets?nolimit=true&client_id=1 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:52367 - "GET /api/sites/?client_id%20=%201 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:16054 - "GET /api/assets/?nolimit=true&client_id=1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:16054 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:16054 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:16054 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:16054 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:16054 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [20975]
+INFO:     Started server process [22499]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [22499]
+INFO:     Started server process [23425]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     192.168.1.247:28422 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28422 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:17679 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25175 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25175 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25175 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25175 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25175 - "GET /api/correlations/?limit=50&skip=0&statut=confirme&client_id=1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25175 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25175 - "GET /api/correlations/?limit=50&skip=0&statut=confirme&client_id=1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25175 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25175 - "GET /api/correlations/?limit=50&skip=0&statut=confirme&client_id=1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25175 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25175 - "GET /api/correlations/?limit=50&skip=0&statut=confirme&client_id=1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:25175 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:23052 - "GET /docs HTTP/1.1" 200 OK
+INFO:     192.168.1.247:23052 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24760 - "GET /api/correlations/?limit=50&skip=0&nolimit=false HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47659 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:8801 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:8801 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35245 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26027 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26027 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26027 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26027 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26027 - "PATCH /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26027 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26027 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26027 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26027 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:30882 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:63894 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:63894 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:30882 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:30882 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:42223 - "GET /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6065 - "GET /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:11429 - "GET /api/correlations/?limit=50&skip=0&statut=confirme HTTP/1.1" 200 OK
+INFO:     192.168.1.247:11429 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:11429 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:11429 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:38228 - "GET /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1155 - "PATCH /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1155 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1155 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59501 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59501 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28427 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:11647 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:11647 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28427 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28427 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28427 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28427 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59501 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:11647 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:10274 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:39381 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:17108 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33450 - "GET /ui/documents HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33450 - "GET /static/styles.css HTTP/1.1" 404 Not Found
+INFO:     192.168.1.247:33450 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     192.168.1.247:58250 - "GET /api/documents/rapport_complet_20260306_154538.pdf?preview=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:61066 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62335 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45784 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45784 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45784 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45784 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45784 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45784 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62335 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:61066 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15228 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:50962 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34624 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34624 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15228 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:50962 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:50962 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:50962 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:50962 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:50962 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15228 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34624 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45784 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:61066 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62335 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28560 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28560 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:52409 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6612 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6612 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6612 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6612 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6612 - "GET /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6612 - "PATCH /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6612 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6612 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6612 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6612 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:53272 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47432 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:21617 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1677 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1677 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:21617 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "PATCH /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "PATCH /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "PATCH /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "PATCH /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "PATCH /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "PATCH /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "PATCH /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "PATCH /api/correlations/87 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:34949 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62265 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62265 - "GET /static/app-premium.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62265 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:54828 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:29760 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62265 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:29760 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:54828 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62265 - "GET /static/styles.css HTTP/1.1" 404 Not Found
+INFO:     192.168.1.247:62265 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     192.168.1.247:9111 - "GET /api/documents/synthese_vulnerabilites_20260306_154538.pdf?preview=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:45159 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     192.168.1.247:18573 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     192.168.1.247:60623 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:60623 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:60623 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:30491 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:52456 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:21869 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6049 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:41445 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4667 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4667 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:4667 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:41081 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:58769 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4667 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24306 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3410 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3410 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3410 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24306 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4667 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:4667 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24306 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24306 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56862 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56862 - "GET /api/clients?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:56862 - "GET /api/clients/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56862 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56862 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56862 - "GET /api/sites?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:56862 - "GET /api/sites/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56862 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56862 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:56862 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56862 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56862 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:56862 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35332 - "GET /ui/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35332 - "GET /api/vendors?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35332 - "GET /ui/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35332 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35332 - "GET /api/models?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:38968 - "GET /api/vendors?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:38968 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:38968 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:38968 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:38968 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:38968 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1897 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24946 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:21031 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15794 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:51390 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:49087 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15794 - "GET /ui/documents HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15794 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     192.168.1.247:7442 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     192.168.1.247:7442 - "GET /ui/documents HTTP/1.1" 200 OK
+INFO:     192.168.1.247:7442 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:7442 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     192.168.1.247:7442 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:7442 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62043 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:48218 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:48218 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62043 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62043 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62043 - "POST /api/correlations/run-correlation?mode=correlate HTTP/1.1" 200 OK
+DEBUG: execute_correlation started mode=correlate
+DEBUG: process started pid=30469
+INFO:     192.168.1.247:62043 - "POST /api/correlations/run-correlation?mode=analyze HTTP/1.1" 200 OK
+DEBUG: execute_correlation started mode=analyze
+DEBUG: process started pid=30499
+INFO:     192.168.1.247:17971 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:17971 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:17971 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:62306 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:48679 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26374 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35945 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:48509 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56025 - "GET /ui/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56025 - "GET /api/vendors?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:58785 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:58785 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:49978 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:5045 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:5045 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:49978 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:49978 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:39542 - "GET /api/correlations/?limit=50&skip=0&client_id=1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:39542 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:39542 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:39542 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2005 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2005 - "GET /static/bootstrap.min.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2005 - "GET /static/app-search.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:43468 - "GET /static/app-premium.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:30653 - "GET /static/bootstrap.bundle.min.js HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15043 - "GET /static/app-search.js HTTP/1.1" 200 OK
+INFO:     192.168.1.247:30653 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6304 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15043 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:43468 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35878 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2005 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2005 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.1.247:33443 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33443 - "GET /static/app-premium.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33443 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:33443 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33443 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33443 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:33443 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:55258 - "GET /api/sites?client_id%20=%201 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:23904 - "GET /api/assets?nolimit=true&client_id=1 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:55258 - "GET /api/assets/?nolimit=true&client_id=1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:23904 - "GET /api/sites/?client_id%20=%201 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:55258 - "GET /api/assets?nolimit=true&client_id=1 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:55258 - "GET /api/assets/?nolimit=true&client_id=1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:46143 - "GET /api/assets?nolimit=true&client_id=1 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:46143 - "GET /api/assets/?nolimit=true&client_id=1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:46143 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56925 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:12188 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:32723 - "GET /ui/clients?q=adm HTTP/1.1" 200 OK
+INFO:     192.168.1.247:32723 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:32723 - "GET /api/clients?nolimit=true HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:32723 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:32723 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:61500 - "GET /api/sites/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:12808 - "GET /api/assets/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24755 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24755 - "GET /static/app-premium.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24755 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2224 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:24755 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2224 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:52743 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:3683 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:42791 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:42791 - "GET /static/app-premium.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:42791 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1774 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:16415 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35625 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26068 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:35621 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26068 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.1.247:38944 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:38944 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:38944 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:38944 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:38944 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:38944 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:38944 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:31403 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:31403 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19366 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19366 - "GET /static/app-premium.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:19366 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:55751 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:8615 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:8615 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:8615 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:8615 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26935 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:26935 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33134 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33134 - "GET /static/app-premium.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33134 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:33134 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33134 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.1.247:33134 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33134 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:33134 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:55328 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:55328 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:55328 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:55328 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:55328 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:55328 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:55328 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:55328 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:55328 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59175 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59175 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:59175 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:59175 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59175 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:59175 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:59175 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [23425]
+INFO:     Started server process [35685]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     192.168.1.247:6141 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6141 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:6141 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:6141 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6141 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:6141 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:6141 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:44023 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:44023 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:44023 - "GET /api/clients?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:44023 - "GET /api/clients/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:63589 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:63589 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:63589 - "GET /api/sites?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:63589 - "GET /api/sites/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33596 - "GET /api/sites/2 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33596 - "PUT /api/sites/2 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33596 - "GET /api/sites?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:33596 - "GET /api/sites/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33596 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33596 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:33596 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33596 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:33596 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:33596 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47197 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47197 - "GET /static/app-premium.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:47197 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15213 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:49795 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15213 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15213 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15213 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15213 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15213 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:15213 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:15213 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15213 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15213 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:15213 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15213 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15213 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:15213 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:15213 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15213 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15213 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:15213 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:12906 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:12906 - "GET /static/app-premium.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:12906 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:12906 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:12906 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:12906 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:12906 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:28727 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:28727 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1198 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1198 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:1198 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:7632 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56682 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:56682 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:7632 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:7632 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:11526 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:11526 - "GET /static/app-premium.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:11526 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:11526 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:11526 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:11526 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.1.247:43239 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:43239 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:46052 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:46052 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:61212 - "GET /ui/vulns HTTP/1.1" 200 OK
+INFO:     192.168.1.247:61212 - "GET /static/app-premium.css HTTP/1.1" 200 OK
+INFO:     192.168.1.247:61212 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:61212 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15667 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:15667 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:61212 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:61212 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:8358 - "GET /api/correlations/?limit=50&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:8358 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:8358 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.1.247:8358 - "GET /api/clients/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:12726 - "GET /api/assets/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:53365 - "GET /api/sites/?nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:17550 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:2689 - "GET /api/correlations/stats HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1369 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1369 - "GET /ui/clients HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1369 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:1369 - "GET /api/clients?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:1369 - "GET /api/clients/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1369 - "GET /ui/sites HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1369 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1369 - "GET /api/sites?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:1369 - "GET /api/sites/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1369 - "GET /ui/assets HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1369 - "GET /api/clients HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:1369 - "GET /api/clients/ HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1369 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1369 - "GET /api/assets?limit=20&skip=0 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:1369 - "GET /api/assets/?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1369 - "GET /api/sites?client_id%20=%201 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:57759 - "GET /api/assets?nolimit=true&client_id=1 HTTP/1.1" 307 Temporary Redirect
+INFO:     192.168.1.247:57759 - "GET /api/sites/?client_id%20=%201 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1369 - "GET /api/assets/?nolimit=true&client_id=1 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1369 - "GET /ui/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:1369 - "GET /static/app-premium.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.1.247:1369 - "GET /api/vendors?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20108 - "GET /api/vendors?limit=20&skip=0&search=z&nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20108 - "GET /api/vendors?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20108 - "GET /api/vendors?limit=20&skip=0&search=a&nolimit=true HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20108 - "GET /api/vendors?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20108 - "GET /ui/models HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20108 - "GET /api/vendors HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20108 - "GET /api/models?limit=20&skip=0 HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20108 - "GET /api/models?limit=20&skip=0&nolimit=true&search=a HTTP/1.1" 200 OK
+INFO:     192.168.1.247:20108 - "GET /api/models?limit=20&skip=0 HTTP/1.1" 200 OK
