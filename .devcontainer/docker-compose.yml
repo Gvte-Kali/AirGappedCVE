@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/python:3.12
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+    network_mode: service:mariadb
+    environment:
+      - SERVER_IP=localhost
+      - DB_HOST=127.0.0.1
+      - DB_PORT=3306
+      - DB_NAME=asset_vuln_manager
+      - DB_USER=avea
+      - DB_PASSWORD=devpassword
+      - MISTRAL_MODEL=mistral-large-latest
+    depends_on:
+      - mariadb
+
+  mariadb:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootdevpassword
+      MYSQL_DATABASE: asset_vuln_manager
+      MYSQL_USER: avea
+      MYSQL_PASSWORD: devpassword
+    volumes:
+      - mariadb-data:/var/lib/mysql
+      - ../sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    ports:
+      - "3306:3306"
+
+volumes:
+  mariadb-data:

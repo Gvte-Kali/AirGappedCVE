@@ -1,0 +1,37 @@
+{
+  "name": "Asset & Vulnerability Manager",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+
+  "forwardPorts": [8000, 3306],
+  "portsAttributes": {
+    "8000": { "label": "FastAPI", "onAutoForward": "openBrowser" },
+    "3306": { "label": "MariaDB", "onAutoForward": "silent" }
+  },
+
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postStartCommand": "bash .devcontainer/start.sh",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-mysql",
+        "humao.rest-client",
+        "ms-python.black-formatter"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/workspace/venv/bin/python",
+        "editor.formatOnSave": true
+      }
+    }
+  },
+
+  "secrets": {
+    "NVD_API_KEY": { "description": "Clé API NVD (nvd.nist.gov)" },
+    "MISTRAL_API_KEY": { "description": "Clé API Mistral (console.mistral.ai)" }
+  }
+}
