@@ -25,7 +25,7 @@ from typing import Optional
 from tqdm import tqdm
 
 from dotenv import load_dotenv
-load_dotenv("/opt/asset-manager/.env")
+load_dotenv()
 
 import typer
 import pymysql

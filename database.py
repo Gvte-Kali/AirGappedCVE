@@ -4,7 +4,7 @@ import os
 import pymysql
 from dotenv import load_dotenv
 
-load_dotenv("/opt/asset-manager/.env")
+load_dotenv()
 
 def get_connection():
     return pymysql.connect(
