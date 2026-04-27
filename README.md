@@ -14,10 +14,11 @@ Système de gestion d'assets informatiques et de vulnérabilités de sécurité,
 6. [Flux de données — de la CVE à la décision](#6-flux-de-données--de-la-cve-à-la-décision)
 7. [Moteur de corrélation et analyse Mistral](#7-moteur-de-corrélation-et-analyse-mistral)
 8. [Structure du projet](#8-structure-du-projet)
-9. [Installation](#9-installation)
-10. [Configuration](#10-configuration)
-11. [Gestion quotidienne](#11-gestion-quotidienne)
-12. [Sécurité](#12-sécurité)
+9. [Obtenir les clés API](#9-obtenir-les-clés-api)
+10. [Installation](#10-installation)
+11. [Configuration](#11-configuration)
+12. [Gestion quotidienne](#12-gestion-quotidienne)
+13. [Sécurité](#13-sécurité)
 
 ---
 
@@ -347,7 +348,54 @@ L'opérateur a toujours le dernier mot via `override_utilisateur`. Ce champ écr
 
 ---
 
-## 9. Installation
+
+## 9. Obtenir les clés API
+
+Deux clés API sont nécessaires pour faire fonctionner le système. Voici comment les obtenir.
+
+### Clé API NVD (National Vulnerability Database)
+
+La NVD est la source officielle des CVE. Sa clé API est **gratuite** et permet d'augmenter les limites de requêtes.
+
+1. Aller sur [https://nvd.nist.gov/developers/request-an-api-key](https://nvd.nist.gov/developers/request-an-api-key)
+2. Remplir le formulaire avec ton adresse email
+3. Recevoir la clé par email sous quelques minutes
+4. La clé ressemble à : `c9d534b7-79b2-4413-a6b4-843efdfb87b9`
+
+> **Sans clé NVD**, l'API fonctionne mais est limitée à 5 requêtes par 30 secondes au lieu de 50. La synchronisation sera beaucoup plus lente.
+
+---
+
+### Clé API Mistral AI
+
+Mistral est le moteur d'analyse IA. L'accès est **payant** (facturation à l'usage, quelques centimes par analyse).
+
+1. Créer un compte sur [https://console.mistral.ai](https://console.mistral.ai)
+2. Aller dans **API Keys** → **Create new key**
+3. Donner un nom à la clé (ex: `asset-manager`)
+4. Copier la clé immédiatement — elle ne sera plus affichée ensuite
+5. La clé ressemble à : `OZO8beOiyEBfh8OmL6YS5saYrtAkCdsR`
+
+> **Modèle recommandé** : `mistral-large-latest` — meilleur équilibre qualité/coût pour l'analyse de vulnérabilités.
+
+> **Crédits** : Mistral offre des crédits gratuits à la création du compte, suffisants pour tester le système.
+
+---
+
+### Stocker les clés
+
+Les clés sont à renseigner dans le fichier `.env` à la racine du projet :
+
+```ini
+NVD_API_KEY=ta_cle_nvd_ici
+MISTRAL_API_KEY=ta_cle_mistral_ici
+```
+
+Le script d'installation les demande interactivement — tu n'as pas besoin d'éditer le fichier manuellement.
+
+> ⚠️ Ne jamais commiter ces clés sur GitHub. Le `.env` est dans le `.gitignore`.
+
+## 10. Installation
 
 > **Prérequis :** Ubuntu Server 22.04 ou 24.04 LTS, accès Internet pour le téléchargement initial.
 
@@ -381,7 +429,7 @@ Le script installe et configure tout de manière interactive :
 
 ---
 
-## 10. Configuration
+## 11. Configuration
 
 ### Fichier `.env`
 
@@ -406,7 +454,7 @@ DB_NAME=asset_vuln_manager
 
 ---
 
-## 11. Gestion quotidienne
+## 12. Gestion quotidienne
 
 ### Vérifier le service FastAPI
 
@@ -445,7 +493,7 @@ Crée un dossier `backups_YYYYMMDD_HHMMSS/` dans le home de l'utilisateur avec l
 
 ---
 
-## 12. Sécurité
+## 13. Sécurité
 
 - **`.env`** n'est jamais commité (`.gitignore`) — c'est la seule source de vérité pour les credentials
 - **Root MariaDB** accessible uniquement via `sudo mariadb` (unix socket)
