@@ -331,9 +331,6 @@ L'opérateur a toujours le dernier mot via `override_utilisateur`. Ce champ écr
 ├── sql/
 │   └── schema.sql                 # Schéma complet de la base de données
 │
-├── config/
-│   ├── secrets.json               # Credentials (non commité)
-│   └── secrets.json.example       # Template
 │
 ├── logs/
 │   └── FastAPI.log                # Logs du service (non commité)
@@ -405,21 +402,7 @@ DB_PASSWORD=your_password_here
 DB_NAME=asset_vuln_manager
 ```
 
-### Fichier `config/secrets.json`
 
-```json
-{
-  "mariadb": {
-    "host": "127.0.0.1",
-    "port": 3306,
-    "user": "avea",
-    "password": "your_password_here",
-    "database": "asset_vuln_manager"
-  },
-  "mistral": { "api_key": "your_mistral_api_key_here" },
-  "nvd":     { "api_key": "your_nvd_api_key_here" }
-}
-```
 
 ---
 
@@ -464,7 +447,7 @@ Crée un dossier `backups_YYYYMMDD_HHMMSS/` dans le home de l'utilisateur avec l
 
 ## 12. Sécurité
 
-- **`.env` et `secrets.json`** ne sont jamais commités (`.gitignore`)
+- **`.env`** n'est jamais commité (`.gitignore`) — c'est la seule source de vérité pour les credentials
 - **Root MariaDB** accessible uniquement via `sudo mariadb` (unix socket)
 - **Contexte air-gap** pris en compte dans toutes les analyses de risque
 - **Override opérateur** permet de corriger toute décision automatique erronée
