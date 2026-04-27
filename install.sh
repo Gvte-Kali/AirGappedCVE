@@ -1,243 +1,303 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # =============================================================================
-#  Asset & Vulnerability Manager — Script d'installation
+# install.sh — Installation complète Asset & Vulnerability Manager
+# Usage : curl -sSL https://raw.githubusercontent.com/Gvte-Kali/AirGappedCVE/main/install.sh | sudo bash
 # =============================================================================
-set -euo pipefail
 
-# ── Couleurs ──────────────────────────────────────────────────────────────────
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
-info()  { echo -e "${GREEN}[INFO]${NC}  $*"; }
-warn()  { echo -e "${YELLOW}[WARN]${NC}  $*"; }
-error() { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
+set -e
 
-# ── Variables ─────────────────────────────────────────────────────────────────
-INSTALL_DIR="/opt/asset-manager"
-SERVICE_USER="pwner"
-SERVICE_NAME="asset-manager"
-DB_NAME="asset_vuln_manager"
-DB_USER="avea"
-VENV_PATH="$INSTALL_DIR/venv"
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
+log()    { echo -e "${GREEN}[OK]${NC}  $1"; }
+warn()   { echo -e "${YELLOW}[WARN]${NC} $1"; }
+error()  { echo -e "${RED}[ERR]${NC}  $1"; exit 1; }
+header() { echo -e "\n${BLUE}==== $1 ====${NC}"; }
+ask()    { echo -e "${YELLOW}  → $1${NC}"; }
 
-# =============================================================================
-# 0. Vérifications préalables
-# =============================================================================
-info "Vérification des prérequis..."
-[[ $EUID -ne 0 ]] && error "Ce script doit être exécuté en root (sudo ./install.sh)"
-command -v python3 &>/dev/null || error "python3 introuvable."
-
-# =============================================================================
-# 1. Dépendances système
-# =============================================================================
-info "Installation des dépendances système..."
-apt-get update -qq
-apt-get install -y -qq \
-    python3 \
-    python3-pip \
-    python3-venv \
-    mariadb-server \
-    mariadb-client \
-    libmariadb-dev \
-    curl \
-    git
-
-# =============================================================================
-# 2. Création de l'utilisateur système (si absent)
-# =============================================================================
-if ! id "$SERVICE_USER" &>/dev/null; then
-    info "Création de l'utilisateur système '$SERVICE_USER'..."
-    useradd --system --no-create-home --shell /usr/sbin/nologin "$SERVICE_USER"
-else
-    info "Utilisateur '$SERVICE_USER' déjà existant."
+if [ "$EUID" -ne 0 ]; then
+  error "Lance ce script avec sudo : sudo bash install.sh"
 fi
 
-# =============================================================================
-# 3. Création de l'arborescence du projet
-# =============================================================================
-info "Création des répertoires..."
-mkdir -p "$INSTALL_DIR"/{config,data/nvd/{raw,cwe},infos,logs,routers,scripts,ui/static}
+echo ""
+echo -e "${BLUE}=================================================${NC}"
+echo -e "${BLUE}   Asset & Vulnerability Manager — Installer    ${NC}"
+echo -e "${BLUE}=================================================${NC}"
+echo ""
 
 # =============================================================================
-# 4. Clonage / copie des fichiers
+header "1/6 — Mise à jour système et dépendances"
 # =============================================================================
-# Décommentez et adaptez si vous clonez depuis GitHub :
-#   git clone https://github.com/<votre-compte>/asset-manager "$INSTALL_DIR"
-info "Fichiers du projet supposés présents dans $INSTALL_DIR."
+apt update && apt upgrade -y
+apt install -y curl wget git nano unzip python3 python3-pip python3-venv mariadb-server
+log "Paquets système installés"
 
 # =============================================================================
-# 5. Environnement virtuel Python
+header "2/6 — Clone du repo"
 # =============================================================================
-info "Création du virtualenv Python..."
-python3 -m venv "$VENV_PATH"
-source "$VENV_PATH/bin/activate"
+if [ -d /opt/asset-manager/.git ]; then
+  warn "Dossier déjà existant, mise à jour depuis GitHub"
+  cd /opt/asset-manager && git pull
+else
+  git clone https://github.com/Gvte-Kali/AirGappedCVE.git /opt/asset-manager
+  log "Repo cloné dans /opt/asset-manager"
+fi
 
-info "Installation des dépendances Python..."
-pip install --upgrade pip -q
-pip install -r "$INSTALL_DIR/requirements.txt" -q
-
-deactivate
+groupadd -f asset-manager
+SUDO_USER_NAME="${SUDO_USER:-$(logname 2>/dev/null || echo 'pwner')}"
+usermod -aG asset-manager "$SUDO_USER_NAME" 2>/dev/null || true
+chown -R :asset-manager /opt/asset-manager
+chmod -R 775 /opt/asset-manager
+log "Groupe et permissions configurés"
 
 # =============================================================================
-# 6. Fichier .env (vierge)
+header "3/6 — Configuration du .env"
 # =============================================================================
-info "Création du fichier .env..."
-cat > "$INSTALL_DIR/.env" << 'EOF'
+echo ""
+echo "  Remplis les informations suivantes pour configurer le système."
+echo "  Appuie sur Entrée pour garder la valeur par défaut indiquée entre []."
+echo ""
+
+ask "Adresse IP du serveur [10.100.0.20] :"
+read -rp "  > " SERVER_IP; SERVER_IP="${SERVER_IP:-10.100.0.20}"
+
+ask "Clé API NVD (https://nvd.nist.gov/developers/request-an-api-key) :"
+read -rp "  > " NVD_API_KEY
+
+ask "Clé API Mistral (https://console.mistral.ai/api-keys) :"
+read -rp "  > " MISTRAL_API_KEY
+
+ask "Modèle Mistral [mistral-large-latest] :"
+read -rp "  > " MISTRAL_MODEL; MISTRAL_MODEL="${MISTRAL_MODEL:-mistral-large-latest}"
+
+ask "Mot de passe pour l'utilisateur MariaDB 'avea' :"
+read -rsp "  > " DB_PASSWORD; echo ""
+
+ask "Nom de la base de données [asset_vuln_manager] :"
+read -rp "  > " DB_NAME; DB_NAME="${DB_NAME:-asset_vuln_manager}"
+
+# Écrire le .env
+cat > /opt/asset-manager/.env << EOF
 # SERVER INFOS
-SERVER_IP=
+SERVER_IP=${SERVER_IP}
 
 # API Keys
-NVD_API_KEY=
-MISTRAL_API_KEY=
-MISTRAL_MODEL=mistral-large-latest
+NVD_API_KEY=${NVD_API_KEY}
+MISTRAL_API_KEY=${MISTRAL_API_KEY}
+MISTRAL_MODEL=${MISTRAL_MODEL}
 
 # Database Infos
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_USER=avea
-DB_PASSWORD=
-DB_NAME=asset_vuln_manager
+DB_PASSWORD=${DB_PASSWORD}
+DB_NAME=${DB_NAME}
 EOF
 
-# =============================================================================
-# 7. Fichier config/secrets.json (vierge)
-# =============================================================================
-info "Création du fichier config/secrets.json..."
-cat > "$INSTALL_DIR/config/secrets.json" << 'EOF'
+# Écrire config/secrets.json
+mkdir -p /opt/asset-manager/config
+cat > /opt/asset-manager/config/secrets.json << EOF
 {
   "mariadb": {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "avea",
-    "password": "",
-    "database": "asset_vuln_manager"
+    "password": "${DB_PASSWORD}",
+    "database": "${DB_NAME}"
   },
   "mistral": {
-    "api_key": ""
+    "api_key": "${MISTRAL_API_KEY}"
   },
   "nvd": {
-    "api_key": ""
+    "api_key": "${NVD_API_KEY}"
   }
 }
 EOF
 
-# =============================================================================
-# 8. Base de données MariaDB
-# =============================================================================
-info "Démarrage de MariaDB..."
-systemctl enable --now mariadb
-
-info "Création de la base de données et de l'utilisateur MariaDB..."
-DB_PASSWORD=$(python3 -c "import secrets,string; print(''.join(secrets.choice(string.ascii_letters+string.digits) for _ in range(24)))")
-
-mysql -u root << SQL
-CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`
-    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1'
-    IDENTIFIED BY '${DB_PASSWORD}';
-GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'127.0.0.1';
-FLUSH PRIVILEGES;
-SQL
-
-# Injecter le mot de passe dans .env
-sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=${DB_PASSWORD}/" "$INSTALL_DIR/.env"
-
-# Injecter le mot de passe dans secrets.json
-python3 - << PYEOF
-import json, pathlib
-p = pathlib.Path("$INSTALL_DIR/config/secrets.json")
-d = json.loads(p.read_text())
-d["mariadb"]["password"] = "$DB_PASSWORD"
-p.write_text(json.dumps(d, indent=2, ensure_ascii=False) + "\n")
-PYEOF
-
-info "Mot de passe MariaDB généré et injecté dans .env et config/secrets.json"
+chown :asset-manager /opt/asset-manager/.env /opt/asset-manager/config/secrets.json
+chmod 660 /opt/asset-manager/.env /opt/asset-manager/config/secrets.json
+log ".env et secrets.json configurés"
 
 # =============================================================================
-# 9. Scripts de démarrage
+header "4/6 — Virtualenv Python et dépendances"
 # =============================================================================
-info "Création du script de démarrage..."
-cat > "$INSTALL_DIR/logs/start.sh" << STARTEOF
-#!/bin/bash
-PROJECT_DIR="$INSTALL_DIR"
-VENV_PATH="\$PROJECT_DIR/venv"
+python3 -m venv /opt/asset-manager/venv
+/opt/asset-manager/venv/bin/pip install --upgrade pip -q
 
-if [ -d "\$VENV_PATH" ]; then
-    source "\$VENV_PATH/bin/activate"
+if [ -f /opt/asset-manager/requirements.txt ]; then
+  /opt/asset-manager/venv/bin/pip install -r /opt/asset-manager/requirements.txt -q
+  log "Dépendances Python installées"
+else
+  warn "Pas de requirements.txt, installation des paquets de base"
+  /opt/asset-manager/venv/bin/pip install fastapi uvicorn python-dotenv sqlalchemy pymysql typer mistralai -q
 fi
 
-cd "\$PROJECT_DIR"
+# =============================================================================
+header "5/6 — MariaDB from scratch"
+# =============================================================================
+systemctl start mariadb
+systemctl enable mariadb
 
-exec uvicorn main:app \\
-    --host 0.0.0.0 \\
-    --port 8000 \\
-    --log-level info
-STARTEOF
-chmod +x "$INSTALL_DIR/logs/start.sh"
+until mariadb -u root -e "SELECT 1" &>/dev/null; do
+  warn "Attente de MariaDB..."; sleep 2
+done
 
-cat > "$INSTALL_DIR/start_fastapi.sh" << 'WRAPEOF'
-#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-exec bash "$SCRIPT_DIR/logs/start.sh"
-WRAPEOF
-chmod +x "$INSTALL_DIR/start_fastapi.sh"
+# Sécurisation de base (suppression anonymes + base test)
+mariadb -u root << EOF
+DELETE FROM mysql.user WHERE User='';
+DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+DROP DATABASE IF EXISTS test;
+DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
+FLUSH PRIVILEGES;
+EOF
+log "MariaDB sécurisé (users anonymes supprimés, base test supprimée)"
+
+# Création de la base et de l'utilisateur
+mariadb -u root << EOF
+CREATE DATABASE IF NOT EXISTS ${DB_NAME}
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+CREATE USER IF NOT EXISTS 'avea'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
+CREATE USER IF NOT EXISTS 'avea'@'%'         IDENTIFIED BY '${DB_PASSWORD}';
+GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO 'avea'@'localhost' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO 'avea'@'%'         WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+EOF
+log "Base '${DB_NAME}' et utilisateur 'avea' créés"
+
+# Import du schéma
+if [ -f /opt/asset-manager/sql/schema.sql ]; then
+  mariadb -u root "${DB_NAME}" < /opt/asset-manager/sql/schema.sql
+  log "Schéma SQL importé"
+else
+  error "sql/schema.sql introuvable — le repo est-il bien cloné ?"
+fi
+
+# Création de la vue Grafana
+mariadb -u root "${DB_NAME}" << 'EOF'
+CREATE OR REPLACE VIEW v_vulnerabilites_tableau AS
+SELECT
+    co.id                                                       AS correlation_id,
+    cl.nom                                                      AS client,
+    s.nom                                                       AS site,
+    a.nom_interne                                               AS asset,
+    a.type_equipement,
+    a.niveau_criticite,
+    co.cve_id,
+    cv.cvss_v3_score,
+    cv.cvss_v3_severity,
+    co.score_contextuel,
+    co.priorite,
+    co.statut,
+    co.type_correlation,
+    co.override_utilisateur,
+    COALESCE(co.override_utilisateur, co.type_correlation)      AS decision_patch,
+    co.exploitable_air_gap,
+    co.analyse_mistral,
+    co.risque_reel,
+    co.date_detection,
+    co.date_analyse,
+    cv.description                                              AS cve_description,
+    cv.cvss_v3_vector
+FROM correlations co
+JOIN assets a          ON a.id      = co.asset_id
+JOIN cve cv            ON cv.cve_id = co.cve_id
+JOIN sites s           ON s.id      = a.site_id
+JOIN clients cl        ON cl.id     = s.client_id
+JOIN product_vendors pv ON pv.id   = a.vendor_id
+WHERE co.statut NOT IN ('faux_positif')
+ORDER BY
+    FIELD(co.priorite, 'critique', 'haute', 'moyenne', 'basse'),
+    cv.cvss_v3_score DESC;
+EOF
+log "Vue v_vulnerabilites_tableau créée"
 
 # =============================================================================
-# 10. Service systemd
+header "6/6 — Service systemd"
 # =============================================================================
-info "Création du service systemd '$SERVICE_NAME'..."
-cat > "/etc/systemd/system/${SERVICE_NAME}.service" << SVCEOF
+cat > /etc/systemd/system/asset-manager.service << EOF
 [Unit]
-Description=Asset & Vulnerability Manager — FastAPI
+Description=Asset & Vulnerability Manager - FastAPI
 After=network.target mariadb.service
-Wants=mariadb.service
 
 [Service]
 Type=simple
-User=$SERVICE_USER
-WorkingDirectory=$INSTALL_DIR
-ExecStart=/bin/bash $INSTALL_DIR/start_fastapi.sh
+User=${SUDO_USER_NAME}
+WorkingDirectory=/opt/asset-manager
+EnvironmentFile=/opt/asset-manager/.env
+ExecStart=/opt/asset-manager/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
 Restart=on-failure
 RestartSec=5
-StandardOutput=append:$INSTALL_DIR/logs/FastAPI.log
-StandardError=append:$INSTALL_DIR/logs/FastAPI.log
 
 [Install]
 WantedBy=multi-user.target
-SVCEOF
+EOF
 
 systemctl daemon-reload
-systemctl enable "$SERVICE_NAME"
+systemctl enable asset-manager
+systemctl start asset-manager
+sleep 3
+
+if systemctl is-active --quiet asset-manager; then
+  log "Service asset-manager démarré"
+else
+  warn "Service pas encore actif — vérifie : journalctl -u asset-manager -n 30"
+fi
 
 # =============================================================================
-# 11. Permissions
+# Configuration réseau optionnelle
 # =============================================================================
-info "Application des permissions..."
-chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
-chmod -R 750 "$INSTALL_DIR"
-chmod 640 "$INSTALL_DIR/.env" "$INSTALL_DIR/config/secrets.json"
+echo ""
+echo -e "${YELLOW}Veux-tu configurer une IP statique ? (o/N)${NC}"
+read -rp "  > " CONFIGURE_IP
+
+if [[ "$CONFIGURE_IP" =~ ^[oO]$ ]]; then
+  header "Configuration réseau (IP statique)"
+  ask "Adresse IP       (ex: 192.168.1.100) :"; read -rp "  > " NET_IP
+  ask "Masque CIDR      (ex: 24) :";            read -rp "  > " NET_MASK
+  ask "Passerelle       (ex: 192.168.1.1) :";   read -rp "  > " NET_GW
+  ask "DNS primaire     (ex: 192.168.1.1) :";   read -rp "  > " NET_DNS1
+  ask "DNS secondaire   (ex: 8.8.8.8) :";       read -rp "  > " NET_DNS2
+
+  NET_IFACE=$(ip route | grep default | awk '{print $5}' | head -1)
+  NET_IFACE="${NET_IFACE:-eth0}"
+  NETPLAN_FILE=$(ls /etc/netplan/*.yaml 2>/dev/null | head -1)
+  NETPLAN_FILE="${NETPLAN_FILE:-/etc/netplan/50-cloud-init.yaml}"
+
+  cat > "$NETPLAN_FILE" << EOF
+network:
+  version: 2
+  ethernets:
+    ${NET_IFACE}:
+      dhcp4: false
+      addresses:
+        - ${NET_IP}/${NET_MASK}
+      routes:
+        - to: default
+          via: ${NET_GW}
+      nameservers:
+        addresses:
+          - ${NET_DNS1}
+$([ -n "$NET_DNS2" ] && echo "          - ${NET_DNS2}")
+EOF
+
+  netplan apply
+  log "IP statique configurée : ${NET_IP}/${NET_MASK}"
+  SERVER_IP="${NET_IP}"
+fi
 
 # =============================================================================
-# 12. Résumé
-# =============================================================================
 echo ""
-echo -e "${GREEN}============================================================${NC}"
-echo -e "${GREEN}  Installation terminée avec succès !${NC}"
-echo -e "${GREEN}============================================================${NC}"
+echo -e "${GREEN}=================================================${NC}"
+echo -e "${GREEN}   Installation terminée avec succès !          ${NC}"
+echo -e "${GREEN}=================================================${NC}"
 echo ""
-echo "  Répertoire     : $INSTALL_DIR"
-echo "  Service        : $SERVICE_NAME"
-echo "  Base de données: $DB_NAME  (user: $DB_USER)"
+echo "  FastAPI  : http://${SERVER_IP}:8000"
+echo "  Docs API : http://${SERVER_IP}:8000/docs"
+echo "  MariaDB  : localhost:3306 / base : ${DB_NAME}"
+echo "  Auth BDD : sudo mariadb  (root sans mot de passe)"
 echo ""
-warn "ÉTAPES OBLIGATOIRES avant de démarrer le service :"
-echo "  1. Renseignez SERVER_IP      dans : $INSTALL_DIR/.env"
-echo "  2. Renseignez NVD_API_KEY    dans : $INSTALL_DIR/.env"
-echo "  3. Renseignez MISTRAL_API_KEY dans : $INSTALL_DIR/.env"
-echo "     (et dans config/secrets.json)"
-echo ""
-echo "  Démarrer le service :"
-echo "    sudo systemctl start $SERVICE_NAME"
-echo ""
-echo "  Suivre les logs :"
-echo "    sudo journalctl -u $SERVICE_NAME -f"
-echo "    tail -f $INSTALL_DIR/logs/FastAPI.log"
+echo -e "${YELLOW}Actions manuelles restantes :${NC}"
+echo "  1. Vérifier le service : systemctl status asset-manager"
+echo "  2. Vérifier les logs   : journalctl -u asset-manager -n 50"
+echo "  3. Se reconnecter SSH  : pour activer le groupe asset-manager"
 echo ""
