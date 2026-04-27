@@ -134,6 +134,10 @@ else
   log "Repo cloné dans /opt/asset-manager"
 fi
 
+# Supprimer les fichiers inutiles en production
+rm -rf /opt/asset-manager/.devcontainer
+log ".devcontainer supprimé (inutile en production)"
+
 groupadd -f asset-manager
 usermod -aG asset-manager "$SUDO_USER_NAME" 2>/dev/null || \
   warn_tip "Impossible d'ajouter $SUDO_USER_NAME au groupe asset-manager." \
