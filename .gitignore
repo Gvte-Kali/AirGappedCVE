@@ -9,7 +9,6 @@ __pycache__/
 venv/
 
 # Données sensibles / temporaires
-*.sql
 nohup.out
 logs/*
 !logs/.gitkeep
