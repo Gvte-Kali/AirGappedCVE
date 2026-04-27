@@ -24,7 +24,7 @@ Système de gestion d'assets informatiques et de vulnérabilités de sécurité,
 
 ## 1. Contexte et philosophie
 
-### Le problème
+### Le problème rencontré
 
 Un prestataire IT gère les équipements informatiques de plusieurs clients. Ces clients opèrent dans des **environnements air-gappés** : leurs réseaux sont physiquement coupés d'Internet. Chaque jour, de nouvelles vulnérabilités (CVE) sont publiées par le NVD (National Vulnerability Database). La question est : **lesquelles concernent réellement les assets des clients ?**
 
