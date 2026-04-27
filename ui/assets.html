@@ -339,11 +339,11 @@
         // ═══════════════════════════════════════════════════════════
         //  CONFIGURATION
         // ═══════════════════════════════════════════════════════════
-        const API_ASSETS = '/api/assets';
-        const API_CLIENTS = '/api/clients';
-        const API_SITES = '/api/sites';
-        const API_FABRICANTS = '/api/vendors';
-        const API_MODELES = '/api/models';
+        const API_ASSETS = '/api/assets/';
+        const API_CLIENTS = '/api/clients/';
+        const API_SITES = '/api/sites/';
+        const API_FABRICANTS = '/api/vendors/';
+        const API_MODELES = '/api/models/';
 
         const PAGE_SIZE = 20;
         let page = 1;
@@ -924,7 +924,7 @@
         async function editerAsset(id) {
             resetFormulaireAsset();
 
-            const resp = await fetch(`${API_ASSETS}/${id}`);
+            const resp = await fetch(`${API_ASSETS}${id}`);
             const a = await resp.json();
 
             document.getElementById('assetId').value = a.id;
@@ -1013,7 +1013,7 @@
             };
 
             try {
-                const url = id ? `${API_ASSETS}/${id}` : API_ASSETS;
+                const url = id ? `${API_ASSETS}${id}` : API_ASSETS;
                 const method = id ? 'PUT' : 'POST';
 
                 const r = await fetch(url, {
@@ -1049,7 +1049,7 @@
         document.getElementById('btnConfirmSupprimer').addEventListener('click', async () => {
             if (!assetASupprimer) return;
             try {
-                const r = await fetch(`${API_ASSETS}/${assetASupprimer}`, { method: 'DELETE' });
+                const r = await fetch(`${API_ASSETS}${assetASupprimer}`, { method: 'DELETE' });
                 if (!r.ok) throw new Error(`HTTP ${r.status}`);
                 bootstrap.Modal.getInstance(document.getElementById('modalSupprimer')).hide();
                 assetASupprimer = null;

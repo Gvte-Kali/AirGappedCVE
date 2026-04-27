@@ -112,13 +112,14 @@ async def console_page():
 
 CONSOLE_HTML = """
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asset Manager — Console Scripts</title>
     <link rel="stylesheet" href="/static/bootstrap.min.css">
     <link rel="stylesheet" href="/static/app-search.css">
+    <link rel="stylesheet" href="/static/app-premium.css">
     <style>
         * {
             margin: 0;
@@ -360,7 +361,7 @@ CONSOLE_HTML = """
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #161b22 !important; border-bottom: 1px solid #30363d;">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
@@ -376,19 +377,20 @@ CONSOLE_HTML = """
                     </div>
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/clients">Clients</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/sites">Sites</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/assets">Assets</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/vulns">Vulnérabilités</a></li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 Référentiels
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
+                                <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
+                                <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
                             </ul>
                         </li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/documents">Documents</a></li>
                         <li class="nav-item"><a class="nav-link" href="/docs">API Docs</a></li>
                         <li class="nav-item"><a class="nav-link active" href="/scripts/console">Console</a></li>
                     </ul>

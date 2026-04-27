@@ -228,8 +228,8 @@
     <script src="/static/bootstrap.bundle.min.js"></script>
     <script src="/static/app-search.js"></script>
     <script>
-        const API_SITES = '/api/sites';
-        const API_CLIENTS = '/api/clients';
+        const API_SITES = '/api/sites/';
+        const API_CLIENTS = '/api/clients/';
 
         let tousLesClients = [];
         let tousLesSites = [];
@@ -358,7 +358,7 @@
 
         async function chargerClients() {
             try {
-                const resp = await fetch(API_CLIENTS + '/');
+                const resp = await fetch(API_CLIENTS);
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 tousLesClients = await resp.json();
             } catch (e) {
@@ -566,7 +566,7 @@
         }
 
         async function editerSite(id) {
-            const resp = await fetch(`${API_SITES}/${id}`);
+            const resp = await fetch(`${API_SITES}${id}`);
             const s = await resp.json();
 
             document.getElementById('siteId').value = s.id;
@@ -631,7 +631,7 @@
                 return;
             }
 
-            const url = id ? `${API_SITES}/${id}` : `${API_SITES}/`;
+            const url = id ? `${API_SITES}${id}` : `${API_SITES}`;
             const method = id ? 'PUT' : 'POST';
 
             const resp = await fetch(url, {
@@ -655,7 +655,7 @@
 
         async function supprimerSite(id, nom) {
             if (!confirm(`Supprimer le site "${nom}" ?`)) return;
-            const resp = await fetch(`${API_SITES}/${id}`, { method: 'DELETE' });
+            const resp = await fetch(`${API_SITES}${id}`, { method: 'DELETE' });
             if (resp.ok) {
                 await chargerSites();
             } else {

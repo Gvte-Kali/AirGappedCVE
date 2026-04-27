@@ -212,8 +212,8 @@
     <script src="/static/bootstrap.bundle.min.js"></script>
     <script src="/static/app-search.js"></script>
     <script>
-        const API_MODELS = '/api/models';
-        const API_VENDORS = '/api/vendors';
+        const API_MODELS = '/api/models/';
+        const API_VENDORS = '/api/vendors/';
 
         let allModels = [];
         let allVendors = [];
@@ -456,7 +456,7 @@
             errDiv.classList.add('d-none');
 
             try {
-                const res = await fetch(`${API_MODELS}/${deleteTargetId}`, { method: 'DELETE' });
+                const res = await fetch(`${API_MODELS}${deleteTargetId}`, { method: 'DELETE' });
                 if (!res.ok) {
                     const err = await res.json();
                     throw new Error(err.detail || 'Erreur serveur');

@@ -58,7 +58,9 @@
                                 <li><a class="dropdown-item active" href="/ui/clients">👥 Clients</a></li>
                                 <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
                                 <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
-                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
                             </ul>
@@ -89,51 +91,51 @@
                     <label class="form-label stat-label">Nom du client</label>
                     <input type="hidden" id="filtreClientId" value="">
                     <div class="position-relative">
-                        <input class="form-control" id="filtreClientSearch" type="search"
-                            placeholder="Ex: Acme Corp…" autocomplete="off">
+                        <input class="form-control" id="filtreClientSearch" type="search" placeholder="Ex: Acme Corp…"
+                            autocomplete="off">
                         <div class="suggestion-box mt-1" id="filtreClientSuggestions"></div>
                     </div>
                 </div>
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm" id="filtreActif" onchange="appliquerFiltres()">
-                            <option value="">Tous statuts</option>
-                            <option value="1">Actifs</option>
-                            <option value="0">Inactifs</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-sm btn-outline-secondary w-100" onclick="chargerClients()">
-                            🔄 Rafraîchir
-                        </button>
-                    </div>
+                <div class="col-md-3">
+                    <select class="form-select form-select-sm" id="filtreActif" onchange="appliquerFiltres()">
+                        <option value="">Tous statuts</option>
+                        <option value="1">Actifs</option>
+                        <option value="0">Inactifs</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-sm btn-outline-secondary w-100" onclick="chargerClients()">
+                        🔄 Rafraîchir
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Tableau -->
-        <div class="card overflow-hidden">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="tableClients">
-                    <thead class="bg-black bg-opacity-25">
-                        <tr>
-                            <th class="ps-4">Nom</th>
-                            <th>Contact</th>
-                            <th>Email / Tel</th>
-                            <th>Adresse</th>
-                            <th>Statut</th>
-                            <th class="pe-4">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbodyClients" class="border-top-0">
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-5">
-                                <div class="spinner-border spinner-border-sm text-primary"></div> Chargement...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+    <!-- Tableau -->
+    <div class="card overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="tableClients">
+                <thead class="bg-black bg-opacity-25">
+                    <tr>
+                        <th class="ps-4">Nom</th>
+                        <th>Contact</th>
+                        <th>Email / Tel</th>
+                        <th>Adresse</th>
+                        <th>Statut</th>
+                        <th class="pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyClients" class="border-top-0">
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-5">
+                            <div class="spinner-border spinner-border-sm text-primary"></div> Chargement...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
+    </div>
     </div>
 
     <!-- Modal création/édition -->
@@ -192,7 +194,7 @@
     <script src="/static/bootstrap.bundle.min.js"></script>
     <script src="/static/app-search.js"></script>
     <script>
-        const API = '/api/clients';
+        const API = '/api/clients/';
         let tousLesClients = [];
         let page = 1;
         const PAGE_SIZE = 20;
@@ -416,7 +418,7 @@
 
         // ── Ouvrir modal en mode édition ───────────────────────────
         async function editerClient(id) {
-            const resp = await fetch(`${API}/${id}`);
+            const resp = await fetch(`${API}${id}`);  // /api/clients/123
             const c = await resp.json();
 
             document.getElementById('clientId').value = c.id;
@@ -464,7 +466,7 @@
                 return;
             }
 
-            const url = id ? `${API}/${id}` : `${API}/`;
+            const url = id ? `${API}${id}` : `${API}`;
             const method = id ? 'PUT' : 'POST';
 
             const resp = await fetch(url, {
@@ -485,7 +487,7 @@
         // ── Suppression ────────────────────────────────────────────
         async function supprimerClient(id, nom) {
             if (!confirm(`Supprimer le client "${nom}" ?`)) return;
-            const resp = await fetch(`${API}/${id}`, { method: 'DELETE' });
+            const resp = await fetch(`${API}${id}`, { method: 'DELETE' });
             if (resp.ok) {
                 chargerClients();
             } else {
