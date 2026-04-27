@@ -1,0 +1,25 @@
+# Environnement
+.env
+config/secrets.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+
+# Données sensibles / temporaires
+*.sql
+nohup.out
+logs/*
+!logs/.gitkeep
+data/*
+!data/.gitkeep
+documents/*
+!documents/.gitkeep
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
