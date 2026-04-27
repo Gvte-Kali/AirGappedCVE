@@ -68,7 +68,10 @@ read -rp "  > " MISTRAL_API_KEY
 ask "Modèle Mistral [mistral-large-latest] :"
 read -rp "  > " MISTRAL_MODEL; MISTRAL_MODEL="${MISTRAL_MODEL:-mistral-large-latest}"
 
-ask "Mot de passe pour l'utilisateur MariaDB 'avea' :"
+ask "Nom d'utilisateur MariaDB de gestion [avea] :"
+read -rp "  > " DB_USER; DB_USER="${DB_USER:-avea}"
+
+ask "Mot de passe pour l'utilisateur '${DB_USER}' :"
 read -rsp "  > " DB_PASSWORD; echo ""
 
 ask "Nom de la base de données [asset_vuln_manager] :"
@@ -87,7 +90,7 @@ MISTRAL_MODEL=${MISTRAL_MODEL}
 # Database Infos
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_USER=avea
+DB_USER=${DB_USER}
 DB_PASSWORD=${DB_PASSWORD}
 DB_NAME=${DB_NAME}
 EOF
@@ -99,7 +102,7 @@ cat > /opt/asset-manager/config/secrets.json << EOF
   "mariadb": {
     "host": "127.0.0.1",
     "port": 3306,
-    "user": "avea",
+    "user": "${DB_USER}",
     "password": "${DB_PASSWORD}",
     "database": "${DB_NAME}"
   },
@@ -156,13 +159,13 @@ CREATE DATABASE IF NOT EXISTS ${DB_NAME}
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
-CREATE USER IF NOT EXISTS 'avea'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
-CREATE USER IF NOT EXISTS 'avea'@'%'         IDENTIFIED BY '${DB_PASSWORD}';
-GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO 'avea'@'localhost' WITH GRANT OPTION;
-GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO 'avea'@'%'         WITH GRANT OPTION;
+CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
+CREATE USER IF NOT EXISTS '${DB_USER}'@'%'         IDENTIFIED BY '${DB_PASSWORD}';
+GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'%'         WITH GRANT OPTION;
 FLUSH PRIVILEGES;
 EOF
-log "Base '${DB_NAME}' et utilisateur 'avea' créés"
+log "Base '${DB_NAME}' et utilisateur '${DB_USER}' créés"
 
 # Import du schéma
 if [ -f /opt/asset-manager/sql/schema.sql ]; then
