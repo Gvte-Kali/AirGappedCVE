@@ -29,7 +29,7 @@ DB_NAME=asset_vuln_manager
 ENVEOF
 
 echo "=== Attente de MariaDB ==="
-until mariadb -h 127.0.0.1 -u avea -pdevpassword asset_vuln_manager -e "SELECT 1" &>/dev/null; do
+until mariadb -h 127.0.0.1 -u avea -pdevpassword asset_vuln_manager --skip-ssl -e "SELECT 1" &>/dev/null; do
   echo "MariaDB pas encore prêt, attente..."
   sleep 2
 done

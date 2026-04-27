@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 def get_connection():
     return pymysql.connect(
         host=os.getenv("DB_HOST", "127.0.0.1"),
@@ -16,4 +17,5 @@ def get_connection():
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor,
         autocommit=False,
+        ssl_disabled=True,
     )

@@ -10,7 +10,7 @@ from typing import List, Dict
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
-DOCUMENTS_DIR = Path("/opt/asset-manager/documents")
+DOCUMENTS_DIR = Path(__file__).parent.parent / "documents"
 
 # S'assurer que le répertoire existe
 DOCUMENTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -54,7 +54,8 @@ async def list_documents() -> Dict[str, List[Dict]]:
         return {"documents": documents}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la liste des documents: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Erreur lors de la liste des documents: {str(e)}")
 
 
 @router.get("/{filename}")
@@ -78,7 +79,8 @@ async def download_document(filename: str, preview: bool = False):
 
         # Vérifier que c'est bien un PDF
         if not filename.lower().endswith('.pdf'):
-            raise HTTPException(status_code=400, detail="Seuls les fichiers PDF sont autorisés")
+            raise HTTPException(
+                status_code=400, detail="Seuls les fichiers PDF sont autorisés")
 
         # Vérifier que le fichier est bien dans le répertoire documents (sécurité)
         try:
@@ -106,7 +108,8 @@ async def download_document(filename: str, preview: bool = False):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors du téléchargement: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Erreur lors du téléchargement: {str(e)}")
 
 
 @router.delete("/{filename}")
@@ -129,7 +132,8 @@ async def delete_document(filename: str) -> Dict[str, str]:
 
         # Vérifier que c'est bien un PDF
         if not filename.lower().endswith('.pdf'):
-            raise HTTPException(status_code=400, detail="Seuls les fichiers PDF peuvent être supprimés")
+            raise HTTPException(
+                status_code=400, detail="Seuls les fichiers PDF peuvent être supprimés")
 
         # Vérifier que le fichier est bien dans le répertoire documents (sécurité)
         try:
@@ -145,4 +149,5 @@ async def delete_document(filename: str) -> Dict[str, str]:
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
