@@ -27,7 +27,7 @@ import functools
 print = functools.partial(print, flush=True)
 
 # ── Configuration ──────────────────────────────────────────────
-BASE_DIR = Path("/opt/asset-manager/data/nvd")
+BASE_DIR = Path(__file__).resolve().parent.parent / "data" / "nvd"
 RAW_DIR = BASE_DIR / "raw"
 CWE_DIR = BASE_DIR / "cwe"
 STATE_FILE = BASE_DIR / "sync_state.json"

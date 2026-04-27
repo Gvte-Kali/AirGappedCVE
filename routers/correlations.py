@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Response, Query, BackgroundTasks
 import logging
+from pathlib import Path
 from pydantic import BaseModel
 from typing import Optional
 import subprocess
@@ -7,6 +8,8 @@ import os
 from database import get_connection
 
 router = APIRouter()
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ─── Schémas Pydantic ───────────────────────────────────────────────────────
 
@@ -294,8 +297,8 @@ def execute_correlation(mode: str):
     global correlation_status
 
     try:
-        script_path = "/opt/asset-manager/scripts/correlate_and_analyze.py"
-        python_path = "/opt/asset-manager/venv/bin/python3"
+        script_path = str(BASE_DIR / "scripts" / "correlate_and_analyze.py")
+        python_path = str(BASE_DIR / "venv" / "bin" / "python3")
 
         correlation_status["message"] = f"Exécution de '{mode}'..."
         correlation_status["logs"].append(f"[INFO] Démarrage de '{mode}'")
@@ -310,7 +313,7 @@ def execute_correlation(mode: str):
         
         process = subprocess.Popen(
             [python_path, script_path, mode],
-            cwd="/opt/asset-manager",
+            cwd=str(BASE_DIR),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,

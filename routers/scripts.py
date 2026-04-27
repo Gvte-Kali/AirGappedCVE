@@ -7,8 +7,9 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 router = APIRouter(prefix="/scripts", tags=["scripts"])
 
-SCRIPTS_DIR = Path("/opt/asset-manager/scripts")
-VENV_PYTHON = Path("/opt/asset-manager/venv/bin/python")
+BASE_DIR = Path(__file__).resolve().parent.parent
+SCRIPTS_DIR = BASE_DIR / "scripts"
+VENV_PYTHON = BASE_DIR / "venv" / "bin" / "python"
 
 
 @router.get("/list")

@@ -11,13 +11,16 @@ Usage:
   python correlate_and_analyze.py --help
   python correlate_and_analyze.py correlate
   python correlate_and_analyze.py analyze
-  python correlate_and_analyze.py report --output-dir /opt/asset-manager/documents
+  python correlate_and_analyze.py report --output-dir <BASE_DIR>/documents
   python correlate_and_analyze.py run-all
 """
 
 import os
 import sys
 import json
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 import logging
 import time
 from datetime import datetime
@@ -40,7 +43,7 @@ from reportlab.platypus import (
 )
 from reportlab.lib.enums import TA_LEFT, TA_CENTER
 
-sys.path.insert(0, "/opt/asset-manager")
+sys.path.insert(0, str(BASE_DIR))
 from database import get_connection
 
 # ---------------------------------------------------------------------------
@@ -1176,7 +1179,7 @@ def generate_complet_pdf(complet_pdf: str, rows: list, stats: dict, styles: dict
 
 @app.command()
 def report(
-    output_dir: str          = typer.Option("/opt/asset-manager/documents", "--output-dir", "-d"),
+    output_dir: str          = typer.Option(str(BASE_DIR / "documents"), "--output-dir", "-d"),
     client_id:  Optional[int] = typer.Option(None,  "--client-id",  help="Filtrer par client"),
     asset_id:   Optional[int] = typer.Option(None,  "--asset-id",   help="Filtrer par asset"),
     statuts:    str           = typer.Option(

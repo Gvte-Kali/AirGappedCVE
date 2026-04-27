@@ -1,5 +1,3 @@
-# /opt/asset-manager/database.py
-
 import os
 import pymysql
 from dotenv import load_dotenv

@@ -8,6 +8,9 @@ import json
 import os
 import sys
 import glob
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Remonte d'un niveau pour atteindre le répertoire parent
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -288,7 +291,7 @@ def process_file(filepath, conn, vendor_all, vendor_products, stats):
 # ──────────────────────────────────────────────
 def main():
     # Répertoire des fichiers JSON NVD
-    nvd_dir = os.getenv("NVD_DATA_DIR", "/opt/asset-manager/data/nvd/raw/")
+    nvd_dir = os.getenv("NVD_DATA_DIR", str(BASE_DIR / "data" / "nvd" / "raw"))
 
     if not os.path.isdir(nvd_dir):
         print(f"[ERREUR] Répertoire NVD introuvable : {nvd_dir}")
