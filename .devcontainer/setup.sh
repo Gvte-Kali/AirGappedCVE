@@ -4,6 +4,7 @@ set -e
 
 echo "=== Installation des dépendances Python ==="
 cd /workspace
+sudo apt-get install -y mariadb-client -q
 python3 -m venv venv
 venv/bin/pip install --upgrade pip -q
 venv/bin/pip install -r requirements.txt -q
