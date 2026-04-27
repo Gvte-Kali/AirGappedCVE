@@ -143,7 +143,7 @@ chmod -R 775 /opt/asset-manager
 
 # Créer les dossiers nécessaires
 mkdir -p /opt/asset-manager/logs /opt/asset-manager/data \
-         /opt/asset-manager/documents /opt/asset-manager/config
+         /opt/asset-manager/documents
 
 log "Groupe et permissions configurés"
 step_ok "Repo cloné et permissions configurées"
@@ -239,29 +239,10 @@ DB_PASSWORD=${DB_PASSWORD}
 DB_NAME=${DB_NAME}
 EOF
 
-# Écriture de secrets.json
-cat > /opt/asset-manager/config/secrets.json << EOF
-{
-  "mariadb": {
-    "host": "127.0.0.1",
-    "port": 3306,
-    "user": "${DB_USER}",
-    "password": "${DB_PASSWORD}",
-    "database": "${DB_NAME}"
-  },
-  "mistral": {
-    "api_key": "${MISTRAL_API_KEY}"
-  },
-  "nvd": {
-    "api_key": "${NVD_API_KEY}"
-  }
-}
-EOF
-
-chown :asset-manager /opt/asset-manager/.env /opt/asset-manager/config/secrets.json
-chmod 660 /opt/asset-manager/.env /opt/asset-manager/config/secrets.json
-log ".env et secrets.json configurés"
-step_ok ".env et secrets.json générés"
+chown :asset-manager /opt/asset-manager/.env
+chmod 660 /opt/asset-manager/.env
+log ".env configuré"
+step_ok ".env généré"
 
 # =============================================================================
 header "4/6 — Virtualenv Python et dépendances"
