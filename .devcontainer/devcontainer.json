@@ -3,16 +3,27 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
-
-  "forwardPorts": [8000, 3306],
+  "forwardPorts": [
+    8000,
+    3306,
+    3000
+  ],
   "portsAttributes": {
-    "8000": { "label": "FastAPI", "onAutoForward": "openBrowser" },
-    "3306": { "label": "MariaDB", "onAutoForward": "silent" }
+    "8000": {
+      "label": "FastAPI",
+      "onAutoForward": "openBrowser"
+    },
+    "3000": {
+      "label": "Grafana",
+      "onAutoForward": "notify"
+    },
+    "3306": {
+      "label": "MariaDB",
+      "onAutoForward": "silent"
+    }
   },
-
   "postCreateCommand": "bash .devcontainer/setup.sh",
   "postStartCommand": "bash .devcontainer/start.sh",
-
   "customizations": {
     "vscode": {
       "extensions": [
@@ -29,9 +40,12 @@
       }
     }
   },
-
   "secrets": {
-    "NVD_API_KEY": { "description": "Clé API NVD (nvd.nist.gov)" },
-    "MISTRAL_API_KEY": { "description": "Clé API Mistral (console.mistral.ai)" }
+    "NVD_API_KEY": {
+      "description": "Clé API NVD (nvd.nist.gov)"
+    },
+    "MISTRAL_API_KEY": {
+      "description": "Clé API Mistral (console.mistral.ai)"
+    }
   }
 }

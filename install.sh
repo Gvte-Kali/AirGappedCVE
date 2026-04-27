@@ -76,7 +76,7 @@ echo ""
 # =============================================================================
 # VÉRIFICATION DES PRÉREQUIS
 # =============================================================================
-header "0/6 — Vérification des prérequis"
+header "0/7 — Vérification des prérequis"
 
 # Connexion internet
 info "Vérification de la connexion internet..."
@@ -104,7 +104,7 @@ log "Système compatible détecté"
 step_ok "Prérequis validés"
 
 # =============================================================================
-header "1/6 — Mise à jour système et dépendances"
+header "1/7 — Mise à jour système et dépendances"
 # =============================================================================
 info "Mise à jour des paquets (peut prendre quelques minutes)..."
 apt update -q && apt upgrade -y -q || \
@@ -119,7 +119,7 @@ log "Paquets système installés"
 step_ok "Dépendances système installées"
 
 # =============================================================================
-header "2/6 — Clone du repo"
+header "2/7 — Clone du repo"
 # =============================================================================
 if [ -d /opt/asset-manager/.git ]; then
   warn "Dossier /opt/asset-manager déjà existant — mise à jour depuis GitHub"
@@ -153,7 +153,7 @@ log "Groupe et permissions configurés"
 step_ok "Repo cloné et permissions configurées"
 
 # =============================================================================
-header "3/6 — Configuration du .env"
+header "3/7 — Configuration du .env"
 # =============================================================================
 echo ""
 echo "  Remplis les informations suivantes pour configurer le système."
@@ -249,7 +249,7 @@ log ".env configuré"
 step_ok ".env généré"
 
 # =============================================================================
-header "4/6 — Virtualenv Python et dépendances"
+header "4/7 — Virtualenv Python et dépendances"
 # =============================================================================
 info "Création du virtualenv Python..."
 python3 -m venv /opt/asset-manager/venv || \
@@ -274,7 +274,7 @@ fi
 step_ok "Virtualenv Python et dépendances installés"
 
 # =============================================================================
-header "5/6 — MariaDB from scratch"
+header "5/7 — MariaDB from scratch"
 # =============================================================================
 info "Démarrage de MariaDB..."
 systemctl start mariadb || \
@@ -372,7 +372,7 @@ log "Vue v_vulnerabilites_tableau créée"
 step_ok "MariaDB configuré (base, utilisateur, schéma, vue)"
 
 # =============================================================================
-header "6/6 — Service systemd"
+header "6/7 — Service systemd"
 # =============================================================================
 info "Création du service systemd..."
 cat > /etc/systemd/system/asset-manager.service << EOF
@@ -416,6 +416,62 @@ done
 systemctl is-active --quiet asset-manager && {
   log "Service asset-manager démarré avec succès"
   step_ok "Service systemd actif sur le port 8000"
+}
+
+# =============================================================================
+header "7/7 — Installation et configuration de Grafana"
+# =============================================================================
+info "Ajout du dépôt Grafana..."
+wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
+echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | tee /etc/apt/sources.list.d/grafana.list
+apt-get update -q && apt-get install -y grafana -q || \
+  error "Échec de l'installation de Grafana." \
+        "Vérifie ta connexion ou les sources APT."
+log "Grafana installé"
+
+info "Configuration de la datasource MariaDB..."
+mkdir -p /etc/grafana/provisioning/datasources
+cat > /etc/grafana/provisioning/datasources/mariadb.yml << EOF
+apiVersion: 1
+datasources:
+  - name: MariaDB
+    type: mysql
+    url: localhost:3306
+    user: ${DB_USER}
+    secureJsonData:
+      password: ${DB_PASSWORD}
+    jsonData:
+      database: ${DB_NAME}
+      maxOpenConns: 10
+      maxIdleConns: 10
+      connMaxLifetime: 14400
+      tlsAuth: false
+      tlsAuthWithCACert: false
+    isDefault: true
+    editable: true
+EOF
+log "Datasource MariaDB provisionnée"
+
+info "Démarrage du service Grafana..."
+systemctl daemon-reload
+systemctl enable grafana-server -q
+systemctl start grafana-server
+
+info "Attente que Grafana réponde sur le port 3000..."
+RETRIES=0
+until curl -sf http://localhost:3000/api/health &>/dev/null; do
+  RETRIES=$((RETRIES+1))
+  [ "$RETRIES" -ge 15 ] && {
+    step_warn "Grafana ne répond pas après 30 secondes"
+    warn_tip "Grafana n'est pas encore disponible." \
+             "Vérifie : journalctl -u grafana-server -n 30"
+    break
+  }
+  sleep 2
+done
+curl -sf http://localhost:3000/api/health &>/dev/null && {
+  log "Grafana opérationnel sur le port 3000"
+  step_ok "Grafana installé et démarré (port 3000)"
 }
 
 # =============================================================================
@@ -503,6 +559,7 @@ echo ""
 echo -e "  ${BOLD}FastAPI${NC}  : http://${SERVER_IP}:8000"
 echo -e "  ${BOLD}Docs API${NC} : http://${SERVER_IP}:8000/docs"
 echo -e "  ${BOLD}MariaDB${NC}  : localhost:3306 — base : ${DB_NAME}"
+echo "  Grafana  : http://${SERVER_IP}:3000 (admin/admin)"
 echo -e "  ${BOLD}Logs${NC}     : /opt/asset-manager/logs/FastAPI.log"
 echo ""
 echo -e "${YELLOW}${BOLD}Actions manuelles restantes :${NC}"
