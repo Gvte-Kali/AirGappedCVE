@@ -169,18 +169,19 @@
     <script>
         async function loadStats() {
             try {
-                const [clients, sites, assets, vendors, models, vulns] = await Promise.all([
-                    fetch('/api/clients/?nolimit=true').then(r => r.json()),
-                    fetch('/api/sites/?nolimit=true').then(r => r.json()),
-                    fetch('/api/assets/?nolimit=true').then(r => r.json()),
+                const getCount = url => fetch(url + '?limit=1').then(r => parseInt(r.headers.get('X-Total-Count') || '0', 10));
+                const [nbClients, nbSites, nbAssets, vendors, models, vulns] = await Promise.all([
+                    getCount('/api/clients/'),
+                    getCount('/api/sites/'),
+                    getCount('/api/assets/'),
                     fetch('/api/vendors').then(r => r.json()),
                     fetch('/api/models').then(r => r.json()),
                     fetch('/api/correlations/stats').then(r => r.json()),
                 ]);
 
-                document.getElementById('stat-clients').textContent = clients.length;
-                document.getElementById('stat-sites').textContent = sites.length;
-                document.getElementById('stat-assets').textContent = assets.length;
+                document.getElementById('stat-clients').textContent = nbClients;
+                document.getElementById('stat-sites').textContent = nbSites;
+                document.getElementById('stat-assets').textContent = nbAssets;
                 document.getElementById('stat-vendors').textContent = vendors.total || 0;
                 document.getElementById('stat-models').textContent = models.total || 0;
                 document.getElementById('stat-vulns').textContent = vulns.confirme || 0;

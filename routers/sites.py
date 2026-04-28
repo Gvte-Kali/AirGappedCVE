@@ -40,30 +40,31 @@ class SiteUpdate(BaseModel):
 def list_sites(
     response: Response,
     client_id: Optional[int] = None,
+    actif: Optional[bool] = None,
     limit: int = Query(20, ge=1),
-    skip: int = Query(0, ge=0),
-    nolimit: bool = False
+    skip: int = Query(0, ge=0)
 ):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # Prepare WHERE clause
-            where_sql = ""
-            params = []
+            where_clauses = []
+            params_where = []
             if client_id is not None:
-                where_sql = "WHERE s.client_id = %s"
-                params.append(client_id)
+                where_clauses.append("s.client_id = %s")
+                params_where.append(client_id)
+            if actif is not None:
+                where_clauses.append("s.actif = %s")
+                params_where.append(1 if actif else 0)
+            where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
 
             # 1. Total count
-            cursor.execute(f"SELECT COUNT(*) as total FROM sites s {where_sql}", params)
+            cursor.execute(f"SELECT COUNT(*) as total FROM sites s {where_sql}", params_where)
             total_count = cursor.fetchone()["total"]
             response.headers["X-Total-Count"] = str(total_count)
 
             # 2. Paginated data
-            limit_sql = ""
-            if not nolimit:
-                limit_sql = "LIMIT %s OFFSET %s"
-                params.extend([limit, skip])
+            params = params_where + [limit, skip]
+            limit_sql = "LIMIT %s OFFSET %s"
 
             query = f"""
                 SELECT

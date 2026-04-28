@@ -22,3 +22,4 @@ documents/*
 
 # OS
 .DS_Store
+.vscode/settings.json

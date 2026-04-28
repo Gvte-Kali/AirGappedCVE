@@ -44,7 +44,9 @@
                                 <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
                                 <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
                                 <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
-                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li><a class="dropdown-item active" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
                             </ul>
@@ -165,7 +167,7 @@
     <script src="/static/bootstrap.bundle.min.js"></script>
     <script src="/static/app-search.js"></script>
     <script>
-        const API = '/api/vendors/';
+        const API = '/api/vendors';
         let allVendors = [];
         let deleteTargetId = null;
         let page = 1;
@@ -224,15 +226,12 @@
             if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted"><div class="spinner-border spinner-border-sm"></div> Chargement...</td></tr>';
 
             try {
-                const queryParams = new URLSearchParams();
-                queryParams.append('limit', PAGE_SIZE);
-                queryParams.append('skip', (page - 1) * PAGE_SIZE);
-
+                const queryParams = new URLSearchParams({
+                    limit: PAGE_SIZE,
+                    skip: (page - 1) * PAGE_SIZE
+                });
                 const q = document.getElementById('searchInput')?.value.trim() || '';
-                if (q) {
-                    queryParams.append('search', q);
-                    queryParams.append('nolimit', 'true'); // Search bypasses pagination limit if desired, based on the requirements!
-                }
+                if (q) queryParams.append('search', q);
 
                 const res = await fetch(`${API}?${queryParams.toString()}`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -242,12 +241,6 @@
 
                 const data = await res.json();
                 allVendors = data.vendors || [];
-
-                if (q) {
-                    // Update total count accurately to match search results count
-                    totalVendorsCount = allVendors.length;
-                }
-
                 renderTable(allVendors);
             } catch (e) {
                 console.error(e);
@@ -264,13 +257,8 @@
                 return;
             }
 
-            const q = document.getElementById('searchInput')?.value.trim() || '';
-            if (q) {
-                masquerPagination();
-            } else {
-                const totalPages = Math.ceil(totalVendorsCount / PAGE_SIZE);
-                afficherPagination(page, totalPages, totalVendorsCount);
-            }
+            const totalPages = Math.ceil(totalVendorsCount / PAGE_SIZE);
+            afficherPagination(page, totalPages, totalVendorsCount);
             tbody.innerHTML = vendors.map(v => `
         <tr>
             <td class="ps-4"><strong>${esc(v.nom)}</strong></td>

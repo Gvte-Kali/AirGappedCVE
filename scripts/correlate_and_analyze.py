@@ -15,46 +15,47 @@ Usage:
   python correlate_and_analyze.py run-all
 """
 
+import functools
+from database import get_connection
+from reportlab.lib.enums import TA_LEFT, TA_CENTER
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
+    PageBreak, HRFlowable
+)
+from reportlab.lib import colors
+from reportlab.lib.units import cm
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import A4
+from mistralai.client.sdk import Mistral
+import pymysql
+import typer
+from dotenv import load_dotenv
+from tqdm import tqdm
+from typing import Optional
+from datetime import datetime
+import time
+import logging
 import os
 import sys
 import json
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-import logging
-import time
-from datetime import datetime
-from typing import Optional
-from tqdm import tqdm
 
-from dotenv import load_dotenv
 load_dotenv()
 
-import typer
-import pymysql
-from mistralai import Mistral
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import cm
-from reportlab.lib import colors
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, HRFlowable
-)
-from reportlab.lib.enums import TA_LEFT, TA_CENTER
 
 sys.path.insert(0, str(BASE_DIR))
-from database import get_connection
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
-MISTRAL_API_KEY   = os.getenv("MISTRAL_API_KEY", "")
-MISTRAL_MODEL     = os.getenv("MISTRAL_MODEL", "mistral-large-latest")
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "")
+MISTRAL_MODEL = os.getenv("MISTRAL_MODEL", "mistral-large-latest")
 
 # Pause entre chaque appel Mistral pour éviter le rate limiting (secondes)
-MISTRAL_DELAY     = float(os.getenv("MISTRAL_DELAY", "1.5"))
+MISTRAL_DELAY = float(os.getenv("MISTRAL_DELAY", "1.5"))
 
 # Nombre max de corrélations à analyser par run (0 = illimité)
 MISTRAL_BATCH_MAX = int(os.getenv("MISTRAL_BATCH_MAX", "0"))
@@ -66,14 +67,15 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 # Forcer le flush de stdout pour affichage en temps réel
-import functools
 print = functools.partial(print, flush=True)
 
-app = typer.Typer(help="Pipeline corrélation CVE / analyse Mistral / rapport PDF")
+app = typer.Typer(
+    help="Pipeline corrélation CVE / analyse Mistral / rapport PDF")
 
 # ---------------------------------------------------------------------------
 # Helpers BDD
 # ---------------------------------------------------------------------------
+
 
 def dict_cursor(conn):
     """Retourne un curseur qui renvoie des dicts avec pymysql."""
@@ -196,8 +198,8 @@ def is_os_firmware_cve(cve_product, cve_versions):
 
     # Mots-clés composants (à exclure)
     component_keywords = ['library', 'lib', 'component', 'plugin', 'module',
-                         'service', 'daemon', 'application', 'app', 'tool',
-                         'utility', 'driver']
+                          'service', 'daemon', 'application', 'app', 'tool',
+                          'utility', 'driver']
 
     # Vérifier les mots-clés composants d'abord (exclusion)
     for keyword in component_keywords:
@@ -216,6 +218,8 @@ def is_os_firmware_cve(cve_product, cve_versions):
 # ---------------------------------------------------------------------------
 # Barre de chargement
 # ---------------------------------------------------------------------------
+
+
 def get_progress_bar(iterable, total, description=""):
     """
     Retourne une barre de progression compatible terminal et navigateur.
@@ -237,9 +241,11 @@ def get_progress_bar(iterable, total, description=""):
 # ÉTAPE 1 — Corrélation grossière par fabricant
 # ---------------------------------------------------------------------------
 
+
 @app.command()
 def correlate(
-    dry_run: bool = typer.Option(False, "--dry-run", help="Affiche sans insérer")
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Affiche sans insérer")
 ):
     """
     Corrélation grossière : asset.vendor (nvd_vendor) → cve.fabricant.
@@ -250,7 +256,7 @@ def correlate(
     print("=" * 70 + "\n")
 
     conn = get_connection()
-    cur  = dict_cursor(conn)
+    cur = dict_cursor(conn)
 
     # Récupère tous les assets actifs avec leur nvd_vendor
     cur.execute("""
@@ -285,7 +291,7 @@ def correlate(
         raise typer.Exit()
 
     inserted = 0
-    skipped  = 0
+    skipped = 0
     total_filtered = 0
 
     if dry_run:
@@ -324,7 +330,8 @@ def correlate(
             for cve in cves:
                 # === FILTRE 1 : Type de CVE (OS/firmware uniquement) ===
                 try:
-                    versions_data = json.loads(cve["versions_affectees"]) if cve["versions_affectees"] else []
+                    versions_data = json.loads(
+                        cve["versions_affectees"]) if cve["versions_affectees"] else []
                 except:
                     versions_data = []
 
@@ -385,7 +392,8 @@ def correlate(
             total_filtered += filtered_out
 
             # Mise à jour de la barre
-            pbar.set_postfix_str(f"{asset_name} | +{asset_new} CVE | Filtrées: {filtered_out}")
+            pbar.set_postfix_str(
+                f"{asset_name} | +{asset_new} CVE | Filtrées: {filtered_out}")
 
     conn.close()
 
@@ -496,38 +504,38 @@ def analyze_with_mistral(client: Mistral, correlation: dict) -> Optional[dict]:
     Retourne None en cas d'échec.
     """
     prompt = MISTRAL_USER_PROMPT.format(
-        nom_interne          = correlation["nom_interne"]          or "N/A",
-        type_equipement      = correlation["type_equipement"]      or "N/A",
-        nvd_vendor           = correlation["nvd_vendor"]           or "N/A",
-        model_nom            = correlation["model_nom"]            or "N/A",
-        systeme_exploitation = correlation["systeme_exploitation"] or "N/A",
-        version_os           = correlation["version_os"]           or "N/A",
-        version_firmware     = correlation["version_firmware"]     or "N/A",
-        version_bios         = correlation["version_bios"]         or "N/A",
-        niveau_criticite     = correlation["niveau_criticite"]     or "N/A",
-        site_nom             = correlation["site_nom"]             or "N/A",
-        client_nom           = correlation["client_nom"]           or "N/A",
-        cve_id               = correlation["cve_id"],
-        description          = (correlation["description"] or "")[:800],
-        cvss_v3_score        = correlation["cvss_v3_score"]        or "N/A",
-        cvss_v3_severity     = correlation["cvss_v3_severity"]     or "N/A",
-        cvss_v3_vector       = correlation["cvss_v3_vector"]       or "N/A",
-        fabricant            = correlation["fabricant"]            or "N/A",
-        produit              = correlation["produit"]              or "N/A",
-        versions_affectees   = json.dumps(
+        nom_interne=correlation["nom_interne"] or "N/A",
+        type_equipement=correlation["type_equipement"] or "N/A",
+        nvd_vendor=correlation["nvd_vendor"] or "N/A",
+        model_nom=correlation["model_nom"] or "N/A",
+        systeme_exploitation=correlation["systeme_exploitation"] or "N/A",
+        version_os=correlation["version_os"] or "N/A",
+        version_firmware=correlation["version_firmware"] or "N/A",
+        version_bios=correlation["version_bios"] or "N/A",
+        niveau_criticite=correlation["niveau_criticite"] or "N/A",
+        site_nom=correlation["site_nom"] or "N/A",
+        client_nom=correlation["client_nom"] or "N/A",
+        cve_id=correlation["cve_id"],
+        description=(correlation["description"] or "")[:800],
+        cvss_v3_score=correlation["cvss_v3_score"] or "N/A",
+        cvss_v3_severity=correlation["cvss_v3_severity"] or "N/A",
+        cvss_v3_vector=correlation["cvss_v3_vector"] or "N/A",
+        fabricant=correlation["fabricant"] or "N/A",
+        produit=correlation["produit"] or "N/A",
+        versions_affectees=json.dumps(
             correlation["versions_affectees"] or [], ensure_ascii=False
         )[:600],
     )
 
     try:
         response = client.chat.complete(
-            model    = MISTRAL_MODEL,
-            messages = [
+            model=MISTRAL_MODEL,
+            messages=[
                 {"role": "system", "content": MISTRAL_SYSTEM_PROMPT},
                 {"role": "user",   "content": prompt},
             ],
-            temperature = 0.1,
-            max_tokens  = 1024,
+            temperature=0.1,
+            max_tokens=1024,
         )
         raw = response.choices[0].message.content.strip()
 
@@ -545,7 +553,8 @@ def analyze_with_mistral(client: Mistral, correlation: dict) -> Optional[dict]:
         log.error(f"JSON invalide pour {correlation['cve_id']} : {e}")
         return None
     except Exception as e:
-        log.error(f"Erreur Mistral pour {correlation['cve_id']} : {type(e).__name__}: {e}")
+        log.error(
+            f"Erreur Mistral pour {correlation['cve_id']} : {type(e).__name__}: {e}")
         return None
 
 
@@ -578,7 +587,7 @@ def analyze(
 
     mistral_client = Mistral(api_key=MISTRAL_API_KEY)
     conn = get_connection()
-    cur  = dict_cursor(conn)
+    cur = dict_cursor(conn)
 
     # Statuts éligibles et filtrage par date_analyse pour éviter les réanalyses
     if not force:
@@ -637,7 +646,7 @@ def analyze(
         return
 
     processed = 0
-    errors    = 0
+    errors = 0
     confirmed = 0
     false_positives = 0
 
@@ -659,7 +668,8 @@ def analyze(
         for corr in pbar:
             # Afficher les stats dans la barre de progression
             asset_name = corr['nom_interne'][:20]
-            pbar.set_postfix_str(f"{asset_name} | ✅ {confirmed} | ❌ {false_positives} | ⚠️ {errors}")
+            pbar.set_postfix_str(
+                f"{asset_name} | ✅ {confirmed} | ❌ {false_positives} | ⚠️ {errors}")
 
             # Passe en 'en_analyse' pendant le traitement
             cur.execute("""
@@ -671,7 +681,8 @@ def analyze(
             # Désérialise versions_affectees si c'est une string
             if isinstance(corr["versions_affectees"], str):
                 try:
-                    corr["versions_affectees"] = json.loads(corr["versions_affectees"])
+                    corr["versions_affectees"] = json.loads(
+                        corr["versions_affectees"])
                 except Exception:
                     corr["versions_affectees"] = []
 
@@ -701,9 +712,9 @@ def analyze(
                 score = max(0.0, min(10.0, float(score)))
 
             analyse_text = (
-                f"[Confidence: {result.get('confidence','N/A')}]\n\n"
-                f"{result.get('analyse_complete','')}\n\n"
-                f"Recommandation: {result.get('recommandation','')}"
+                f"[Confidence: {result.get('confidence', 'N/A')}]\n\n"
+                f"{result.get('analyse_complete', '')}\n\n"
+                f"Recommandation: {result.get('recommandation', '')}"
             )
 
             # Mise à jour en base
@@ -849,7 +860,8 @@ def generate_synthese_pdf(synthese_pdf: str, rows: list, stats: dict, styles: di
         f"Environnements air-gapped",
         styles["subtitle"]
     ))
-    story.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor("#1A252F")))
+    story.append(HRFlowable(width="100%", thickness=2,
+                 color=colors.HexColor("#1A252F")))
     story.append(Spacer(1, 0.5*cm))
 
     # Tableau de synthèse globale
@@ -858,9 +870,9 @@ def generate_synthese_pdf(synthese_pdf: str, rows: list, stats: dict, styles: di
         ["Indicateur", "Valeur"],
         ["Total vulnérabilités analysées", str(stats["total"] or 0)],
         ["Critique",  str(stats["nb_critique"] or 0)],
-        ["Haute",     str(stats["nb_haute"]    or 0)],
-        ["Moyenne",   str(stats["nb_moyenne"]  or 0)],
-        ["Basse",     str(stats["nb_basse"]    or 0)],
+        ["Haute",     str(stats["nb_haute"] or 0)],
+        ["Moyenne",   str(stats["nb_moyenne"] or 0)],
+        ["Basse",     str(stats["nb_basse"] or 0)],
         ["Exploitables en air-gap", str(stats["nb_air_gap"] or 0)],
     ]
     summary_table = Table(summary_data, colWidths=[10*cm, 4*cm])
@@ -875,17 +887,19 @@ def generate_synthese_pdf(synthese_pdf: str, rows: list, stats: dict, styles: di
         ("ALIGN",       (1, 0), (1, -1),  "CENTER"),
         ("VALIGN",      (0, 0), (-1, -1), "MIDDLE"),
         ("TOPPADDING",  (0, 0), (-1, -1), 5),
-        ("BOTTOMPADDING",(0,0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
     ]))
     story.append(summary_table)
     story.append(Spacer(1, 0.8*cm))
 
     # Liste synthétique des vulnérabilités critiques et hautes
-    story.append(Paragraph("Vulnérabilités critiques et hautes par asset", styles["h1"]))
+    story.append(
+        Paragraph("Vulnérabilités critiques et hautes par asset", styles["h1"]))
     story.append(Spacer(1, 0.3*cm))
 
     # Filtrer pour ne garder que critiques et hautes
-    critical_high_rows = [r for r in rows if r["priorite"] in ("critique", "haute")]
+    critical_high_rows = [
+        r for r in rows if r["priorite"] in ("critique", "haute")]
 
     if critical_high_rows:
         # Regrouper par asset
@@ -904,7 +918,8 @@ def generate_synthese_pdf(synthese_pdf: str, rows: list, stats: dict, styles: di
         )
 
         # Créer la table des vulnérabilités
-        vuln_data = [["CVE ID", "Client", "Site", "Asset", "Priorité", "Score", "Recommandation"]]
+        vuln_data = [["CVE ID", "Client", "Site", "Asset",
+                      "Priorité", "Score", "Recommandation"]]
 
         for row in sorted_rows:
             # Extraire une recommandation courte de l'analyse Mistral
@@ -915,11 +930,13 @@ def generate_synthese_pdf(synthese_pdf: str, rows: list, stats: dict, styles: di
                 lines = analyse.split("\n")
                 for line in lines:
                     if line.strip().startswith("Recommandation:"):
-                        recommandation = line.replace("Recommandation:", "").strip()
+                        recommandation = line.replace(
+                            "Recommandation:", "").strip()
                         break
                 if not recommandation:
                     # Si pas trouvé, prendre le risque réel en raccourci
-                    recommandation = (row.get("risque_reel", "") or "Voir rapport complet")[:80]
+                    recommandation = (row.get("risque_reel", "")
+                                      or "Voir rapport complet")[:80]
             else:
                 recommandation = "Voir rapport complet"
 
@@ -933,14 +950,14 @@ def generate_synthese_pdf(synthese_pdf: str, rows: list, stats: dict, styles: di
                 Paragraph(
                     f'<b>{(row["priorite"] or "N/A").upper()}</b>',
                     ParagraphStyle("priority", parent=styles["small"],
-                                 textColor=colors.white, alignment=TA_CENTER)
+                                   textColor=colors.white, alignment=TA_CENTER)
                 ),
                 Paragraph(
                     f'<b>{row["score_contextuel"] or "N/A"}</b>',
                     styles["small"]
                 ),
                 Paragraph(recommandation[:100] + "..." if len(recommandation) > 100 else recommandation,
-                         styles["small"]),
+                          styles["small"]),
             ])
 
         vuln_table = Table(
@@ -957,7 +974,7 @@ def generate_synthese_pdf(synthese_pdf: str, rows: list, stats: dict, styles: di
             ("GRID",        (0, 0), (-1, -1), 0.5, colors.HexColor("#BDC3C7")),
             ("VALIGN",      (0, 0), (-1, -1), "TOP"),
             ("TOPPADDING",  (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING",(0,0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
         ]
 
         # Ajouter les couleurs de fond pour chaque priorité
@@ -968,7 +985,8 @@ def generate_synthese_pdf(synthese_pdf: str, rows: list, stats: dict, styles: di
         vuln_table.setStyle(TableStyle(table_style))
         story.append(vuln_table)
     else:
-        story.append(Paragraph("Aucune vulnérabilité critique ou haute trouvée.", styles["body"]))
+        story.append(
+            Paragraph("Aucune vulnérabilité critique ou haute trouvée.", styles["body"]))
 
     # Générer le PDF
     log.info(f"Construction du PDF de synthèse...")
@@ -994,13 +1012,15 @@ def generate_complet_pdf(complet_pdf: str, rows: list, stats: dict, styles: dict
 
     # Page de titre
     story.append(Spacer(1, 2*cm))
-    story.append(Paragraph("Rapport Complet de Vulnérabilités", styles["title"]))
+    story.append(
+        Paragraph("Rapport Complet de Vulnérabilités", styles["title"]))
     story.append(Paragraph(
         f"Généré le {datetime.now().strftime('%d/%m/%Y à %H:%M')} — "
         f"Environnements air-gapped",
         styles["subtitle"]
     ))
-    story.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor("#1A252F")))
+    story.append(HRFlowable(width="100%", thickness=2,
+                 color=colors.HexColor("#1A252F")))
     story.append(Spacer(1, 0.5*cm))
 
     # Tableau de synthèse globale
@@ -1009,9 +1029,9 @@ def generate_complet_pdf(complet_pdf: str, rows: list, stats: dict, styles: dict
         ["Indicateur", "Valeur"],
         ["Total vulnérabilités analysées", str(stats["total"] or 0)],
         ["Critique",  str(stats["nb_critique"] or 0)],
-        ["Haute",     str(stats["nb_haute"]    or 0)],
-        ["Moyenne",   str(stats["nb_moyenne"]  or 0)],
-        ["Basse",     str(stats["nb_basse"]    or 0)],
+        ["Haute",     str(stats["nb_haute"] or 0)],
+        ["Moyenne",   str(stats["nb_moyenne"] or 0)],
+        ["Basse",     str(stats["nb_basse"] or 0)],
         ["Exploitables en air-gap", str(stats["nb_air_gap"] or 0)],
     ]
     summary_table = Table(summary_data, colWidths=[10*cm, 4*cm])
@@ -1026,7 +1046,7 @@ def generate_complet_pdf(complet_pdf: str, rows: list, stats: dict, styles: dict
         ("ALIGN",       (1, 0), (1, -1),  "CENTER"),
         ("VALIGN",      (0, 0), (-1, -1), "MIDDLE"),
         ("TOPPADDING",  (0, 0), (-1, -1), 5),
-        ("BOTTOMPADDING",(0,0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
     ]))
     story.append(summary_table)
     story.append(PageBreak())
@@ -1039,7 +1059,8 @@ def generate_complet_pdf(complet_pdf: str, rows: list, stats: dict, styles: dict
     for client_nom, client_rows in groupby(rows, key=itemgetter("client_nom")):
         clients_count += 1
         client_rows = list(client_rows)
-        log.debug(f"Traitement du client: {client_nom} ({len(client_rows)} vulnérabilités)")
+        log.debug(
+            f"Traitement du client: {client_nom} ({len(client_rows)} vulnérabilités)")
         story.append(Paragraph(f"Client : {client_nom}", styles["h1"]))
         story.append(HRFlowable(
             width="100%", thickness=1,
@@ -1052,31 +1073,33 @@ def generate_complet_pdf(complet_pdf: str, rows: list, stats: dict, styles: dict
 
             for asset_nom, asset_rows in groupby(site_rows, key=itemgetter("nom_interne")):
                 asset_rows = list(asset_rows)
-                first      = asset_rows[0]
+                first = asset_rows[0]
 
                 story.append(Paragraph(f"Asset : {asset_nom}", styles["h3"]))
 
                 # Fiche asset
                 asset_info = [
                     ["Type",        first["type_equipement"] or "N/A",
-                     "Fabricant",   first["fabricant_nvd"]   or "N/A"],
-                    ["Modèle",      first["model_nom"]        or "N/A",
+                     "Fabricant",   first["fabricant_nvd"] or "N/A"],
+                    ["Modèle",      first["model_nom"] or "N/A",
                      "Criticité",   first["niveau_criticite"] or "N/A"],
                     ["OS",          first["systeme_exploitation"] or "N/A",
-                     "Version OS",  first["version_os"]       or "N/A"],
+                     "Version OS",  first["version_os"] or "N/A"],
                     ["Firmware",    first["version_firmware"] or "N/A",
-                     "BIOS",        first["version_bios"]     or "N/A"],
+                     "BIOS",        first["version_bios"] or "N/A"],
                 ]
-                asset_table = Table(asset_info, colWidths=[3*cm, 5.5*cm, 3*cm, 5.5*cm])
+                asset_table = Table(asset_info, colWidths=[
+                                    3*cm, 5.5*cm, 3*cm, 5.5*cm])
                 asset_table.setStyle(TableStyle([
                     ("BACKGROUND",  (0, 0), (-1, -1), colors.HexColor("#EBF5FB")),
                     ("FONTNAME",    (0, 0), (0, -1),  "Helvetica-Bold"),
                     ("FONTNAME",    (2, 0), (2, -1),  "Helvetica-Bold"),
                     ("FONTSIZE",    (0, 0), (-1, -1), 8),
-                    ("GRID",        (0, 0), (-1, -1), 0.3, colors.HexColor("#AED6F1")),
+                    ("GRID",        (0, 0), (-1, -1),
+                     0.3, colors.HexColor("#AED6F1")),
                     ("VALIGN",      (0, 0), (-1, -1), "MIDDLE"),
                     ("TOPPADDING",  (0, 0), (-1, -1), 4),
-                    ("BOTTOMPADDING",(0,0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
                 ]))
                 story.append(asset_table)
                 story.append(Spacer(1, 0.3*cm))
@@ -1125,7 +1148,7 @@ def generate_complet_pdf(complet_pdf: str, rows: list, stats: dict, styles: dict
                         ("BACKGROUND", (0, 0), (-1, -1), p_color),
                         ("VALIGN",     (0, 0), (-1, -1), "MIDDLE"),
                         ("TOPPADDING", (0, 0), (-1, -1), 6),
-                        ("BOTTOMPADDING", (0,0), (-1,-1), 6),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
                     ]))
                     story.append(cve_header)
 
@@ -1141,7 +1164,7 @@ def generate_complet_pdf(complet_pdf: str, rows: list, stats: dict, styles: dict
                          Paragraph(
                              (row["cve_description"] or "N/A")[:400],
                              styles["small"]
-                         )],
+                        )],
                         [Paragraph("<b>Vecteur CVSS</b>", styles["small"]),
                          Paragraph(row["cvss_v3_vector"] or "N/A", styles["small"])],
                         [Paragraph("<b>Air-gap</b>", styles["small"]),
@@ -1150,19 +1173,23 @@ def generate_complet_pdf(complet_pdf: str, rows: list, stats: dict, styles: dict
                          Paragraph(row["risque_reel"] or "N/A", styles["small"])],
                         [Paragraph("<b>Analyse</b>", styles["small"]),
                          Paragraph(
-                             (row["analyse_mistral"] or "N/A").replace("\n", "<br/>"),
+                             (row["analyse_mistral"]
+                              or "N/A").replace("\n", "<br/>"),
                              styles["small"]
-                         )],
+                        )],
                     ]
-                    cve_body = Table(cve_body_data, colWidths=[3.5*cm, 13.5*cm])
+                    cve_body = Table(cve_body_data, colWidths=[
+                                     3.5*cm, 13.5*cm])
                     cve_body.setStyle(TableStyle([
-                        ("BACKGROUND",   (0, 0), (0, -1), colors.HexColor("#F8F9FA")),
+                        ("BACKGROUND",   (0, 0), (0, -1),
+                         colors.HexColor("#F8F9FA")),
                         ("FONTNAME",     (0, 0), (0, -1), "Helvetica-Bold"),
-                        ("FONTSIZE",     (0, 0), (-1,-1), 8),
-                        ("GRID",         (0, 0), (-1,-1), 0.3, colors.HexColor("#BDC3C7")),
-                        ("VALIGN",       (0, 0), (-1,-1), "TOP"),
-                        ("TOPPADDING",   (0, 0), (-1,-1), 4),
-                        ("BOTTOMPADDING",(0, 0), (-1,-1), 4),
+                        ("FONTSIZE",     (0, 0), (-1, -1), 8),
+                        ("GRID",         (0, 0), (-1, -1),
+                         0.3, colors.HexColor("#BDC3C7")),
+                        ("VALIGN",       (0, 0), (-1, -1), "TOP"),
+                        ("TOPPADDING",   (0, 0), (-1, -1), 4),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
                     ]))
                     story.append(cve_body)
                     story.append(Spacer(1, 0.4*cm))
@@ -1172,22 +1199,27 @@ def generate_complet_pdf(complet_pdf: str, rows: list, stats: dict, styles: dict
         story.append(PageBreak())
 
     # Générer le PDF
-    log.info(f"Génération du fichier PDF complet final ({clients_count} clients traités)...")
+    log.info(
+        f"Génération du fichier PDF complet final ({clients_count} clients traités)...")
     doc.build(story)
     log.info(f"✓ PDF complet généré: {complet_pdf}")
 
 
 @app.command()
 def report(
-    output_dir: str          = typer.Option(str(BASE_DIR / "documents"), "--output-dir", "-d"),
-    client_id:  Optional[int] = typer.Option(None,  "--client-id",  help="Filtrer par client"),
-    asset_id:   Optional[int] = typer.Option(None,  "--asset-id",   help="Filtrer par asset"),
-    statuts:    str           = typer.Option(
+    output_dir: str = typer.Option(
+        str(BASE_DIR / "documents"), "--output-dir", "-d"),
+    client_id:  Optional[int] = typer.Option(
+        None,  "--client-id",  help="Filtrer par client"),
+    asset_id:   Optional[int] = typer.Option(
+        None,  "--asset-id",   help="Filtrer par asset"),
+    statuts:    str = typer.Option(
         "confirme,mitige",
         "--statuts",
         help="Statuts à inclure, séparés par virgule"
     ),
-    min_score:  float         = typer.Option(0.0,   "--min-score",  help="Score contextuel minimum"),
+    min_score:  float = typer.Option(
+        0.0,   "--min-score",  help="Score contextuel minimum"),
 ):
     """
     Génère 2 PDFs : une synthèse et un rapport complet des vulnérabilités.
@@ -1202,17 +1234,18 @@ def report(
 
     # Générer les noms de fichiers avec timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    synthese_pdf = os.path.join(output_dir, f"synthese_vulnerabilites_{timestamp}.pdf")
+    synthese_pdf = os.path.join(
+        output_dir, f"synthese_vulnerabilites_{timestamp}.pdf")
     complet_pdf = os.path.join(output_dir, f"rapport_complet_{timestamp}.pdf")
 
     conn = get_connection()
-    cur  = dict_cursor(conn)
+    cur = dict_cursor(conn)
 
     statut_list = [s.strip() for s in statuts.split(",")]
     placeholders = ",".join(["%s"] * len(statut_list))
 
-    filters      = [f"co.statut IN ({placeholders})"]
-    params       = statut_list[:]
+    filters = [f"co.statut IN ({placeholders})"]
+    params = statut_list[:]
 
     if min_score > 0:
         filters.append("co.score_contextuel >= %s")
@@ -1319,7 +1352,7 @@ def report(
 
 @app.command("run-all")
 def run_all(
-    batch_max:  int           = typer.Option(MISTRAL_BATCH_MAX, "--batch-max"),
+    batch_max:  int = typer.Option(MISTRAL_BATCH_MAX, "--batch-max"),
 ):
     """Lance corrélation → analyse en une seule commande."""
     print("\n" + "=" * 70)

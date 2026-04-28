@@ -449,15 +449,6 @@
         }
 
         // ═══════════════════════════════════════════════════════════
-        //  3. DÉTECTION FILTRE ACTIF
-        // ═══════════════════════════════════════════════════════════
-        function filtreActif() {
-            const clientId = document.getElementById('filtreClientId')?.value;
-            const siteId = document.getElementById('filtreSiteId')?.value;
-            const type = document.getElementById('filtreType')?.value;
-            return !!(clientId || siteId || type);
-        }
-        // ═══════════════════════════════════════════════════════════
         //  4. AFFICHAGE DES ASSETS
         // ═══════════════════════════════════════════════════════════
         function afficherAssets(assets) {
@@ -469,12 +460,8 @@
                 return;
             }
 
-            if (filtreActif()) {
-                masquerPagination();
-            } else {
-                const totalPages = Math.ceil(totalAssetsCount / PAGE_SIZE);
-                afficherPagination(page, totalPages, totalAssetsCount);
-            }
+            const totalPages = Math.ceil(totalAssetsCount / PAGE_SIZE);
+            afficherPagination(page, totalPages, totalAssetsCount);
 
             tbody.innerHTML = assets.map(a => `
         <tr>
@@ -520,23 +507,19 @@
 
             tbody.innerHTML = '<tr><td colspan="11" class="text-center"><div class="spinner-border spinner-border-sm"></div> Chargement...</td></tr>';
 
-            const clientId = document.getElementById('filtreClientId')?.value;
-            const siteId = document.getElementById('filtreSiteId')?.value;
-            const type = document.getElementById('filtreType')?.value;
-
-            // Construct query parameters
-            let url = `${API_ASSETS}?limit=${PAGE_SIZE}&skip=${(page - 1) * PAGE_SIZE}`;
-
-            if (filtreActif()) {
-                // If filtering is active, bypass limit to get all matching results
-                url = `${API_ASSETS}?nolimit=true`;
-                if (clientId) url += `&client_id=${clientId}`;
-                if (siteId) url += `&site_id=${siteId}`;
-                if (type) url += `&type_equipement=${type}`;
-            }
-
             try {
-                const r = await fetch(url);
+                const params = new URLSearchParams({
+                    limit: PAGE_SIZE,
+                    skip: (page - 1) * PAGE_SIZE
+                });
+                const clientId = document.getElementById('filtreClientId')?.value;
+                const siteId = document.getElementById('filtreSiteId')?.value;
+                const type = document.getElementById('filtreType')?.value;
+                if (clientId) params.append('client_id', clientId);
+                if (siteId) params.append('site_id', siteId);
+                if (type) params.append('type_equipement', type);
+
+                const r = await fetch(`${API_ASSETS}?${params}`);
                 if (!r.ok) throw new Error(`HTTP ${r.status}`);
 
                 const countHeader = r.headers.get("X-Total-Count");
@@ -544,12 +527,6 @@
 
                 const payload = await r.json();
                 tousLesAssets = Array.isArray(payload) ? payload : (payload.results || payload.data || []);
-
-                if (filtreActif() && tousLesAssets.length > 0) {
-                    // Update count specifically for the search results if we bypassed the limit count headers
-                    totalAssetsCount = tousLesAssets.length;
-                }
-
                 afficherAssets(tousLesAssets);
 
             } catch (e) {
@@ -602,8 +579,8 @@
         // ═══════════════════════════════════════════════════════════
         async function chargerClients() {
             try {
-                const r = await fetch(API_CLIENTS);
-                if (!r.ok) throw new Error(`HTTP ${r.status} `);
+                const r = await fetch(`${API_CLIENTS}?limit=1000`);
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
                 tousLesClients = await r.json();
             } catch (e) {
                 console.error('Erreur chargement clients:', e);
@@ -613,8 +590,8 @@
 
         async function chargerFabricants() {
             try {
-                const r = await fetch(API_FABRICANTS);
-                if (!r.ok) throw new Error(`HTTP ${r.status} `);
+                const r = await fetch(`${API_FABRICANTS}?limit=1000`);
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
                 const data = await r.json();
                 tousLesFabricants = Array.isArray(data) ? data : (data.vendors || []);
             } catch (e) {
@@ -640,8 +617,8 @@
             }
 
             try {
-                const r = await fetch(`${API_SITES}?client_id = ${clientId} `);
-                if (!r.ok) throw new Error(`HTTP ${r.status} `);
+                const r = await fetch(`${API_SITES}?client_id=${clientId}&limit=1000`);
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
                 sitesDuClient = await r.json();
                 siteSearch.disabled = false;
                 siteSearch.placeholder = 'Rechercher un site…';
@@ -668,8 +645,8 @@
             }
 
             try {
-                const r = await fetch(`${API_SITES}?client_id = ${clientId} `);
-                if (!r.ok) throw new Error(`HTTP ${r.status} `);
+                const r = await fetch(`${API_SITES}?client_id=${clientId}&limit=1000`);
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
                 sitesDuFiltreClient = await r.json();
                 siteSearch.disabled = false;
                 siteSearch.placeholder = 'Rechercher un site…';
@@ -695,8 +672,8 @@
             }
 
             try {
-                const r = await fetch(`${API_MODELES}?vendor_id = ${fabricantId} `);
-                if (!r.ok) throw new Error(`HTTP ${r.status} `);
+                const r = await fetch(`${API_MODELES}?vendor_id=${fabricantId}&limit=1000`);
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
                 const data = await r.json();
                 modelesDuFabricant = Array.isArray(data) ? data : (data.models || []);
                 modeleSearch.disabled = false;

@@ -15,6 +15,29 @@
             padding: 2px 4px;
             border-radius: 4px;
         }
+
+        .suggestion-box {
+            position: absolute;
+            z-index: 1055;
+            background: #161b22;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .suggestion-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            color: #c9d1d9;
+        }
+
+        .suggestion-item:hover {
+            background: rgba(88, 166, 255, 0.15);
+        }
     </style>
 </head>
 
@@ -45,7 +68,9 @@
                                 <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
                                 <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
                                 <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
-                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item active" href="/ui/models">📦 Modèles</a></li>
                             </ul>
@@ -79,9 +104,12 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label stat-label">Fabricant</label>
-                    <select class="form-select" id="filterVendor">
-                        <option value="">Tous les fabricants</option>
-                    </select>
+                    <input type="hidden" id="filterVendorId" value="">
+                    <div class="position-relative">
+                        <input class="form-control" id="filterVendorSearch" type="search"
+                            placeholder="Ex: Microsoft…" autocomplete="off">
+                        <div class="suggestion-box mt-1" id="filterVendorSuggestions"></div>
+                    </div>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label stat-label">Type</label>
@@ -212,8 +240,8 @@
     <script src="/static/bootstrap.bundle.min.js"></script>
     <script src="/static/app-search.js"></script>
     <script>
-        const API_MODELS = '/api/models/';
-        const API_VENDORS = '/api/vendors/';
+        const API_MODELS = '/api/models';
+        const API_VENDORS = '/api/vendors';
 
         let allModels = [];
         let allVendors = [];
@@ -228,12 +256,7 @@
             const data = await res.json();
             allVendors = data.vendors || [];
 
-            // Filtre tableau
-            const filterSel = document.getElementById('filterVendor');
-            filterSel.innerHTML = '<option value="">Tous les fabricants</option>' +
-                allVendors.map(v => `<option value="${v.id}">${esc(v.nom)}</option>`).join('');
-
-            // Select modal
+            // Select modal uniquement
             const modalSel = document.getElementById('modelVendorId');
             modalSel.innerHTML = '<option value="">— Choisir —</option>' +
                 allVendors.map(v => `<option value="${v.id}">${esc(v.nom)} (${v.nvd_vendor})</option>`).join('');
@@ -242,8 +265,14 @@
             const params = new URLSearchParams(window.location.search);
             const vendorParam = params.get('vendor');
             if (vendorParam) {
-                filterSel.value = vendorParam;
+                const vendor = allVendors.find(v => String(v.id) === String(vendorParam));
+                if (vendor) {
+                    document.getElementById('filterVendorId').value = vendor.id;
+                    document.getElementById('filterVendorSearch').value = vendor.nom;
+                }
             }
+
+            initVendorFilterTypeahead();
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -292,33 +321,22 @@
             loadModels();
         }
 
-        function filtreActif() {
-            const q = document.getElementById('searchInput')?.value.trim() || '';
-            const vendorFilter = document.getElementById('filterVendor')?.value || '';
-            const typeFilter = document.getElementById('filterType')?.value || '';
-            return !!(q || vendorFilter || typeFilter);
-        }
-
         // ── Charger les modèles ──
         async function loadModels() {
             const tbody = document.getElementById('modelTableBody');
             if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted"><div class="spinner-border spinner-border-sm"></div> Chargement...</td></tr>';
 
             try {
-                const queryParams = new URLSearchParams();
-                queryParams.append('limit', PAGE_SIZE);
-                queryParams.append('skip', (page - 1) * PAGE_SIZE);
-
+                const queryParams = new URLSearchParams({
+                    limit: PAGE_SIZE,
+                    skip: (page - 1) * PAGE_SIZE
+                });
                 const q = document.getElementById('searchInput')?.value.trim() || '';
-                const vendorFilter = document.getElementById('filterVendor')?.value || '';
+                const vendorFilter = document.getElementById('filterVendorId')?.value || '';
                 const typeFilter = document.getElementById('filterType')?.value || '';
-
-                if (filtreActif()) {
-                    queryParams.append('nolimit', 'true');
-                    if (q) queryParams.append('search', q);
-                    if (vendorFilter) queryParams.append('vendor_id', vendorFilter);
-                    if (typeFilter) queryParams.append('type_produit', typeFilter);
-                }
+                if (q) queryParams.append('search', q);
+                if (vendorFilter) queryParams.append('vendor_id', vendorFilter);
+                if (typeFilter) queryParams.append('type_produit', typeFilter);
 
                 const res = await fetch(`${API_MODELS}?${queryParams.toString()}`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -328,12 +346,6 @@
 
                 const data = await res.json();
                 allModels = data.models || [];
-
-                if (filtreActif()) {
-                    // Adjust count accurately based on filtered results
-                    totalModelsCount = allModels.length;
-                }
-
                 renderTable(allModels);
             } catch (e) {
                 console.error(e);
@@ -352,7 +364,6 @@
         }
 
         document.getElementById('searchInput').addEventListener('input', applyFilters);
-        document.getElementById('filterVendor').addEventListener('change', applyFilters);
         document.getElementById('filterType').addEventListener('change', applyFilters);
 
         // ── Afficher le tableau ──
@@ -364,12 +375,8 @@
                 return;
             }
 
-            if (filtreActif()) {
-                masquerPagination();
-            } else {
-                const totalPages = Math.ceil(totalModelsCount / PAGE_SIZE);
-                afficherPagination(page, totalPages, totalModelsCount);
-            }
+            const totalPages = Math.ceil(totalModelsCount / PAGE_SIZE);
+            afficherPagination(page, totalPages, totalModelsCount);
 
             const typeBadge = {
                 os: 'bg-primary',
@@ -392,6 +399,52 @@
             </td>
         </tr>
     `).join('');
+        }
+
+        // ── Typeahead fabricant (filtre) ──
+        function initVendorFilterTypeahead() {
+            const input = document.getElementById('filterVendorSearch');
+            const hidden = document.getElementById('filterVendorId');
+            const box = document.getElementById('filterVendorSuggestions');
+            if (!input || !hidden || !box) return;
+
+            const render = (q) => {
+                const query = q.toLowerCase().trim();
+                const items = query
+                    ? allVendors.filter(v =>
+                        v.nom.toLowerCase().includes(query) ||
+                        v.nvd_vendor.toLowerCase().includes(query)
+                      ).slice(0, 10)
+                    : allVendors.slice(0, 10);
+
+                if (!items.length) {
+                    box.innerHTML = '<div class="suggestion-item text-muted">Aucun fabricant</div>';
+                    box.style.display = 'block';
+                    return;
+                }
+
+                box.innerHTML = items.map(v => `
+                    <div class="suggestion-item" data-vendor-id="${v.id}" data-vendor-nom="${v.nom.replace(/"/g, '&quot;')}">
+                        <div class="fw-semibold">${esc(v.nom)}</div>
+                        <div class="small text-muted">${v.nvd_vendor}</div>
+                    </div>
+                `).join('');
+                box.style.display = 'block';
+
+                box.querySelectorAll('[data-vendor-id]').forEach(el => {
+                    el.addEventListener('click', () => {
+                        hidden.value = el.getAttribute('data-vendor-id');
+                        input.value = el.getAttribute('data-vendor-nom');
+                        box.style.display = 'none';
+                        page = 1;
+                        loadModels();
+                    });
+                });
+            };
+
+            input.addEventListener('input', () => { hidden.value = ''; render(input.value); page = 1; loadModels(); });
+            input.addEventListener('focus', () => render(input.value));
+            input.addEventListener('blur', () => setTimeout(() => { box.style.display = 'none'; }, 150));
         }
 
         // ── Création ──

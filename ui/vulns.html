@@ -384,7 +384,7 @@
 
         async function chargerClients() {
             try {
-                const response = await fetch('/api/clients/?nolimit=true');
+                const response = await fetch('/api/clients/?limit=1000');
                 tousLesClients = await response.json();
             } catch (e) {
                 console.error('Erreur chargement clients:', e);
@@ -393,7 +393,7 @@
 
         async function chargerSites() {
             try {
-                const response = await fetch(`/api/sites/?nolimit=true`);
+                const response = await fetch('/api/sites/?limit=1000');
                 tousLesSites = await response.json();
             } catch (e) {
                 console.error('Erreur chargement sites:', e);

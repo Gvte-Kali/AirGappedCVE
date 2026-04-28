@@ -28,23 +28,29 @@ def list_clients(
     response: Response,
     limit: int = Query(20, ge=1),
     skip: int = Query(0, ge=0),
-    nolimit: bool = False
+    actif: Optional[bool] = None,
+    search: Optional[str] = None
 ):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
+            where_clauses = []
+            params_where = []
+            if actif is not None:
+                where_clauses.append("c.actif = %s")
+                params_where.append(1 if actif else 0)
+            if search:
+                where_clauses.append("c.nom LIKE %s")
+                params_where.append(f"%{search}%")
+            where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+
             # 1. Get total count
-            cursor.execute("SELECT COUNT(*) as total FROM clients")
+            cursor.execute(f"SELECT COUNT(*) as total FROM clients c {where_sql}", params_where)
             total_count = cursor.fetchone()["total"]
             response.headers["X-Total-Count"] = str(total_count)
 
-            # 2. Get data
-            limit_sql = ""
-            params = []
-            if not nolimit:
-                limit_sql = "LIMIT %s OFFSET %s"
-                params.extend([limit, skip])
-
+            # 2. Get paginated data
+            params = params_where + [limit, skip]
             query = f"""
                 SELECT
                     c.id,
@@ -52,7 +58,9 @@ def list_clients(
                     c.contact_nom,
                     c.contact_email,
                     c.contact_telephone,
+                    c.adresse,
                     c.notes,
+                    c.actif,
                     c.date_creation,
                     c.date_modification,
                     COUNT(DISTINCT s.id)  AS nb_sites,
@@ -60,9 +68,10 @@ def list_clients(
                 FROM clients c
                 LEFT JOIN sites s  ON s.client_id = c.id
                 LEFT JOIN assets a ON a.site_id   = s.id
+                {where_sql}
                 GROUP BY c.id
                 ORDER BY c.nom ASC
-                {limit_sql}
+                LIMIT %s OFFSET %s
             """
             cursor.execute(query, params)
             return cursor.fetchall()

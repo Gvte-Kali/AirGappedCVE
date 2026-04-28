@@ -85,7 +85,7 @@
         <div class="card p-4 mb-5">
             <h6 class="section-title">🔍 RECHERCHE</h6>
             <div class="row g-3 align-items-end">
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label class="form-label stat-label">Client</label>
                     <input type="hidden" id="filtreClientId" value="">
                     <div class="position-relative">
@@ -95,6 +95,15 @@
                     </div>
                 </div>
                 <div class="col-md-4">
+                    <label class="form-label stat-label">Site</label>
+                    <input type="hidden" id="filtreSiteId" value="">
+                    <div class="position-relative">
+                        <input class="form-control" id="filtreSiteSearch" type="search"
+                            placeholder="Ex: Siège Paris…" autocomplete="off">
+                        <div class="suggestion-box mt-1" id="filtreSiteSuggestions"></div>
+                    </div>
+                </div>
+                <div class="col-md-2">
                     <label class="form-label stat-label">Statut</label>
                     <select class="form-select" id="filtreActif" onchange="page = 1; chargerSites()">
                         <option value="">Tous les statuts</option>
@@ -102,7 +111,7 @@
                         <option value="0">Inactifs</option>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <button class="btn btn-primary w-100" onclick="page = 1; chargerSites()">
                         🔄 Rafraîchir
                     </button>
@@ -245,26 +254,6 @@
                 .replaceAll("'", "\\'");
         }
 
-        function filtrerSitesParTexte(sites, q) {
-            const query = norm(q);
-            if (!query) return sites;
-            return sites.filter(s => {
-                const hay = [
-                    s.client_nom,
-                    s.nom,
-                    s.adresse,
-                    s.ville,
-                    s.code_postal,
-                    s.pays,
-                    s.contact_local_nom,
-                    s.contact_local_email,
-                    s.contact_local_telephone,
-                    s.notes
-                ].map(norm).join(' ');
-                return hay.includes(query);
-            });
-        }
-
         // ═══════════════════════════════════════════════════════════
         //  PAGINATION Helpers
         // ═══════════════════════════════════════════════════════════
@@ -311,13 +300,6 @@
             chargerSites();
         }
 
-        function filtreActif() {
-            const clientId = document.getElementById('filtreClientId')?.value || '';
-            const actif = document.getElementById('filtreActif')?.value || '';
-            const q = new URLSearchParams(window.location.search).get('q') || '';
-            return !!(clientId || actif || q);
-        }
-
         function afficherSites(sites) {
             const tbody = document.getElementById('tbodySites');
 
@@ -327,12 +309,8 @@
                 return;
             }
 
-            if (filtreActif()) {
-                masquerPagination();
-            } else {
-                const totalPages = Math.ceil(totalSitesCount / PAGE_SIZE);
-                afficherPagination(page, totalPages, totalSitesCount);
-            }
+            const totalPages = Math.ceil(totalSitesCount / PAGE_SIZE);
+            afficherPagination(page, totalPages, totalSitesCount);
 
             tbody.innerHTML = sites.map(s => `
         <tr>
@@ -358,7 +336,7 @@
 
         async function chargerClients() {
             try {
-                const resp = await fetch(API_CLIENTS);
+                const resp = await fetch(`${API_CLIENTS}?limit=1000`);
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 tousLesClients = await resp.json();
             } catch (e) {
@@ -371,8 +349,6 @@
 
         async function chargerSites() {
             const tbody = document.getElementById('tbodySites');
-
-            // Affiche un spinner pendant le chargement
             tbody.innerHTML = `
         <tr>
             <td colspan="8" class="text-center py-4 text-secondary">
@@ -382,63 +358,31 @@
         </tr>`;
 
             try {
-                // Récupère les filtres
+                const params = new URLSearchParams({
+                    limit: PAGE_SIZE,
+                    skip: (page - 1) * PAGE_SIZE
+                });
                 const clientId = document.getElementById('filtreClientId')?.value || '';
                 const actif = document.getElementById('filtreActif')?.value || '';
+                if (clientId) params.append('client_id', clientId);
+                if (actif === '1') params.append('actif', 'true');
+                if (actif === '0') params.append('actif', 'false');
 
-                // Construit l'URL avec les paramètres de pagination
-                let url = `${API_SITES}?limit=${PAGE_SIZE}&skip=${(page - 1) * PAGE_SIZE}`;
-
-                if (filtreActif()) {
-                    url = `${API_SITES}?nolimit=true`;
-                    if (clientId) url += `&client_id=${encodeURIComponent(clientId)}`;
-                }
-
-                const resp = await fetch(url);
+                const resp = await fetch(`${API_SITES}?${params}`);
                 if (!resp.ok) throw new Error(`HTTP ${resp.status} — ${resp.statusText}`);
 
                 const countHeader = resp.headers.get("X-Total-Count");
                 if (countHeader) totalSitesCount = parseInt(countHeader, 10);
 
                 tousLesSites = await resp.json();
-
-                // Applique les filtres front-end additionnels sur tousLesSites fetché en nolimit
-                let filteredSites = tousLesSites;
-                if (filtreActif()) {
-                    totalSitesCount = filteredSites.length;
-
-                    if (actif === '1') filteredSites = filteredSites.filter(s => !!s.actif);
-                    if (actif === '0') filteredSites = filteredSites.filter(s => !s.actif);
-
-                    // Applique le filtre texte depuis l'URL (?q=...)
-                    const q = new URLSearchParams(window.location.search).get('q') || '';
-                    if (q) filteredSites = filtrerSitesParTexte(filteredSites, q);
-
-                    totalSitesCount = filteredSites.length;
-                }
-
-                // Affiche un message si aucun résultat
-                if (filteredSites.length === 0) {
-                    tbody.innerHTML = `
-                <tr>
-                    <td colspan="8" class="text-center py-4 text-secondary">
-                        Aucun site trouvé.
-                    </td>
-                </tr>`;
-                    masquerPagination();
-                    return;
-                }
-
-                // Affiche les sites
-                afficherSites(filteredSites);
+                afficherSites(tousLesSites);
 
             } catch (e) {
                 console.error('Erreur chargement sites:', e);
                 tbody.innerHTML = `
             <tr>
                 <td colspan="8" class="text-center text-danger py-4">
-                    ⚠️ Erreur chargement sites : ${e.message}<br>
-                    <small class="text-secondary">Vérifie que l'API est démarrée et que la base de données est accessible.</small>
+                    ⚠️ Erreur chargement sites : ${e.message}
                 </td>
             </tr>`;
                 tousLesSites = [];
@@ -535,6 +479,48 @@
         function hideClientSuggestions() {
             const box = document.getElementById('siteClientSuggestions');
             hideSuggestionBox(box);
+        }
+
+        function initFiltreSiteTypeahead() {
+            const input = document.getElementById('filtreSiteSearch');
+            const hidden = document.getElementById('filtreSiteId');
+            const box = document.getElementById('filtreSiteSuggestions');
+            if (!input || !hidden || !box) return;
+
+            const render = (q) => {
+                const query = norm(q);
+                const items = query
+                    ? tousLesSites.filter(s => norm(s.nom).includes(query)).slice(0, 10)
+                    : tousLesSites.slice(0, 10);
+
+                if (!items.length) {
+                    box.innerHTML = '<div class="suggestion-item text-muted">Aucun site</div>';
+                    box.style.display = 'block';
+                    return;
+                }
+
+                box.innerHTML = items.map(s => `
+                    <div class="suggestion-item" data-site-id="${s.id}" data-site-nom="${s.nom.replace(/"/g, '&quot;')}">
+                        <div class="fw-semibold">${s.nom}</div>
+                        <div class="small text-muted">${s.client_nom || ''}</div>
+                    </div>
+                `).join('');
+                box.style.display = 'block';
+
+                box.querySelectorAll('[data-site-id]').forEach(el => {
+                    el.addEventListener('click', () => {
+                        hidden.value = el.getAttribute('data-site-id');
+                        input.value = el.getAttribute('data-site-nom');
+                        box.style.display = 'none';
+                        page = 1;
+                        chargerSites();
+                    });
+                });
+            };
+
+            input.addEventListener('input', () => { hidden.value = ''; render(input.value); page = 1; chargerSites(); });
+            input.addEventListener('focus', () => render(input.value));
+            input.addEventListener('blur', () => setTimeout(() => { box.style.display = 'none'; }, 150));
         }
 
         function initClientSearch() {
@@ -676,6 +662,7 @@
                 }
             });
             await chargerSites();
+            initFiltreSiteTypeahead();
         })();
     </script>
 </body>
