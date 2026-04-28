@@ -7,6 +7,30 @@
     <link rel="stylesheet" href="/static/bootstrap.min.css">
     <link rel="stylesheet" href="/static/app-search.css">
     <link rel="stylesheet" href="/static/app-premium.css">
+    <style>
+        .suggestion-box {
+            position: absolute;
+            z-index: 1055;
+            background: #161b22;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .suggestion-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            color: #c9d1d9;
+        }
+
+        .suggestion-item:hover {
+            background: rgba(88, 166, 255, 0.15);
+        }
+    </style>
 </head>
 
 <body>
@@ -34,9 +58,7 @@
                                 <li><a class="dropdown-item active" href="/ui/clients">👥 Clients</a></li>
                                 <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
                                 <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
                             </ul>
@@ -48,9 +70,8 @@
             </div>
         </div>
     </nav>
-
-    <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-end mb-4">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-end mb-5">
             <div>
                 <h6 class="section-title mb-2">Partenaires & Comptes</h6>
                 <h1 class="fw-bold m-0 stat-number">CLIENTS</h1>
@@ -60,15 +81,58 @@
             </button>
         </div>
 
-        <!-- Dashboard Grafana -->
-        <div class="card overflow-hidden p-0">
-            <iframe
-                id="grafanaFrame"
-                src="https://psychic-space-couscous-vxwjjqqrqwx2xx99-3000.app.github.dev/grafana/d-solo/add29lk/clients?folderUid=efkczkb452ccgb&orgId=1&timezone=browser&panelId=panel-1&from=now-6h&to=now&kiosk"
-                width="100%"
-                frameborder="0"
-                style="border: none; display: block; height: calc(100vh - 200px);">
-            </iframe>
+        <!-- Filtres -->
+        <div class="card p-4 mb-5">
+            <h6 class="section-title">🔍 RECHERCHE</h6>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label stat-label">Nom du client</label>
+                    <input type="hidden" id="filtreClientId" value="">
+                    <div class="position-relative">
+                        <input class="form-control" id="filtreClientSearch" type="search"
+                            placeholder="Ex: Acme Corp…" autocomplete="off">
+                        <div class="suggestion-box mt-1" id="filtreClientSuggestions"></div>
+                    </div>
+                </div>
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm" id="filtreActif" onchange="appliquerFiltres()">
+                            <option value="">Tous statuts</option>
+                            <option value="1">Actifs</option>
+                            <option value="0">Inactifs</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-sm btn-outline-secondary w-100" onclick="chargerClients()">
+                            🔄 Rafraîchir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau -->
+        <div class="card overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="tableClients">
+                    <thead class="bg-black bg-opacity-25">
+                        <tr>
+                            <th class="ps-4">Nom</th>
+                            <th>Contact</th>
+                            <th>Email / Tel</th>
+                            <th>Adresse</th>
+                            <th>Statut</th>
+                            <th class="pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyClients" class="border-top-0">
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <div class="spinner-border spinner-border-sm text-primary"></div> Chargement...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -128,15 +192,231 @@
     <script src="/static/bootstrap.bundle.min.js"></script>
     <script src="/static/app-search.js"></script>
     <script>
-        const API = '/api/clients/';
+        const API = '/api/clients';
+        let tousLesClients = [];
+        let page = 1;
+        const PAGE_SIZE = 20;
+        let totalClientsCount = 0;
 
-        function reloadGrafana() {
-            const frame = document.getElementById('grafanaFrame');
-            frame.src = frame.src;
+        function norm(v) { return String(v || '').toLowerCase().trim(); }
+
+        function showSuggestionBox(boxEl, itemsHtml) {
+            boxEl.innerHTML = itemsHtml;
+            boxEl.style.display = 'block';
         }
 
+        function hideSuggestionBox(boxEl) {
+            boxEl.style.display = 'none';
+            boxEl.innerHTML = '';
+        }
+
+        function initClientTypeahead({ inputId, hiddenId, boxId, onSelect }) {
+            const input = document.getElementById(inputId);
+            const hidden = document.getElementById(hiddenId);
+            const box = document.getElementById(boxId);
+            if (!input || !hidden || !box) return;
+
+            const render = (q) => {
+                const query = norm(q);
+                const items = query
+                    ? tousLesClients.filter(c => norm(c.nom).startsWith(query)).slice(0, 10)
+                    : tousLesClients.slice(0, 10);
+
+                if (!items.length) {
+                    return showSuggestionBox(box, '<div class="list-group-item am-search-muted">Aucun client</div>');
+                }
+
+                showSuggestionBox(
+                    box,
+                    items.map(c => `
+                <div class="suggestion-item" data-client-id="${c.id}">
+                    <div class="fw-semibold">${c.nom}</div>
+                    <div class="small text-muted">${[c.contact_email, c.contact_nom].filter(Boolean).join(' • ')}</div>
+                </div>
+            `).join('')
+                );
+
+                box.querySelectorAll('[data-client-id]').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const id = parseInt(el.getAttribute('data-client-id'), 10);
+                        const c = tousLesClients.find(x => x.id === id);
+                        if (!c) return;
+                        hidden.value = String(c.id);
+                        input.value = c.nom || '';
+                        hideSuggestionBox(box);
+                        onSelect?.(c);
+                    });
+                });
+            };
+
+            input.addEventListener('input', () => {
+                hidden.value = '';
+                render(input.value);
+            });
+            input.addEventListener('focus', () => render(input.value));
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 150));
+        }
+
+        function filtrerClientsParTexte(clients, q) {
+            const query = (q || '').toLowerCase().trim();
+            if (!query) return clients;
+            return clients.filter(c => {
+                const hay = [
+                    c.nom,
+                    c.contact_nom,
+                    c.contact_email,
+                    c.contact_telephone,
+                    c.adresse,
+                    c.notes
+                ].map(v => String(v || '').toLowerCase()).join(' ');
+                return hay.includes(query);
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  PAGINATION Helpers
+        // ═══════════════════════════════════════════════════════════
+        function afficherPagination(currentPage, totalPages, totalItems) {
+            let container = document.getElementById('paginationContainer');
+            if (!container) {
+                const table = document.getElementById('tbodyClients')?.closest('table');
+                if (!table) return;
+                container = document.createElement('div');
+                container.id = 'paginationContainer';
+                container.className = 'mt-3';
+                table.parentNode.insertBefore(container, table.nextSibling);
+            }
+
+            container.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted">
+                Page ${currentPage} / ${totalPages > 0 ? totalPages : 1} — ${totalItems} client${totalItems > 1 ? 's' : ''} au total
+            </span>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary me-1"
+                        onclick="changerPage(${currentPage - 1})"
+                        ${currentPage <= 1 ? 'disabled' : ''}>
+                    ◀ Précédent
+                </button>
+                <button class="btn btn-sm btn-outline-secondary"
+                        onclick="changerPage(${currentPage + 1})"
+                        ${currentPage >= totalPages ? 'disabled' : ''}>
+                    Suivant ▶
+                </button>
+            </div>
+        </div>
+    `;
+            container.style.display = 'block';
+        }
+
+        function masquerPagination() {
+            const container = document.getElementById('paginationContainer');
+            if (container) container.style.display = 'none';
+        }
+
+        function changerPage(nouvellePage) {
+            page = nouvellePage;
+            chargerClients();
+        }
+
+        function filtreActif() {
+            const actif = document.getElementById('filtreActif').value;
+            const selectedId = document.getElementById('filtreClientId').value;
+            const q = new URLSearchParams(window.location.search).get('q') || '';
+            return !!(actif || selectedId || q);
+        }
+
+        function appliquerFiltres() {
+            page = 1;
+            chargerClients();
+        }
+
+        function afficherClients(clients) {
+            const tbody = document.getElementById('tbodyClients');
+
+            if (!clients.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Aucun client</td></tr>';
+                masquerPagination();
+                return;
+            }
+
+            if (filtreActif()) {
+                masquerPagination();
+            } else {
+                const totalPages = Math.ceil(totalClientsCount / PAGE_SIZE);
+                afficherPagination(page, totalPages, totalClientsCount);
+            }
+
+            tbody.innerHTML = clients.map(c => `
+        <tr>
+            <td class="ps-4"><strong>${c.nom}</strong></td>
+            <td>${c.contact_nom || '—'}</td>
+            <td>
+                <small>${c.contact_email || '—'}</small><br>
+                <small class="text-muted">${c.contact_telephone || ''}</small>
+            </td>
+            <td><small>${c.adresse || '—'}</small></td>
+            <td>
+                <span class="badge ${c.actif ? 'bg-success' : 'bg-secondary'}">
+                    ${c.actif ? 'Actif' : 'Inactif'}
+                </span>
+            </td>
+            <td class="pe-4">
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editerClient(${c.id})">✏️</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="supprimerClient(${c.id}, '${c.nom.replace(/'/g, "\\'")}')">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+        }
+
+        // ── Chargement de la liste ─────────────────────────────────
+        async function chargerClients() {
+            const tbody = document.getElementById('tbodyClients');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm"></div> Chargement...</td></tr>';
+
+            try {
+                let url = `${API}?limit=${PAGE_SIZE}&skip=${(page - 1) * PAGE_SIZE}`;
+
+                if (filtreActif()) {
+                    url = `${API}?nolimit=true`;
+                }
+
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+                const countHeader = resp.headers.get("X-Total-Count");
+                if (countHeader) totalClientsCount = parseInt(countHeader, 10);
+
+                tousLesClients = await resp.json();
+
+                // Client-side filtering logic remains here because backend API doesn't fully support all `clients` filters yet natively,
+                // but we fetch all data if there's an active filter to not restrict the filter capability. 
+                let filteredClients = tousLesClients;
+                if (filtreActif()) {
+                    totalClientsCount = filteredClients.length;
+                    const actif = document.getElementById('filtreActif').value;
+                    const selectedId = document.getElementById('filtreClientId').value;
+                    const q = new URLSearchParams(window.location.search).get('q') || '';
+
+                    if (selectedId) filteredClients = filteredClients.filter(c => String(c.id) === String(selectedId));
+                    if (actif === '1') filteredClients = filteredClients.filter(c => !!c.actif);
+                    if (actif === '0') filteredClients = filteredClients.filter(c => !c.actif);
+                    if (q) filteredClients = filtrerClientsParTexte(filteredClients, q);
+                    totalClientsCount = filteredClients.length;
+                }
+
+                afficherClients(filteredClients);
+            } catch (e) {
+                console.error('Erreur chargement clients:', e);
+                tousLesClients = [];
+                if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Erreur de chargement</td></tr>`;
+            }
+        }
+
+
+        // ── Ouvrir modal en mode édition ───────────────────────────
         async function editerClient(id) {
-            const resp = await fetch(`${API}${id}`);
+            const resp = await fetch(`${API}/${id}`);
             const c = await resp.json();
 
             document.getElementById('clientId').value = c.id;
@@ -152,6 +432,7 @@
             new bootstrap.Modal(document.getElementById('modalClient')).show();
         }
 
+        // ── Réinitialiser le modal pour création ──────────────────
         document.getElementById('modalClient').addEventListener('hidden.bs.modal', () => {
             document.getElementById('clientId').value = '';
             document.getElementById('clientNom').value = '';
@@ -164,6 +445,7 @@
             document.getElementById('modalClientTitre').textContent = 'Nouveau client';
         });
 
+        // ── Sauvegarde (création ou mise à jour) ──────────────────
         async function sauvegarderClient() {
             const id = document.getElementById('clientId').value;
 
@@ -182,7 +464,7 @@
                 return;
             }
 
-            const url = id ? `${API}${id}` : `${API}`;
+            const url = id ? `${API}/${id}` : `${API}/`;
             const method = id ? 'PUT' : 'POST';
 
             const resp = await fetch(url, {
@@ -193,22 +475,36 @@
 
             if (resp.ok) {
                 bootstrap.Modal.getInstance(document.getElementById('modalClient')).hide();
-                reloadGrafana();
+                chargerClients();
             } else {
                 const err = await resp.json();
                 alert('Erreur : ' + JSON.stringify(err));
             }
         }
 
+        // ── Suppression ────────────────────────────────────────────
         async function supprimerClient(id, nom) {
             if (!confirm(`Supprimer le client "${nom}" ?`)) return;
-            const resp = await fetch(`${API}${id}`, { method: 'DELETE' });
+            const resp = await fetch(`${API}/${id}`, { method: 'DELETE' });
             if (resp.ok) {
-                reloadGrafana();
+                chargerClients();
             } else {
                 alert('Erreur lors de la suppression.');
             }
         }
+
+        // ── Init ───────────────────────────────────────────────────
+        (async () => {
+            await chargerClients(); // ne plantera plus
+
+            initClientTypeahead({
+                inputId: 'filtreClientSearch',
+                hiddenId: 'filtreClientId',
+                boxId: 'filtreClientSuggestions',
+                onSelect: () => appliquerFiltres()
+            });
+        })();
+
     </script>
 </body>
 
