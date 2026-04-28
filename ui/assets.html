@@ -8,10 +8,21 @@
     <link rel="stylesheet" href="/static/app-search.css">
     <link rel="stylesheet" href="/static/app-premium.css">
     <style>
-        .badge-critique { background-color: #f85149; }
-        .badge-haute { background-color: #f0883e; }
-        .badge-moyenne { background-color: #d29922; }
-        .badge-basse { background-color: #3fb950; }
+        .badge-critique {
+            background-color: #f85149;
+        }
+
+        .badge-haute {
+            background-color: #f0883e;
+        }
+
+        .badge-moyenne {
+            background-color: #d29922;
+        }
+
+        .badge-basse {
+            background-color: #3fb950;
+        }
 
         td .btn-sm {
             width: 32px;
@@ -53,7 +64,9 @@
                                 <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
                                 <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
                                 <li><a class="dropdown-item active" href="/ui/assets">💻 Assets</a></li>
-                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
                             </ul>
@@ -284,9 +297,9 @@
                             <label class="form-label">Criticité</label>
                             <select class="form-select" id="assetCriticite">
                                 <option value="critique">Critique</option>
-                                <option value="haute">Haute</option>
-                                <option value="moyenne" selected>Moyenne</option>
-                                <option value="basse">Basse</option>
+                                <option value="eleve">Haute</option>
+                                <option value="moyen" selected>Moyenne</option>
+                                <option value="faible">Basse</option>
                             </select>
                         </div>
                         <!-- Statut -->
@@ -342,18 +355,13 @@
         const API_ASSETS = '/api/assets/';
         const API_CLIENTS = '/api/clients/';
         const API_SITES = '/api/sites/';
-        const API_FABRICANTS = '/api/vendors/';
-        const API_MODELES = '/api/models/';
+        const API_FABRICANTS = '/api/vendors';
+        const API_MODELES = '/api/models';
 
         const PAGE_SIZE = 20;
         let page = 1;
         let totalAssetsCount = 0;
         let tousLesAssets = [];
-        let tousLesClients = [];
-        let tousLesFabricants = [];
-        let sitesDuClient = [];
-        let sitesDuFiltreClient = [];
-        let modelesDuFabricant = [];
 
         // ═══════════════════════════════════════════════════════════
         //  1. FONCTIONS UTILITAIRES
@@ -575,115 +583,8 @@
         });
 
         // ═══════════════════════════════════════════════════════════
-        //  CHARGEMENT DONNÉES
+        //  CHARGEMENT DONNÉES (plus de chargement en masse)
         // ═══════════════════════════════════════════════════════════
-        async function chargerClients() {
-            try {
-                const r = await fetch(`${API_CLIENTS}?limit=1000`);
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                tousLesClients = await r.json();
-            } catch (e) {
-                console.error('Erreur chargement clients:', e);
-                tousLesClients = [];
-            }
-        }
-
-        async function chargerFabricants() {
-            try {
-                const r = await fetch(`${API_FABRICANTS}?limit=1000`);
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                const data = await r.json();
-                tousLesFabricants = Array.isArray(data) ? data : (data.vendors || []);
-            } catch (e) {
-                console.error('Erreur chargement fabricants:', e);
-                tousLesFabricants = [];
-            }
-        }
-
-
-        async function chargerSitesDuClient() {
-            const clientId = document.getElementById('assetClientId').value;
-            const siteSearch = document.getElementById('assetSiteSearch');
-            const siteId = document.getElementById('assetSiteId');
-
-            siteId.value = '';
-            siteSearch.value = '';
-            sitesDuClient = [];
-
-            if (!clientId) {
-                siteSearch.disabled = true;
-                siteSearch.placeholder = 'Choisir d\'abord un client…';
-                return;
-            }
-
-            try {
-                const r = await fetch(`${API_SITES}?client_id=${clientId}&limit=1000`);
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                sitesDuClient = await r.json();
-                siteSearch.disabled = false;
-                siteSearch.placeholder = 'Rechercher un site…';
-            } catch (e) {
-                console.error('Erreur chargement sites:', e);
-                sitesDuClient = [];
-                siteSearch.disabled = true;
-            }
-        }
-
-        async function chargerSitesFiltre() {
-            const clientId = document.getElementById('filtreClientId').value;
-            const siteSearch = document.getElementById('filtreSiteSearch');
-            const siteId = document.getElementById('filtreSiteId');
-
-            siteId.value = '';
-            siteSearch.value = '';
-            sitesDuFiltreClient = [];
-
-            if (!clientId) {
-                siteSearch.disabled = true;
-                siteSearch.placeholder = 'Choisir d\'abord un client…';
-                return;
-            }
-
-            try {
-                const r = await fetch(`${API_SITES}?client_id=${clientId}&limit=1000`);
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                sitesDuFiltreClient = await r.json();
-                siteSearch.disabled = false;
-                siteSearch.placeholder = 'Rechercher un site…';
-            } catch (e) {
-                console.error('Erreur chargement sites filtre:', e);
-                sitesDuFiltreClient = [];
-                siteSearch.disabled = true;
-            }
-        }
-
-        async function chargerModelesDuFabricant(fabricantId) {
-            const modeleSearch = document.getElementById('assetModeleSearch');
-            const modeleId = document.getElementById('assetModeleId');
-
-            modeleId.value = '';
-            modeleSearch.value = '';
-            modelesDuFabricant = [];
-
-            if (!fabricantId) {
-                modeleSearch.disabled = true;
-                modeleSearch.placeholder = 'Choisir d\'abord un fabricant…';
-                return;
-            }
-
-            try {
-                const r = await fetch(`${API_MODELES}?vendor_id=${fabricantId}&limit=1000`);
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                const data = await r.json();
-                modelesDuFabricant = Array.isArray(data) ? data : (data.models || []);
-                modeleSearch.disabled = false;
-                modeleSearch.placeholder = 'Rechercher un modèle…';
-            } catch (e) {
-                console.error('Erreur chargement modèles:', e);
-                modelesDuFabricant = [];
-                modeleSearch.disabled = true;
-            }
-        }
 
         // ═══════════════════════════════════════════════════════════
         //  TYPEAHEAD : CLIENT (FILTRE)
@@ -692,46 +593,63 @@
             const input = document.getElementById('filtreClientSearch');
             const hidden = document.getElementById('filtreClientId');
             const box = document.getElementById('filtreClientSuggestions');
+            let debounceTimer;
 
             input.addEventListener('input', () => {
-                const q = input.value.trim().toLowerCase();
+                const q = input.value.trim();
                 hidden.value = '';
-
                 document.getElementById('filtreSiteSearch').disabled = true;
                 document.getElementById('filtreSiteSearch').placeholder = 'Choisir d\'abord un client…';
                 document.getElementById('filtreSiteId').value = '';
                 document.getElementById('filtreSiteSearch').value = '';
-
-                if (q.length === 0) { hideSuggestionBox(box); filtrerAssets(); return; }
-                const filtered = tousLesClients.filter(c => c.nom.toLowerCase().includes(q));
-                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
-                    input.value = item.nom;
-                    hidden.value = item.id;
-                    chargerSitesFiltre();
-                    filtrerAssets();
-                });
+                if (q.length < 2) { hideSuggestionBox(box); filtrerAssets(); return; }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const r = await fetch(`${API_CLIENTS}?search=${encodeURIComponent(q)}&limit=10`);
+                        const items = await r.json();
+                        renderSuggestions(box, items, 'nom', 'id', (item) => {
+                            input.value = item.nom;
+                            hidden.value = item.id;
+                            document.getElementById('filtreSiteSearch').disabled = false;
+                            document.getElementById('filtreSiteSearch').placeholder = 'Rechercher un site…';
+                            filtrerAssets();
+                        });
+                    } catch (e) { console.error(e); }
+                }, 250);
             });
-
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
 
+        // ═══════════════════════════════════════════════════════════
+        //  TYPEAHEAD : SITE (FILTRE)
+        // ═══════════════════════════════════════════════════════════
         function initFiltreSiteTypeahead() {
             const input = document.getElementById('filtreSiteSearch');
             const hidden = document.getElementById('filtreSiteId');
             const box = document.getElementById('filtreSiteSuggestions');
+            let debounceTimer;
 
             input.addEventListener('input', () => {
-                const q = input.value.trim().toLowerCase();
+                const q = input.value.trim();
                 hidden.value = '';
-                if (q.length === 0) { hideSuggestionBox(box); filtrerAssets(); return; }
-                const filtered = sitesDuFiltreClient.filter(s => s.nom.toLowerCase().includes(q));
-                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
-                    input.value = item.nom;
-                    hidden.value = item.id;
-                    filtrerAssets();
-                });
+                if (q.length < 2) { hideSuggestionBox(box); filtrerAssets(); return; }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const clientId = document.getElementById('filtreClientId').value;
+                        const params = new URLSearchParams({ search: q, limit: 10 });
+                        if (clientId) params.append('client_id', clientId);
+                        const r = await fetch(`${API_SITES}?${params}`);
+                        const items = await r.json();
+                        renderSuggestions(box, items, 'nom', 'id', (item) => {
+                            input.value = item.nom;
+                            hidden.value = item.id;
+                            filtrerAssets();
+                        });
+                    } catch (e) { console.error(e); }
+                }, 250);
             });
-
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
 
@@ -742,24 +660,30 @@
             const input = document.getElementById('assetClientSearch');
             const hidden = document.getElementById('assetClientId');
             const box = document.getElementById('assetClientSuggestions');
+            let debounceTimer;
 
             input.addEventListener('input', () => {
-                const q = input.value.trim().toLowerCase();
+                const q = input.value.trim();
                 hidden.value = '';
                 document.getElementById('assetSiteSearch').disabled = true;
                 document.getElementById('assetSiteSearch').placeholder = 'Choisir d\'abord un client…';
                 document.getElementById('assetSiteId').value = '';
                 document.getElementById('assetSiteSearch').value = '';
-
-                if (q.length === 0) { hideSuggestionBox(box); return; }
-                const filtered = tousLesClients.filter(c => c.nom.toLowerCase().includes(q));
-                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
-                    input.value = item.nom;
-                    hidden.value = item.id;
-                    chargerSitesDuClient();
-                });
+                if (q.length < 2) { hideSuggestionBox(box); return; }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const r = await fetch(`${API_CLIENTS}?search=${encodeURIComponent(q)}&limit=10`);
+                        const items = await r.json();
+                        renderSuggestions(box, items, 'nom', 'id', (item) => {
+                            input.value = item.nom;
+                            hidden.value = item.id;
+                            document.getElementById('assetSiteSearch').disabled = false;
+                            document.getElementById('assetSiteSearch').placeholder = 'Rechercher un site…';
+                        });
+                    } catch (e) { console.error(e); }
+                }, 250);
             });
-
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
 
@@ -770,18 +694,27 @@
             const input = document.getElementById('assetSiteSearch');
             const hidden = document.getElementById('assetSiteId');
             const box = document.getElementById('assetSiteSuggestions');
+            let debounceTimer;
 
             input.addEventListener('input', () => {
-                const q = input.value.trim().toLowerCase();
+                const q = input.value.trim();
                 hidden.value = '';
-                if (q.length === 0) { hideSuggestionBox(box); return; }
-                const filtered = sitesDuClient.filter(s => s.nom.toLowerCase().includes(q));
-                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
-                    input.value = item.nom;
-                    hidden.value = item.id;
-                });
+                if (q.length < 2) { hideSuggestionBox(box); return; }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const clientId = document.getElementById('assetClientId').value;
+                        const params = new URLSearchParams({ search: q, limit: 10 });
+                        if (clientId) params.append('client_id', clientId);
+                        const r = await fetch(`${API_SITES}?${params}`);
+                        const items = await r.json();
+                        renderSuggestions(box, items, 'nom', 'id', (item) => {
+                            input.value = item.nom;
+                            hidden.value = item.id;
+                        });
+                    } catch (e) { console.error(e); }
+                }, 250);
             });
-
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
 
@@ -792,24 +725,34 @@
             const input = document.getElementById('assetFabricantSearch');
             const hidden = document.getElementById('assetFabricantId');
             const box = document.getElementById('assetFabricantSuggestions');
+            let debounceTimer;
 
             input.addEventListener('input', () => {
-                const q = input.value.trim().toLowerCase();
+                const q = input.value.trim();
                 hidden.value = '';
-                // Reset modèle
                 document.getElementById('assetModeleSearch').disabled = true;
                 document.getElementById('assetModeleSearch').placeholder = 'Choisir d\'abord un fabricant…';
                 document.getElementById('assetModeleId').value = '';
                 document.getElementById('assetModeleSearch').value = '';
-                modelesDuFabricant = [];
 
-                if (q.length === 0) { hideSuggestionBox(box); return; }
-                const filtered = tousLesFabricants.filter(f => f.nom.toLowerCase().includes(q));
-                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
-                    input.value = item.nom;
-                    hidden.value = item.id;
-                    chargerModelesDuFabricant(item.id);
-                });
+                if (q.length < 2) { hideSuggestionBox(box); return; }
+
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const r = await fetch(`${API_FABRICANTS}?search=${encodeURIComponent(q)}&limit=10`);
+                        const data = await r.json();
+                        const items = data.vendors || [];
+                        renderSuggestions(box, items, 'nom', 'id', (item) => {
+                            input.value = item.nom;
+                            hidden.value = item.id;
+                            document.getElementById('assetModeleSearch').disabled = false;
+                            document.getElementById('assetModeleSearch').placeholder = 'Rechercher un modèle…';
+                        });
+                    } catch (e) {
+                        console.error('Erreur recherche fabricants:', e);
+                    }
+                }, 250);
             });
 
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
@@ -822,16 +765,27 @@
             const input = document.getElementById('assetModeleSearch');
             const hidden = document.getElementById('assetModeleId');
             const box = document.getElementById('assetModeleSuggestions');
+            let debounceTimer;
 
             input.addEventListener('input', () => {
-                const q = input.value.trim().toLowerCase();
+                const q = input.value.trim();
                 hidden.value = '';
-                if (q.length === 0) { hideSuggestionBox(box); return; }
-                const filtered = modelesDuFabricant.filter(m => m.nom.toLowerCase().includes(q));
-                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
-                    input.value = item.nom;
-                    hidden.value = item.id;
-                });
+                if (q.length < 2) { hideSuggestionBox(box); return; }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const fabricantId = document.getElementById('assetFabricantId').value;
+                        const params = new URLSearchParams({ search: q, limit: 10 });
+                        if (fabricantId) params.append('vendor_id', fabricantId);
+                        const r = await fetch(`${API_MODELES}?${params}`);
+                        const data = await r.json();
+                        const items = data.models || data || [];
+                        renderSuggestions(box, items, 'nom', 'id', (item) => {
+                            input.value = item.nom;
+                            hidden.value = item.id;
+                        });
+                    } catch (e) { console.error('Erreur recherche modèles:', e); }
+                }, 250);
             });
 
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
@@ -855,7 +809,7 @@
             document.getElementById('assetBios').value = '';
             document.getElementById('assetDateInstall').value = '';
             document.getElementById('assetFinGarantie').value = '';
-            document.getElementById('assetCriticite').value = 'moyenne';
+            document.getElementById('assetCriticite').value = 'moyen';
             document.getElementById('assetStatut').value = 'actif';
             document.getElementById('assetNotes').value = '';
 
@@ -867,7 +821,6 @@
             document.getElementById('assetSiteId').value = '';
             document.getElementById('assetSiteSearch').disabled = true;
             document.getElementById('assetSiteSearch').placeholder = 'Choisir d\'abord un client…';
-            sitesDuClient = [];
             // Fabricant
             document.getElementById('assetFabricantSearch').value = '';
             document.getElementById('assetFabricantId').value = '';
@@ -876,7 +829,6 @@
             document.getElementById('assetModeleId').value = '';
             document.getElementById('assetModeleSearch').disabled = true;
             document.getElementById('assetModeleSearch').placeholder = 'Choisir d\'abord un fabricant…';
-            modelesDuFabricant = [];
         }
 
         function ouvrirModalCreation() {
@@ -917,27 +869,28 @@
             document.getElementById('assetBios').value = a.version_bios || '';
             document.getElementById('assetDateInstall').value = a.date_installation || '';
             document.getElementById('assetFinGarantie').value = a.date_fin_garantie || a.fin_garantie || '';
-            document.getElementById('assetCriticite').value = a.niveau_criticite || a.criticite || 'moyenne';
+            document.getElementById('assetCriticite').value = a.niveau_criticite || a.criticite || 'moyen';
             document.getElementById('assetStatut').value = a.statut_operationnel || a.statut || 'actif';
             document.getElementById('assetNotes').value = a.notes || '';
 
             // Fabricant puis Modèle
-            document.getElementById('assetFabricantId').value = a.fabricant_id ? String(a.fabricant_id) : '';
-            document.getElementById('assetFabricantSearch').value = a.fabricant_nom || a.fabricant || '';
-            if (a.fabricant_id) {
-                await chargerModelesDuFabricant(a.fabricant_id);
-                document.getElementById('assetModeleId').value = a.modele_id ? String(a.modele_id) : '';
-                document.getElementById('assetModeleSearch').value = a.modele_nom || a.modele || '';
+            document.getElementById('assetFabricantId').value = a.vendor_id ? String(a.vendor_id) : '';
+            document.getElementById('assetFabricantSearch').value = a.vendor_nom || '';
+            if (a.vendor_id) {
+                document.getElementById('assetModeleSearch').disabled = false;
+                document.getElementById('assetModeleSearch').placeholder = 'Rechercher un modèle…';
+                document.getElementById('assetModeleId').value = a.model_id ? String(a.model_id) : '';
+                document.getElementById('assetModeleSearch').value = a.model_nom || '';
             }
 
             // Client puis Site
             document.getElementById('assetClientId').value = String(a.client_id || '');
             document.getElementById('assetClientSearch').value = a.client_nom || '';
             if (a.client_id) {
-                await chargerSitesDuClient();
+                document.getElementById('assetSiteSearch').disabled = false;
+                document.getElementById('assetSiteSearch').placeholder = 'Rechercher un site…';
                 document.getElementById('assetSiteId').value = String(a.site_id || '');
                 document.getElementById('assetSiteSearch').value = a.site_nom || '';
-                document.getElementById('assetSiteSearch').disabled = false;
             }
 
             document.getElementById('modalAssetLabel').textContent = `Éditer : ${a.nom_interne || a.nom || ''}`;
@@ -972,8 +925,8 @@
                 site_id: parseInt(siteId),
                 nom_interne: nom,
                 type_equipement: type,
-                fabricant_id: document.getElementById('assetFabricantId').value ? parseInt(document.getElementById('assetFabricantId').value) : null,
-                modele_id: document.getElementById('assetModeleId').value ? parseInt(document.getElementById('assetModeleId').value) : null,
+                vendor_id: document.getElementById('assetFabricantId').value ? parseInt(document.getElementById('assetFabricantId').value) : null,
+                model_id: document.getElementById('assetModeleId').value ? parseInt(document.getElementById('assetModeleId').value) : null,
                 numero_serie: document.getElementById('assetSerie').value.trim() || null,
                 adresse_ip: document.getElementById('assetIP').value.trim() || null,
                 adresse_mac: document.getElementById('assetMAC').value.trim() || null,
@@ -1040,9 +993,6 @@
         //  INIT
         // ═══════════════════════════════════════════════════════════
         (async () => {
-            await chargerClients();
-            await chargerFabricants();
-
             initFiltreClientTypeahead();
             initFiltreSiteTypeahead();
             initModalClientTypeahead();

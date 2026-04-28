@@ -40,7 +40,9 @@ class SiteUpdate(BaseModel):
 def list_sites(
     response: Response,
     client_id: Optional[int] = None,
+    site_id: Optional[int] = None,
     actif: Optional[bool] = None,
+    search: Optional[str] = None,
     limit: int = Query(20, ge=1),
     skip: int = Query(0, ge=0)
 ):
@@ -52,9 +54,15 @@ def list_sites(
             if client_id is not None:
                 where_clauses.append("s.client_id = %s")
                 params_where.append(client_id)
+            if site_id is not None:
+                where_clauses.append("s.id = %s")
+                params_where.append(site_id)
             if actif is not None:
                 where_clauses.append("s.actif = %s")
                 params_where.append(1 if actif else 0)
+            if search:
+                where_clauses.append("s.nom LIKE %s")
+                params_where.append(f"%{search}%")
             where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
 
             # 1. Total count

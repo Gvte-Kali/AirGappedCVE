@@ -168,9 +168,12 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Fabricant *</label>
-                            <select class="form-select" id="modelVendorId">
-                                <option value="">— Choisir —</option>
-                            </select>
+                            <input type="hidden" id="modelVendorId" value="">
+                            <div class="position-relative">
+                                <input class="form-control" id="modelVendorSearch" type="search"
+                                    placeholder="Ex: Microsoft…" autocomplete="off">
+                                <div class="suggestion-box mt-1" id="modelVendorSuggestions"></div>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Type de produit *</label>
@@ -244,35 +247,26 @@
         const API_VENDORS = '/api/vendors';
 
         let allModels = [];
-        let allVendors = [];
         let deleteTargetId = null;
         let page = 1;
         const PAGE_SIZE = 20;
         let totalModelsCount = 0;
 
-        // ── Charger les vendors (pour filtres + modal) ──
+        // ── Init vendors (pré-sélection URL + typeaheads) ──
         async function loadVendors() {
-            const res = await fetch(API_VENDORS);
-            const data = await res.json();
-            allVendors = data.vendors || [];
-
-            // Select modal uniquement
-            const modalSel = document.getElementById('modelVendorId');
-            modalSel.innerHTML = '<option value="">— Choisir —</option>' +
-                allVendors.map(v => `<option value="${v.id}">${esc(v.nom)} (${v.nvd_vendor})</option>`).join('');
-
-            // Pré-sélection si ?vendor=X dans l'URL
-            const params = new URLSearchParams(window.location.search);
-            const vendorParam = params.get('vendor');
+            const vendorParam = new URLSearchParams(window.location.search).get('vendor');
             if (vendorParam) {
-                const vendor = allVendors.find(v => String(v.id) === String(vendorParam));
-                if (vendor) {
-                    document.getElementById('filterVendorId').value = vendor.id;
-                    document.getElementById('filterVendorSearch').value = vendor.nom;
-                }
+                try {
+                    const r = await fetch(`${API_VENDORS}/${vendorParam}`);
+                    if (r.ok) {
+                        const v = await r.json();
+                        document.getElementById('filterVendorId').value = v.id;
+                        document.getElementById('filterVendorSearch').value = v.nom;
+                    }
+                } catch (e) { console.error(e); }
             }
-
             initVendorFilterTypeahead();
+            initModalVendorTypeahead();
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -401,49 +395,91 @@
     `).join('');
         }
 
-        // ── Typeahead fabricant (filtre) ──
+        // ── Typeahead fabricant (filtre table) ──
         function initVendorFilterTypeahead() {
             const input = document.getElementById('filterVendorSearch');
             const hidden = document.getElementById('filterVendorId');
             const box = document.getElementById('filterVendorSuggestions');
             if (!input || !hidden || !box) return;
+            let debounceTimer;
 
-            const render = (q) => {
-                const query = q.toLowerCase().trim();
-                const items = query
-                    ? allVendors.filter(v =>
-                        v.nom.toLowerCase().includes(query) ||
-                        v.nvd_vendor.toLowerCase().includes(query)
-                      ).slice(0, 10)
-                    : allVendors.slice(0, 10);
+            input.addEventListener('input', () => {
+                const q = input.value.trim();
+                hidden.value = '';
+                if (q.length < 2) { box.style.display = 'none'; return; }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const r = await fetch(`${API_VENDORS}?search=${encodeURIComponent(q)}&limit=10`);
+                        const data = await r.json();
+                        const items = data.vendors || [];
+                        if (!items.length) {
+                            box.innerHTML = '<div class="suggestion-item text-muted">Aucun fabricant</div>';
+                            box.style.display = 'block';
+                            return;
+                        }
+                        box.innerHTML = items.map(v => `
+                            <div class="suggestion-item" data-vendor-id="${v.id}" data-vendor-nom="${v.nom.replace(/"/g, '&quot;')}">
+                                <div class="fw-semibold">${esc(v.nom)}</div>
+                                <div class="small text-muted">${v.nvd_vendor}</div>
+                            </div>
+                        `).join('');
+                        box.style.display = 'block';
+                        box.querySelectorAll('[data-vendor-id]').forEach(el => {
+                            el.addEventListener('click', () => {
+                                hidden.value = el.getAttribute('data-vendor-id');
+                                input.value = el.getAttribute('data-vendor-nom');
+                                box.style.display = 'none';
+                                page = 1;
+                                loadModels();
+                            });
+                        });
+                    } catch (e) { console.error(e); }
+                }, 250);
+            });
+            input.addEventListener('blur', () => setTimeout(() => { box.style.display = 'none'; }, 150));
+        }
 
-                if (!items.length) {
-                    box.innerHTML = '<div class="suggestion-item text-muted">Aucun fabricant</div>';
-                    box.style.display = 'block';
-                    return;
-                }
+        // ── Typeahead fabricant (modal création) ──
+        function initModalVendorTypeahead() {
+            const input = document.getElementById('modelVendorSearch');
+            const hidden = document.getElementById('modelVendorId');
+            const box = document.getElementById('modelVendorSuggestions');
+            if (!input || !hidden || !box) return;
+            let debounceTimer;
 
-                box.innerHTML = items.map(v => `
-                    <div class="suggestion-item" data-vendor-id="${v.id}" data-vendor-nom="${v.nom.replace(/"/g, '&quot;')}">
-                        <div class="fw-semibold">${esc(v.nom)}</div>
-                        <div class="small text-muted">${v.nvd_vendor}</div>
-                    </div>
-                `).join('');
-                box.style.display = 'block';
-
-                box.querySelectorAll('[data-vendor-id]').forEach(el => {
-                    el.addEventListener('click', () => {
-                        hidden.value = el.getAttribute('data-vendor-id');
-                        input.value = el.getAttribute('data-vendor-nom');
-                        box.style.display = 'none';
-                        page = 1;
-                        loadModels();
-                    });
-                });
-            };
-
-            input.addEventListener('input', () => { hidden.value = ''; render(input.value); page = 1; loadModels(); });
-            input.addEventListener('focus', () => render(input.value));
+            input.addEventListener('input', () => {
+                const q = input.value.trim();
+                hidden.value = '';
+                if (q.length < 2) { box.style.display = 'none'; return; }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const r = await fetch(`${API_VENDORS}?search=${encodeURIComponent(q)}&limit=10`);
+                        const data = await r.json();
+                        const items = data.vendors || [];
+                        if (!items.length) {
+                            box.innerHTML = '<div class="suggestion-item text-muted">Aucun fabricant</div>';
+                            box.style.display = 'block';
+                            return;
+                        }
+                        box.innerHTML = items.map(v => `
+                            <div class="suggestion-item" data-vendor-id="${v.id}" data-vendor-nom="${v.nom.replace(/"/g, '&quot;')}">
+                                <div class="fw-semibold">${esc(v.nom)}</div>
+                                <div class="small text-muted">${v.nvd_vendor}</div>
+                            </div>
+                        `).join('');
+                        box.style.display = 'block';
+                        box.querySelectorAll('[data-vendor-id]').forEach(el => {
+                            el.addEventListener('click', () => {
+                                hidden.value = el.getAttribute('data-vendor-id');
+                                input.value = el.getAttribute('data-vendor-nom');
+                                box.style.display = 'none';
+                            });
+                        });
+                    } catch (e) { console.error(e); }
+                }, 250);
+            });
             input.addEventListener('blur', () => setTimeout(() => { box.style.display = 'none'; }, 150));
         }
 
@@ -485,7 +521,7 @@
 
                 bootstrap.Modal.getInstance(document.getElementById('modalModel')).hide();
                 // Reset form
-                ['modelVendorId', 'modelNom', 'modelNvdProduct', 'modelCpe', 'modelNotes'].forEach(id => {
+                ['modelVendorId', 'modelVendorSearch', 'modelNom', 'modelNvdProduct', 'modelCpe', 'modelNotes'].forEach(id => {
                     document.getElementById(id).value = '';
                 });
                 document.getElementById('modelType').value = 'os';

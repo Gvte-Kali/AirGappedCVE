@@ -1,0 +1,106 @@
+# ═══════════════════════════════════════════════════════════════════════
+# Asset & Vulnerability Manager — Configuration pipeline
+# Fichier : scripts/config.yml
+# ═══════════════════════════════════════════════════════════════════════
+
+correlation:
+  # ── Passe unique de corrélation ───────────────────────────────────────
+  passes:
+    vendor_match: true   # Passe unique — vendor obligatoire + scoring version
+
+  # ── Match version ─────────────────────────────────────────────────────
+  # true = au moins 1 match version obligatoire pour insérer la corrélation
+  version_match_required: true
+  # Chars alphanumériques communs minimum pour valider un match de version
+  version_match_min_chars: 4
+
+  # ── Match produit (bonus, jamais bloquant) ─────────────────────────────
+  # true = un match produit ajoute +0.5 au score pré-triage
+  product_match_bonus: true
+  # Chars alphanumériques communs minimum pour déclencher le bonus produit
+  product_match_min_chars: 6
+
+  # ── Filtres CVSS ─────────────────────────────────────────────────────
+  cvss_min: 4.0
+  cvss_network_min: 7.0
+
+  # ── Filtre temporel ───────────────────────────────────────────────────
+  date_min: "2015-01-01"
+
+  # ── Limite cache par vendor ────────────────────────────────────────────
+  # Max CVE chargées par vendor, triées par score DESC (0 = illimité)
+  vendor_cve_limit: 2000
+
+  # ── Mapping OS textuel → vendor NVD ──────────────────────────────────
+  # Utilisé pour PC/Laptop/Serveur/Raspberry Pi qui ignorent leur vendor matériel
+  os_vendor_map:
+    windows: microsoft
+    linux: linux
+    DietPi : linux
+    ubuntu: canonical
+    debian: debian
+    centos: centos
+    redhat: redhat
+    dsm: synology
+    fortios: fortinet
+    fortigate: fortinet
+    ios: cisco
+    esxi: vmware
+    proxmox: proxmox
+    android: google
+    macos: apple
+    freebsd: freebsd
+
+  # ── Types d'équipements qui utilisent l'OS pour déterminer le vendor CVE ──
+  # (ignorent leur vendor matériel pour la corrélation)
+  os_based_types:
+    - pc
+    - laptop
+    - serveur
+    - raspberry_pi
+
+  # ── Types d'équipements qui utilisent leur vendor matériel ────────────
+  vendor_based_types:
+    - nas
+    - switch
+    - routeur
+    - pare_feu
+    - camera_axis
+    - camera_hikvision
+    - lecteur_biometrique
+    - lecteur_cartes
+    - ugl
+    - utl
+    - imprimante
+    - autre
+
+  # ── Mode dry-run ─────────────────────────────────────────────────────
+  dry_run: false
+
+  # ── Verbosité ────────────────────────────────────────────────────────
+  verbose: true
+
+mistral:
+  # Modèle Mistral à utiliser
+  model: "mistral-large-latest"
+  # Délai en secondes entre chaque appel API (clé gratuite ≈ 6 req/min max)
+  delay_seconds: 12.0
+  # Nombre max de tentatives en cas de rate limit (backoff 20s/40s/60s)
+  max_retries: 3
+  # Nombre max de corrélations à analyser par run (0 = illimité)
+  batch_max: 0
+  # Nombre max de tokens en sortie par appel
+  max_tokens: 512
+  # Ré-analyser les corrélations déjà analysées
+  force: false
+
+rapport:
+  # Répertoire de sortie des PDFs (relatif à la racine du projet)
+  output_dir: "documents"
+  # Statuts inclus dans le rapport
+  statuts_inclus:
+    - "confirme"
+    - "informatif"
+    - "mitige"
+  # Score contextuel minimum pour apparaître dans le rapport
+  score_min: 0.0

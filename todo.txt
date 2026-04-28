@@ -1,5 +1,14 @@
-1. La corrélation a trouvé un souci avec une version de firmware BIOS du serveur supermicro. Cependant, aucune version du BIOS n'a été renseignée. Cela veut dire que c'est un faux-positif. Il faut trouver un moyen de gérer les problèmes de firmwares BIOS. Pour cela, je voudrais rajouter un champ à ma page assets.html et dans ma abse de données afin que lors de l'ajout d'un serveur ou d'un pc, on ait une version_bios à ajouter, afin que cela soit plus simple pour la corrélation.
-2. Adapter la corrélation à l'ajout du champ version_bios dans la bdd.
-3. Changer la navbar de la page console ( /scripts/console )
-4. La page documents.html me renvoie "{"detail":"Not Found"}", trouver d'où vient le problème.
-5. La page assets.html n'affiche plus les assets correctement, on a juste un "chargement..." avec un logo qui tourne. J'avais demandé des modifications sur es routers afin d'afficher uniquement 20 résultats, et de ne pas limiter les résultats lors d'une recherche. L'idée était de ne pas surcharger la mémoire du service web. Quelque chose a foiré quelque part, il faut trouver d'où ça vient.
+1. /scripts/correlate_and_analyze.py : 
+    - Affiner la détection des cve afin de ne pas torp en envoyer à Mistral
+
+
+
+
+2. Réfaction page vulnérabilités
+3. Dégager Grafana qui ne nous servira plus
+
+!! En dernier !! . Créer un script de first install, ce script va être long : 
+    - Créer la bdd avec /sql/schema.sql ( voir si install.sh ne le fait pas déjà )
+    - Faire le premier téléchargement des pages json nvd avec /script/download_nvd.py
+    - Importer les Fabricants et Modèles dans la bdd avec /scripts/import_vendors_models.py
+    - Importer les cve qui correspondent aux fabricants/modèles avec /scripts/cve_sync.py

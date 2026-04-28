@@ -240,13 +240,9 @@
         const API_SITES = '/api/sites/';
         const API_CLIENTS = '/api/clients/';
 
-        let tousLesClients = [];
-        let tousLesSites = [];
         let page = 1;
         const PAGE_SIZE = 20;
         let totalSitesCount = 0;
-
-        function norm(v) { return String(v || '').toLowerCase().trim(); }
 
         function escSingleQuoteJsString(v) {
             return String(v ?? '')
@@ -334,19 +330,6 @@
     `).join('');
         }
 
-        async function chargerClients() {
-            try {
-                const resp = await fetch(`${API_CLIENTS}?limit=1000`);
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                tousLesClients = await resp.json();
-            } catch (e) {
-                console.error('Erreur chargement clients:', e);
-                const tbody = document.getElementById('tbodySites');
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Erreur chargement clients (voir console)</td></tr>';
-                tousLesClients = [];
-            }
-        }
-
         async function chargerSites() {
             const tbody = document.getElementById('tbodySites');
             tbody.innerHTML = `
@@ -363,8 +346,10 @@
                     skip: (page - 1) * PAGE_SIZE
                 });
                 const clientId = document.getElementById('filtreClientId')?.value || '';
+                const siteId = document.getElementById('filtreSiteId')?.value || '';
                 const actif = document.getElementById('filtreActif')?.value || '';
                 if (clientId) params.append('client_id', clientId);
+                if (siteId) params.append('site_id', siteId);
                 if (actif === '1') params.append('actif', 'true');
                 if (actif === '0') params.append('actif', 'false');
 
@@ -374,8 +359,7 @@
                 const countHeader = resp.headers.get("X-Total-Count");
                 if (countHeader) totalSitesCount = parseInt(countHeader, 10);
 
-                tousLesSites = await resp.json();
-                afficherSites(tousLesSites);
+                afficherSites(await resp.json());
 
             } catch (e) {
                 console.error('Erreur chargement sites:', e);
@@ -390,165 +374,141 @@
         }
 
 
-        function showSuggestionBox(boxEl, itemsHtml) {
-            boxEl.innerHTML = itemsHtml;
-            boxEl.style.display = 'block';
+        function hideSuggestionBox(box) {
+            box.style.display = 'none';
+            box.innerHTML = '';
         }
 
-        function hideSuggestionBox(boxEl) {
-            boxEl.style.display = 'none';
-            boxEl.innerHTML = '';
-        }
-
-        function initClientTypeahead({ inputId, hiddenId, boxId, onSelect }) {
-            const input = document.getElementById(inputId);
-            const hidden = document.getElementById(hiddenId);
-            const box = document.getElementById(boxId);
+        // ── Typeahead client (filtre table) ──
+        function initFiltreClientTypeahead() {
+            const input = document.getElementById('filtreClientSearch');
+            const hidden = document.getElementById('filtreClientId');
+            const box = document.getElementById('filtreClientSuggestions');
             if (!input || !hidden || !box) return;
-
-            const render = (q) => {
-                const query = norm(q);
-                const items = query
-                    ? tousLesClients.filter(c => norm(c.nom).startsWith(query)).slice(0, 10)
-                    : tousLesClients.slice(0, 10);
-
-                if (!items.length) {
-                    return showSuggestionBox(box, '<div class="list-group-item am-search-muted">Aucun client</div>');
-                }
-
-                showSuggestionBox(
-                    box,
-                    items.map(c => `
-                <div class="suggestion-item" data-client-id="${c.id}">
-                    <div class="fw-semibold">${c.nom}</div>
-                </div>
-            `).join('')
-                );
-
-                box.querySelectorAll('[data-client-id]').forEach(el => {
-                    el.addEventListener('click', () => {
-                        const id = parseInt(el.getAttribute('data-client-id'), 10);
-                        const c = tousLesClients.find(x => x.id === id);
-                        if (!c) return;
-                        hidden.value = String(c.id);
-                        input.value = c.nom || '';
-                        hideSuggestionBox(box);
-                        onSelect?.(c);
-                    });
-                });
-            };
+            let debounceTimer;
 
             input.addEventListener('input', () => {
+                const q = input.value.trim();
                 hidden.value = '';
-                render(input.value);
+                if (q.length < 2) { hideSuggestionBox(box); return; }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const r = await fetch(`${API_CLIENTS}?search=${encodeURIComponent(q)}&limit=10`);
+                        const items = await r.json();
+                        if (!items.length) {
+                            box.innerHTML = '<div class="suggestion-item text-muted">Aucun client</div>';
+                            box.style.display = 'block';
+                            return;
+                        }
+                        box.innerHTML = items.map(c => `
+                            <div class="suggestion-item" data-id="${c.id}" data-nom="${c.nom.replace(/"/g, '&quot;')}">
+                                <div class="fw-semibold">${c.nom}</div>
+                            </div>
+                        `).join('');
+                        box.style.display = 'block';
+                        box.querySelectorAll('[data-id]').forEach(el => {
+                            el.addEventListener('click', () => {
+                                hidden.value = el.dataset.id;
+                                input.value = el.dataset.nom;
+                                hideSuggestionBox(box);
+                                page = 1;
+                                chargerSites();
+                            });
+                        });
+                    } catch (e) { console.error(e); }
+                }, 250);
             });
-            input.addEventListener('focus', () => render(input.value));
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 150));
         }
 
-        function setClientSelection(client) {
-            document.getElementById('siteClientId').value = client ? String(client.id) : '';
-            document.getElementById('siteClientSearch').value = client ? (client.nom || '') : '';
-            hideClientSuggestions();
-        }
-
-        function showClientSuggestions(items) {
-            const box = document.getElementById('siteClientSuggestions');
-            if (!items.length) {
-                box.innerHTML = '<div class="list-group-item am-search-muted">Aucun client</div>';
-                box.style.display = 'block';
-                return;
-            }
-            box.innerHTML = items.map(c => `
-        <div class="suggestion-item" data-client-id="${c.id}">
-            <div class="fw-semibold">${c.nom}</div>
-            <div class="small text-muted">${[c.contact_email, c.contact_nom].filter(Boolean).join(' • ')}</div>
-        </div>
-    `).join('');
-            box.style.display = 'block';
-
-            box.querySelectorAll('[data-client-id]').forEach(el => {
-                el.addEventListener('click', () => {
-                    const id = parseInt(el.getAttribute('data-client-id'), 10);
-                    const c = tousLesClients.find(x => x.id === id);
-                    if (c) setClientSelection(c);
-                });
-            });
-        }
-
-        function hideClientSuggestions() {
-            const box = document.getElementById('siteClientSuggestions');
-            hideSuggestionBox(box);
-        }
-
+        // ── Typeahead site (filtre table) ──
         function initFiltreSiteTypeahead() {
             const input = document.getElementById('filtreSiteSearch');
             const hidden = document.getElementById('filtreSiteId');
             const box = document.getElementById('filtreSiteSuggestions');
             if (!input || !hidden || !box) return;
-
-            const render = (q) => {
-                const query = norm(q);
-                const items = query
-                    ? tousLesSites.filter(s => norm(s.nom).includes(query)).slice(0, 10)
-                    : tousLesSites.slice(0, 10);
-
-                if (!items.length) {
-                    box.innerHTML = '<div class="suggestion-item text-muted">Aucun site</div>';
-                    box.style.display = 'block';
-                    return;
-                }
-
-                box.innerHTML = items.map(s => `
-                    <div class="suggestion-item" data-site-id="${s.id}" data-site-nom="${s.nom.replace(/"/g, '&quot;')}">
-                        <div class="fw-semibold">${s.nom}</div>
-                        <div class="small text-muted">${s.client_nom || ''}</div>
-                    </div>
-                `).join('');
-                box.style.display = 'block';
-
-                box.querySelectorAll('[data-site-id]').forEach(el => {
-                    el.addEventListener('click', () => {
-                        hidden.value = el.getAttribute('data-site-id');
-                        input.value = el.getAttribute('data-site-nom');
-                        box.style.display = 'none';
-                        page = 1;
-                        chargerSites();
-                    });
-                });
-            };
-
-            input.addEventListener('input', () => { hidden.value = ''; render(input.value); page = 1; chargerSites(); });
-            input.addEventListener('focus', () => render(input.value));
-            input.addEventListener('blur', () => setTimeout(() => { box.style.display = 'none'; }, 150));
-        }
-
-        function initClientSearch() {
-            const input = document.getElementById('siteClientSearch');
-            if (!input) return;
+            let debounceTimer;
 
             input.addEventListener('input', () => {
-                // dès qu'on retape, on invalide l'id sélectionné
-                document.getElementById('siteClientId').value = '';
-                const q = norm(input.value);
-                if (!q) return hideClientSuggestions();
-                const items = tousLesClients
-                    .filter(c => norm(c.nom).includes(q))
-                    .slice(0, 10);
-                showClientSuggestions(items);
+                const q = input.value.trim();
+                hidden.value = '';
+                if (q.length < 2) { hideSuggestionBox(box); return; }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const clientId = document.getElementById('filtreClientId').value;
+                        const params = new URLSearchParams({ search: q, limit: 10 });
+                        if (clientId) params.append('client_id', clientId);
+                        const r = await fetch(`${API_SITES}?${params}`);
+                        const items = await r.json();
+                        if (!items.length) {
+                            box.innerHTML = '<div class="suggestion-item text-muted">Aucun site</div>';
+                            box.style.display = 'block';
+                            return;
+                        }
+                        box.innerHTML = items.map(s => `
+                            <div class="suggestion-item" data-id="${s.id}" data-nom="${s.nom.replace(/"/g, '&quot;')}">
+                                <div class="fw-semibold">${s.nom}</div>
+                                <div class="small text-muted">${s.client_nom || ''}</div>
+                            </div>
+                        `).join('');
+                        box.style.display = 'block';
+                        box.querySelectorAll('[data-id]').forEach(el => {
+                            el.addEventListener('click', () => {
+                                hidden.value = el.dataset.id;
+                                input.value = el.dataset.nom;
+                                hideSuggestionBox(box);
+                                page = 1;
+                                chargerSites();
+                            });
+                        });
+                    } catch (e) { console.error(e); }
+                }, 250);
             });
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 150));
+        }
 
-            input.addEventListener('focus', () => {
-                const q = norm(input.value);
-                if (!q) return;
-                const items = tousLesClients
-                    .filter(c => norm(c.nom).includes(q))
-                    .slice(0, 10);
-                showClientSuggestions(items);
+        // ── Typeahead client (modal) ──
+        function initModalClientTypeahead() {
+            const input = document.getElementById('siteClientSearch');
+            if (!input) return;
+            const hidden = document.getElementById('siteClientId');
+            const box = document.getElementById('siteClientSuggestions');
+            let debounceTimer;
+
+            input.addEventListener('input', () => {
+                const q = input.value.trim();
+                hidden.value = '';
+                if (q.length < 2) { hideSuggestionBox(box); return; }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const r = await fetch(`${API_CLIENTS}?search=${encodeURIComponent(q)}&limit=10`);
+                        const items = await r.json();
+                        if (!items.length) {
+                            box.innerHTML = '<div class="suggestion-item text-muted">Aucun client</div>';
+                            box.style.display = 'block';
+                            return;
+                        }
+                        box.innerHTML = items.map(c => `
+                            <div class="suggestion-item" data-id="${c.id}" data-nom="${c.nom.replace(/"/g, '&quot;')}">
+                                <div class="fw-semibold">${c.nom}</div>
+                                <div class="small text-muted">${[c.contact_email, c.contact_nom].filter(Boolean).join(' • ')}</div>
+                            </div>
+                        `).join('');
+                        box.style.display = 'block';
+                        box.querySelectorAll('[data-id]').forEach(el => {
+                            el.addEventListener('click', () => {
+                                hidden.value = el.dataset.id;
+                                input.value = el.dataset.nom;
+                                hideSuggestionBox(box);
+                            });
+                        });
+                    } catch (e) { console.error(e); }
+                }, 250);
             });
-
-            // petit délai pour permettre le click sur une suggestion
-            input.addEventListener('blur', () => setTimeout(hideClientSuggestions, 150));
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 150));
         }
 
         async function editerSite(id) {
@@ -577,7 +537,7 @@
             document.getElementById('siteId').value = '';
             document.getElementById('siteClientId').value = '';
             document.getElementById('siteClientSearch').value = '';
-            hideClientSuggestions();
+            hideSuggestionBox(document.getElementById('siteClientSuggestions'));
             document.getElementById('siteNom').value = '';
             document.getElementById('siteAdresse').value = '';
             document.getElementById('siteVille').value = '';
@@ -650,19 +610,10 @@
         }
 
         (async () => {
-            await chargerClients();
-            initClientSearch();
-            initClientTypeahead({
-                inputId: 'filtreClientSearch',
-                hiddenId: 'filtreClientId',
-                boxId: 'filtreClientSuggestions',
-                onSelect: () => {
-                    page = 1;
-                    chargerSites();
-                }
-            });
-            await chargerSites();
+            initFiltreClientTypeahead();
             initFiltreSiteTypeahead();
+            initModalClientTypeahead();
+            await chargerSites();
         })();
     </script>
 </body>

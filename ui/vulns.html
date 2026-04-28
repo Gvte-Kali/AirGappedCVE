@@ -317,8 +317,6 @@
         let pageActuelle = 1;
         const itemsParPage = 50;
         let correlationEnCours = null;
-        let tousLesClients = [];
-        let tousLesSites = [];
 
         // ═══════════════════════════════════════════════════════════
         //  UTILITAIRES SUGGESTION BOX
@@ -382,39 +380,28 @@
             }
         }
 
-        async function chargerClients() {
-            try {
-                const response = await fetch('/api/clients/?limit=1000');
-                tousLesClients = await response.json();
-            } catch (e) {
-                console.error('Erreur chargement clients:', e);
-            }
-        }
-
-        async function chargerSites() {
-            try {
-                const response = await fetch('/api/sites/?limit=1000');
-                tousLesSites = await response.json();
-            } catch (e) {
-                console.error('Erreur chargement sites:', e);
-            }
-        }
-
         function initFiltreClientTypeahead() {
             const input = document.getElementById('filtreClientSearch');
             const hidden = document.getElementById('filtreClientId');
             const box = document.getElementById('filtreClientSuggestions');
+            let debounceTimer;
 
             input.addEventListener('input', () => {
-                const q = input.value.trim().toLowerCase();
+                const q = input.value.trim();
                 hidden.value = '';
-                if (q.length === 0) { hideSuggestionBox(box); chargerVulnerabilites(); return; }
-                const filtered = tousLesClients.filter(c => c.nom.toLowerCase().includes(q));
-                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
-                    input.value = item.nom;
-                    hidden.value = item.id;
-                    chargerVulnerabilites();
-                });
+                if (q.length < 2) { hideSuggestionBox(box); return; }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const r = await fetch(`/api/clients/?search=${encodeURIComponent(q)}&limit=10`);
+                        const items = await r.json();
+                        renderSuggestions(box, items, 'nom', 'id', (item) => {
+                            input.value = item.nom;
+                            hidden.value = item.id;
+                            chargerVulnerabilites();
+                        });
+                    } catch (e) { console.error(e); }
+                }, 250);
             });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
@@ -423,17 +410,27 @@
             const input = document.getElementById('filtreSiteSearch');
             const hidden = document.getElementById('filtreSiteId');
             const box = document.getElementById('filtreSiteSuggestions');
+            let debounceTimer;
 
             input.addEventListener('input', () => {
-                const q = input.value.trim().toLowerCase();
+                const q = input.value.trim();
                 hidden.value = '';
-                if (q.length === 0) { hideSuggestionBox(box); chargerVulnerabilites(); return; }
-                const filtered = tousLesSites.filter(s => s.nom.toLowerCase().includes(q));
-                renderSuggestions(box, filtered, 'nom', 'id', (item) => {
-                    input.value = item.nom;
-                    hidden.value = item.id;
-                    chargerVulnerabilites();
-                });
+                if (q.length < 2) { hideSuggestionBox(box); return; }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const clientId = document.getElementById('filtreClientId').value;
+                        const params = new URLSearchParams({ search: q, limit: 10 });
+                        if (clientId) params.append('client_id', clientId);
+                        const r = await fetch(`/api/sites/?${params}`);
+                        const items = await r.json();
+                        renderSuggestions(box, items, 'nom', 'id', (item) => {
+                            input.value = item.nom;
+                            hidden.value = item.id;
+                            chargerVulnerabilites();
+                        });
+                    } catch (e) { console.error(e); }
+                }, 250);
             });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
@@ -451,8 +448,7 @@
         }
 
         // Initialisation
-        document.addEventListener('DOMContentLoaded', async () => {
-            await Promise.all([chargerClients(), chargerSites()]);
+        document.addEventListener('DOMContentLoaded', () => {
             initFiltreClientTypeahead();
             initFiltreSiteTypeahead();
             chargerVulnerabilites();
