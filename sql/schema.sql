@@ -263,6 +263,8 @@ CREATE TABLE `correlations` (
     'vendor_only',
     'os_textuel'
   ) DEFAULT NULL COMMENT 'Méthode de match qui a généré cette corrélation',
+  `type_attaque` varchar(50) DEFAULT 'Unknown' COMMENT 'Type classifié depuis vuln_types.yml',
+  `passer_mistral` tinyint(1) DEFAULT 1 COMMENT '1 = envoyer à Mistral, 0 = ignorer (non pertinent air-gap)',
   `override_utilisateur` enum('a_patcher', 'informatif', 'faux_positif') DEFAULT NULL COMMENT 'Décision manuelle qui prime sur le statut auto',
   `statut` enum(
     'nouveau',
@@ -294,9 +296,23 @@ CREATE TABLE `correlations` (
   KEY `idx_priorite` (`priorite`),
   KEY `idx_priorite_pre_triage` (`priorite_pre_triage`),
   KEY `idx_passe_correlation` (`passe_correlation`),
+  KEY `idx_type_attaque` (`type_attaque`),
+  KEY `idx_passer_mistral` (`passer_mistral`),
   CONSTRAINT `correlations_ibfk_1` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE,
   CONSTRAINT `correlations_ibfk_2` FOREIGN KEY (`cve_id`) REFERENCES `cve` (`cve_id`) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+-- ── Migration pour BDD existantes ─────────────────────────────────────
+ALTER TABLE correlations
+  ADD COLUMN IF NOT EXISTS `type_attaque` varchar(50) DEFAULT 'Unknown'
+    COMMENT 'Type classifié depuis vuln_types.yml'
+    AFTER passe_correlation,
+  ADD COLUMN IF NOT EXISTS `passer_mistral` tinyint(1) DEFAULT 1
+    COMMENT '1 = envoyer à Mistral, 0 = ignorer (non pertinent air-gap)'
+    AFTER type_attaque,
+  ADD KEY IF NOT EXISTS `idx_type_attaque` (`type_attaque`),
+  ADD KEY IF NOT EXISTS `idx_passer_mistral` (`passer_mistral`);
+
 -- ─────────────────────────────────────────────────────────────────────
 -- Log des rejets de corrélation (debug des faux négatifs)
 -- ─────────────────────────────────────────────────────────────────────

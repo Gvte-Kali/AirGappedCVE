@@ -8,6 +8,31 @@ _PROJECT_ROOT = os.path.dirname(_SCRIPT_DIR)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
+from database import get_connection
+from reportlab.lib.enums import TA_LEFT, TA_CENTER
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
+    PageBreak, HRFlowable
+)
+from reportlab.lib import colors
+from reportlab.lib.units import cm
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import A4
+from mistralai.client.sdk import Mistral
+import pymysql
+import typer
+from dotenv import load_dotenv
+from typing import Optional
+from datetime import datetime
+import collections
+import functools
+import re
+import time
+import logging
+import yaml
+import json
+from pathlib import Path
+
 """
 correlate_and_analyze.py — Pipeline corrélation + analyse Mistral
 
@@ -34,37 +59,14 @@ Usage:
   python correlate_and_analyze.py run-all
 """
 
-from pathlib import Path
-import json
-import yaml
-import logging
-import time
-import re
-import functools
-import collections
-from datetime import datetime
-from typing import Optional
-from tqdm import tqdm
-from dotenv import load_dotenv
-import typer
-import pymysql
-from mistralai.client.sdk import Mistral
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import cm
-from reportlab.lib import colors
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, HRFlowable
-)
-from reportlab.lib.enums import TA_LEFT, TA_CENTER
-from database import get_connection
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv()
 
 # ── Chargement de la config ──────────────────────────────────────────
+
+
 def load_config():
     config_path = Path(__file__).resolve().parent / "config.yml"
     if not config_path.exists():
@@ -72,13 +74,38 @@ def load_config():
     with open(config_path, encoding="utf-8") as f:
         return yaml.safe_load(f) or {}
 
+
 CFG = load_config()
+
+
+def load_vuln_types() -> dict:
+    path = Path(__file__).resolve().parent / "vuln_types.yml"
+    if not path.exists():
+        print("⚠️  vuln_types.yml introuvable — tous les CVE passeront à Mistral")
+        return {}
+    with open(path, encoding="utf-8") as f:
+        data = yaml.safe_load(f) or {}
+    return data.get("types", {})
+
+
+VULN_TYPES = load_vuln_types()
+
+CWE_TO_TYPE: dict[str, str] = {}
+KEYWORDS_TO_TYPE: list[tuple[str, str]] = []
+for _type_id, _type_def in VULN_TYPES.items():
+    for _cwe in _type_def.get("cwe_ids", []):
+        CWE_TO_TYPE[_cwe] = _type_id
+    for _kw in _type_def.get("keywords", []):
+        KEYWORDS_TO_TYPE.append((_kw.lower(), _type_id))
+
 
 def cfg_corr(key, default):
     return CFG.get("correlation", {}).get(key, default)
 
+
 def cfg_mistral(key, default):
     return CFG.get("mistral", {}).get(key, default)
+
 
 def cfg_rapport(key, default):
     return CFG.get("rapport", {}).get(key, default)
@@ -87,10 +114,14 @@ def cfg_rapport(key, default):
 # CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════════
 
+
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "")
-MISTRAL_MODEL = os.getenv("MISTRAL_MODEL") or cfg_mistral("model", "mistral-large-latest")
-MISTRAL_DELAY = float(os.getenv("MISTRAL_DELAY") or cfg_mistral("delay_seconds", 1.5))
-MISTRAL_BATCH_MAX = int(os.getenv("MISTRAL_BATCH_MAX") or cfg_mistral("batch_max", 0))
+MISTRAL_MODEL = os.getenv("MISTRAL_MODEL") or cfg_mistral(
+    "model", "mistral-large-latest")
+MISTRAL_DELAY = float(os.getenv("MISTRAL_DELAY")
+                      or cfg_mistral("delay_seconds", 1.5))
+MISTRAL_BATCH_MAX = int(os.getenv("MISTRAL_BATCH_MAX")
+                        or cfg_mistral("batch_max", 0))
 
 logging.basicConfig(
     level=logging.WARNING,
@@ -128,7 +159,8 @@ def common_chars_count(s1, s2):
     """Compte les caractères alphanumériques communs entre deux chaînes (insensible à la casse)."""
     if not s1 or not s2:
         return 0
-    clean = lambda s: re.sub(r'[^a-z0-9]', '', str(s).lower())
+
+    def clean(s): return re.sub(r'[^a-z0-9]', '', str(s).lower())
     c1 = collections.Counter(clean(s1))
     c2 = collections.Counter(clean(s2))
     return sum((c1 & c2).values())
@@ -303,7 +335,7 @@ OS_FIRMWARE_KEYWORDS = ['os', 'firmware', 'bios', 'uefi', 'kernel', 'system',
 COMPONENT_KEYWORDS = ['library', 'lib', 'plugin', 'module', 'driver']
 
 
-def calc_pre_triage_score(cve, asset, version_match, cwe_list):
+def calc_pre_triage_score(cve, asset, version_match, cwe_list, priorite_type=2):
     """
     Calcule (score_pre_triage, priorite_pre_triage) selon règles déterministes.
 
@@ -348,6 +380,16 @@ def calc_pre_triage_score(cve, asset, version_match, cwe_list):
     if cwe_list and any(cwe in CWE_AIR_GAP_BOOST for cwe in cwe_list):
         score += 0.5
 
+    # Ajustement selon le type de vulnérabilité (depuis vuln_types.yml)
+    if priorite_type == 4:      # RCE, MemCorrupt, CmdInjection, FirmwareBIOS
+        score += 1.5
+    elif priorite_type == 3:    # LPE, DoS, AuthBypass, FileWrite
+        score += 0.5
+    elif priorite_type == 1:    # InfoDisc, WeakCrypto, Misconfiguration
+        score -= 1.0
+    elif priorite_type == 0:    # XSS, CSRF, SSRF, OpenRedirect
+        score -= 5.0
+
     # Clamp 0-10
     score = max(0.0, min(10.0, score))
 
@@ -375,7 +417,8 @@ def get_cwes_for_cve(cur, cve_id):
 
 
 def insert_correlation(cur, asset_id, cve_id, type_corr, passe,
-                       score_pre, priorite_pre):
+                       score_pre, priorite_pre,
+                       type_attaque="Unknown", passer_mistral=True):
     """
     Insertion idempotente. Si la corrélation existe déjà, on garde la meilleure
     passe (cpe_full > vendor_product > os_textuel) et on met à jour
@@ -415,10 +458,12 @@ def insert_correlation(cur, asset_id, cve_id, type_corr, passe,
         INSERT INTO correlations (
             asset_id, cve_id, type_correlation, passe_correlation,
             score_pre_triage, priorite_pre_triage,
+            type_attaque, passer_mistral,
             statut, date_detection
         )
-        VALUES (%s, %s, %s, %s, %s, %s, 'nouveau', NOW())
-    """, (asset_id, cve_id, type_corr, passe, score_pre, priorite_pre))
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'nouveau', NOW())
+    """, (asset_id, cve_id, type_corr, passe, score_pre, priorite_pre,
+          type_attaque, 1 if passer_mistral else 0))
     return "inserted"
 
 
@@ -496,14 +541,16 @@ def get_asset_version_tokens(asset: dict) -> list[str]:
     Utilise les FK normalisées en priorité, fallback sur texte libre.
     """
     type_eq = (asset.get("type_equipement") or "").lower()
-    os_based_types = cfg_corr("os_based_types", ["pc", "laptop", "serveur", "raspberry_pi"])
+    os_based_types = cfg_corr(
+        "os_based_types", ["pc", "laptop", "serveur", "raspberry_pi"])
     tokens = set()
 
     if type_eq in os_based_types:
         if asset.get("os_nvd_product"):
             tokens.add(asset["os_nvd_product"])
         if asset.get("os_version_label"):
-            tokens.update(re.findall(r'[a-zA-Z0-9]{3,}', asset["os_version_label"]))
+            tokens.update(re.findall(
+                r'[a-zA-Z0-9]{3,}', asset["os_version_label"]))
         for field in [asset.get("systeme_exploitation"), asset.get("version_os")]:
             if field:
                 tokens.update(re.findall(r'\b\d{4,}\b', field))
@@ -512,7 +559,8 @@ def get_asset_version_tokens(asset: dict) -> list[str]:
         if asset.get("fw_nvd_product"):
             tokens.add(asset["fw_nvd_product"])
         if asset.get("fw_version_label"):
-            tokens.update(re.findall(r'[a-zA-Z0-9]{3,}', asset["fw_version_label"]))
+            tokens.update(re.findall(
+                r'[a-zA-Z0-9]{3,}', asset["fw_version_label"]))
         if asset.get("bios_nvd_product"):
             tokens.add(asset["bios_nvd_product"])
         for field in [asset.get("version_firmware"), asset.get("version_bios"),
@@ -552,7 +600,8 @@ def get_correlation_vendor(asset: dict) -> tuple[str | None, str]:
       3. Type vendor-based → utilise le vendor matériel
     """
     type_eq = (asset.get("type_equipement") or "").lower()
-    os_based_types = cfg_corr("os_based_types", ["pc", "laptop", "serveur", "raspberry_pi"])
+    os_based_types = cfg_corr(
+        "os_based_types", ["pc", "laptop", "serveur", "raspberry_pi"])
 
     if type_eq in os_based_types:
         if asset.get("os_nvd_vendor"):
@@ -601,6 +650,35 @@ def get_cve_version_tokens(cve: dict) -> list:
     return list(set(filter(None, tokens)))
 
 
+def classify_cve_type(cve_id: str, description: str, cwes: list[str]) -> tuple[str, bool, int]:
+    """
+    Classifie une CVE depuis vuln_types.yml.
+    Retourne (type_attaque, passer_mistral, priorite_type).
+    Priorité : CWE > keywords description > Unknown.
+    """
+    for cwe in cwes:
+        if cwe in CWE_TO_TYPE:
+            type_id = CWE_TO_TYPE[cwe]
+            type_def = VULN_TYPES[type_id]
+            return (
+                type_id,
+                type_def.get("passer_mistral", True),
+                type_def.get("priorite", 2),
+            )
+
+    desc_lower = (description or "").lower()
+    for keyword, type_id in KEYWORDS_TO_TYPE:
+        if keyword in desc_lower:
+            type_def = VULN_TYPES[type_id]
+            return (
+                type_id,
+                type_def.get("passer_mistral", True),
+                type_def.get("priorite", 2),
+            )
+
+    return ("Unknown", True, 2)
+
+
 def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
     """
     Passe unique de corrélation :
@@ -622,12 +700,14 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
 
     if not all_cves:
         if verbose:
-            print(f"    [vendor_match] SKIP — 0 CVE en cache pour {vendor_cve}")
+            print(
+                f"    [vendor_match] SKIP — 0 CVE en cache pour {vendor_cve}")
         return
 
     # ── Filtre produit (pré-filtrage avant la boucle) ─────────────────
     type_eq = (asset.get("type_equipement") or "").lower()
-    os_based_types = cfg_corr("os_based_types", ["pc", "laptop", "serveur", "raspberry_pi"])
+    os_based_types = cfg_corr(
+        "os_based_types", ["pc", "laptop", "serveur", "raspberry_pi"])
 
     if type_eq in os_based_types and asset.get("os_nvd_product"):
         target_product = asset["os_nvd_product"]
@@ -642,7 +722,8 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
             print(f"    [vendor_match] Filtre exact firmware={target_product} "
                   f"→ {len(cves)}/{len(all_cves)} CVE retenues")
     else:
-        cves = [c for c in all_cves if product_matches_asset(c.get("produit"), asset)]
+        cves = [c for c in all_cves if product_matches_asset(
+            c.get("produit"), asset)]
         if verbose:
             print(f"    [vendor_match] Fallback matching flou "
                   f"→ {len(cves)}/{len(all_cves)} CVE retenues")
@@ -675,9 +756,14 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
         # ── Match exact FK (os_version_id / fw_version_id / bios_version_id) ──
         if has_fk and cve_produit in exact_products:
             cwes = get_cwes_for_cve(cur, cve["cve_id"])
-            score, priorite = calc_pre_triage_score(cve, asset, "affirme", cwes)
+            type_attaque, passer_mistral, priorite_type = classify_cve_type(
+                cve["cve_id"], cve.get("description", ""), cwes
+            )
+            score, priorite = calc_pre_triage_score(
+                cve, asset, "affirme", cwes, priorite_type)
             result = insert_correlation(cur, asset["asset_id"], cve["cve_id"],
-                                        "affirme", "vendor_product", score, priorite)
+                                        "affirme", "vendor_product", score, priorite,
+                                        type_attaque=type_attaque, passer_mistral=passer_mistral)
             stats[result] = stats.get(result, 0) + 1
             retenues += 1
             fk_matches += 1
@@ -734,7 +820,11 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
             version_match_type = "informatif"
 
         cwes = get_cwes_for_cve(cur, cve["cve_id"])
-        score, priorite = calc_pre_triage_score(cve, asset, version_match_type, cwes)
+        type_attaque, passer_mistral, priorite_type = classify_cve_type(
+            cve["cve_id"], cve.get("description", ""), cwes
+        )
+        score, priorite = calc_pre_triage_score(
+            cve, asset, version_match_type, cwes, priorite_type)
 
         # Bonus produit
         if product_bonus and product_score >= product_min_chars:
@@ -749,7 +839,8 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
                 priorite = "basse"
 
         result = insert_correlation(cur, asset["asset_id"], cve["cve_id"],
-                                    type_corr, "vendor_product", score, priorite)
+                                    type_corr, "vendor_product", score, priorite,
+                                    type_attaque=type_attaque, passer_mistral=passer_mistral)
         stats[result] = stats.get(result, 0) + 1
         retenues += 1
 
@@ -767,7 +858,8 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
 def correlate(
     dry_run: bool = typer.Option(cfg_corr("dry_run", False), "--dry-run",
                                  help="Affiche sans insérer"),
-    verbose: bool = typer.Option(cfg_corr("verbose", False), "--verbose/--no-verbose", "-v"),
+    verbose: bool = typer.Option(
+        cfg_corr("verbose", False), "--verbose/--no-verbose", "-v"),
 ):
     """Phase 1+2 : détection brute (passes) + pré-classification déterministe."""
     print("\n" + "=" * 70)
@@ -829,7 +921,8 @@ def correlate(
     for asset in assets:
         os_info = asset.get("os_nvd_product") or "⚠️  non normalisé"
         fw_info = asset.get("fw_nvd_product") or "—"
-        print(f"  {asset['nom_interne']:20s} | OS: {os_info:30s} | FW: {fw_info}")
+        print(
+            f"  {asset['nom_interne']:20s} | OS: {os_info:30s} | FW: {fw_info}")
     print()
 
     print("\n[STRATÉGIE PAR ASSET]")
@@ -842,11 +935,13 @@ def correlate(
         if vendor_cve:
             vendors_uniques.add(vendor_cve)
     vendors_uniques = list(vendors_uniques)
-    print(f"\nVendors CVE distincts : {len(vendors_uniques)} → {', '.join(vendors_uniques)}\n")
+    print(
+        f"\nVendors CVE distincts : {len(vendors_uniques)} → {', '.join(vendors_uniques)}\n")
 
     print("[VÉRIFICATION] CVE disponibles par vendor :")
     for vendor in vendors_uniques:
-        cur.execute("SELECT COUNT(*) as nb FROM cve WHERE fabricant = %s", (vendor,))
+        cur.execute(
+            "SELECT COUNT(*) as nb FROM cve WHERE fabricant = %s", (vendor,))
         nb = cur.fetchone()["nb"]
         flag = "⚠️  AUCUNE CVE" if nb == 0 else f"{nb:>6} CVE totales"
         print(f"  {vendor:30s} → {flag}")
@@ -874,13 +969,15 @@ def correlate(
               f" — {nb_cves_cache} CVE en cache")
 
         if nb_cves_cache == 0:
-            print(f"  ⚠️  Aucune CVE en cache pour {label_vendor} — asset ignoré")
+            print(
+                f"  ⚠️  Aucune CVE en cache pour {label_vendor} — asset ignoré")
             continue
 
         local_stats = {"inserted": 0, "updated": 0, "skipped": 0}
         t_asset_start = time.time()
 
-        correlate_pass_vendor_match(cur, asset, local_stats, cve_cache, verbose)
+        correlate_pass_vendor_match(
+            cur, asset, local_stats, cve_cache, verbose)
 
         if not dry_run:
             conn.commit()
@@ -1036,7 +1133,8 @@ def analyze_with_mistral(client, correlation, max_retries=None):
             )
             return None
 
-    log.error(f"Échec après {max_retries} tentatives pour {correlation['cve_id']}")
+    log.error(
+        f"Échec après {max_retries} tentatives pour {correlation['cve_id']}")
     return None
 
 
@@ -1086,20 +1184,24 @@ def analyze(
             co.asset_id, co.cve_id,
             co.type_correlation, co.passe_correlation,
             co.score_pre_triage, co.priorite_pre_triage,
+            co.type_attaque,
             a.nom_interne, a.type_equipement,
             a.systeme_exploitation,
             a.version_os, a.version_firmware, a.version_bios,
             a.niveau_criticite,
             pv.nvd_vendor,
             pm.nom                AS model_nom,
+            s.nom                 AS site_nom,
             cv.description, cv.cvss_v3_score, cv.cvss_v3_severity,
             cv.cvss_v3_vector, cv.produit, cv.versions_affectees
         FROM correlations co
-        JOIN assets a  ON a.id  = co.asset_id
-        JOIN cve cv    ON cv.cve_id = co.cve_id
-        JOIN product_vendors pv ON pv.id = a.vendor_id
+        JOIN assets a        ON a.id        = co.asset_id
+        JOIN cve cv          ON cv.cve_id   = co.cve_id
+        JOIN product_vendors pv ON pv.id    = a.vendor_id
         LEFT JOIN product_models pm ON pm.id = a.model_id
+        LEFT JOIN sites s    ON s.id         = a.site_id
         WHERE {statut_filter}
+          AND co.passer_mistral = 1
         {asset_clause}
         ORDER BY co.score_pre_triage DESC, cv.cvss_v3_score DESC
         {limit_clause}
@@ -1111,50 +1213,52 @@ def analyze(
         conn.close()
         return
 
+    cur.execute(
+        "SELECT COUNT(*) as nb FROM correlations WHERE passer_mistral = 0 AND statut = 'nouveau'"
+    )
+    nb_ignores = cur.fetchone()["nb"]
+
     if batch_max > 0:
         print(f"Limite batch : {batch_max}")
-    print(f"Corrélations à analyser : {len(correlations)}\n")
+    print(f"CVE ignorées (non pertinentes air-gap) : {nb_ignores}")
+    print(f"CVE à analyser par Mistral             : {len(correlations)}\n")
 
     counters = {"confirme": 0, "informatif": 0, "faux_positif": 0, "errors": 0}
 
-    with tqdm(
-        correlations, total=len(correlations),
-        desc="Mistral", unit="CVE",
-        ncols=100,
-        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}] {postfix}",
-        file=sys.stdout, dynamic_ncols=False, ascii=False,
-    ) as pbar:
-        for corr in pbar:
-            asset_name = corr["nom_interne"][:18]
-            pbar.set_postfix_str(
-                f"{asset_name} | ✅{counters['confirme']} "
-                f"📋{counters['informatif']} ❌{counters['faux_positif']} ⚠️{counters['errors']}"
-            )
+    total = len(correlations)
+    for idx, corr in enumerate(correlations, 1):
+        asset_name = corr["nom_interne"]
+        site_name = corr.get("site_nom", "?")
+        cve_id = corr["cve_id"]
+        type_attaque = corr.get("type_attaque", "Unknown")
 
+        print(
+            f"[ {idx:>4} / {total} ] — {asset_name} [ {site_name} ] — {cve_id}", flush=True)
+
+        cur.execute(
+            "UPDATE correlations SET statut = 'en_analyse' WHERE id = %s",
+            (corr["correlation_id"],)
+        )
+        conn.commit()
+
+        if isinstance(corr["versions_affectees"], str):
+            try:
+                corr["versions_affectees"] = json.loads(
+                    corr["versions_affectees"])
+            except Exception:
+                corr["versions_affectees"] = []
+
+        result = analyze_with_mistral(mistral_client, corr)
+
+        if result is None:
+            counters["errors"] += 1
             cur.execute(
-                "UPDATE correlations SET statut = 'en_analyse' WHERE id = %s",
+                "UPDATE correlations SET statut = 'nouveau' WHERE id = %s",
                 (corr["correlation_id"],)
             )
             conn.commit()
-
-            if isinstance(corr["versions_affectees"], str):
-                try:
-                    corr["versions_affectees"] = json.loads(
-                        corr["versions_affectees"])
-                except Exception:
-                    corr["versions_affectees"] = []
-
-            result = analyze_with_mistral(mistral_client, corr)
-
-            if result is None:
-                counters["errors"] += 1
-                cur.execute(
-                    "UPDATE correlations SET statut = 'nouveau' WHERE id = %s",
-                    (corr["correlation_id"],)
-                )
-                conn.commit()
-                continue
-
+            print(f"         ⚠️  Erreur Mistral — remis en file", flush=True)
+        else:
             verdict = result.get("verdict", "informatif")
             statut_final = VERDICT_TO_STATUT.get(verdict, "informatif")
             counters[statut_final] = counters.get(statut_final, 0) + 1
@@ -1202,7 +1306,13 @@ def analyze(
                 corr["correlation_id"],
             ))
             conn.commit()
-            time.sleep(MISTRAL_DELAY)
+
+            verdict_icon = {"confirme": "✅", "informatif": "📋",
+                            "faux_positif": "❌"}.get(statut_final, "?")
+            print(
+                f"         {verdict_icon} {statut_final} | score={round(score_final, 1)} | {type_attaque}", flush=True)
+
+        time.sleep(MISTRAL_DELAY)
 
     conn.close()
 
@@ -1257,9 +1367,11 @@ def report(
     output_dir: str = typer.Option(
         str(BASE_DIR / cfg_rapport("output_dir", "documents")), "--output-dir", "-d"),
     statuts: str = typer.Option(
-        ",".join(cfg_rapport("statuts_inclus", ["confirme", "informatif", "mitige"])),
+        ",".join(cfg_rapport("statuts_inclus", [
+                 "confirme", "informatif", "mitige"])),
         "--statuts"),
-    min_score: float = typer.Option(cfg_rapport("score_min", 0.0), "--min-score"),
+    min_score: float = typer.Option(
+        cfg_rapport("score_min", 0.0), "--min-score"),
     client_id: Optional[int] = typer.Option(None, "--client-id"),
     asset_id: Optional[int] = typer.Option(None, "--asset-id"),
 ):
@@ -1278,7 +1390,8 @@ def report(
 @app.command("run-all")
 def run_all(
     batch_max: int = typer.Option(cfg_mistral("batch_max", 0), "--batch-max"),
-    verbose: bool = typer.Option(cfg_corr("verbose", False), "--verbose/--no-verbose", "-v"),
+    verbose: bool = typer.Option(
+        cfg_corr("verbose", False), "--verbose/--no-verbose", "-v"),
 ):
     """Pipeline complet : corrélation → analyse Mistral."""
     print("\n" + "=" * 70)

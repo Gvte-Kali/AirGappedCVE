@@ -4,22 +4,6 @@
 # ═══════════════════════════════════════════════════════════════════════
 
 correlation:
-  # ── Passe unique de corrélation ───────────────────────────────────────
-  passes:
-    vendor_match: true   # Passe unique — vendor obligatoire + scoring version
-
-  # ── Match version ─────────────────────────────────────────────────────
-  # true = au moins 1 match version obligatoire pour insérer la corrélation
-  version_match_required: true
-  # Chars alphanumériques communs minimum pour valider un match de version
-  version_match_min_chars: 4
-
-  # ── Match produit (bonus, jamais bloquant) ─────────────────────────────
-  # true = un match produit ajoute +0.5 au score pré-triage
-  product_match_bonus: true
-  # Chars alphanumériques communs minimum pour déclencher le bonus produit
-  product_match_min_chars: 6
-
   # ── Filtres CVSS ─────────────────────────────────────────────────────
   cvss_min: 4.0
   cvss_network_min: 7.0
@@ -74,8 +58,8 @@ correlation:
     - imprimante
     - autre
 
-  # ── Mode dry-run ─────────────────────────────────────────────────────
-  dry_run: false
+  # ── Mode dry-run ( n'insère rien en bdd ) ─────────────────────────────────────────────────────
+  dry_run: true
 
   # ── Verbosité ────────────────────────────────────────────────────────
   verbose: true
@@ -84,7 +68,7 @@ mistral:
   # Modèle Mistral à utiliser
   model: "mistral-large-latest"
   # Délai en secondes entre chaque appel API (clé gratuite ≈ 6 req/min max)
-  delay_seconds: 12.0
+  delay_seconds: 15.0
   # Nombre max de tentatives en cas de rate limit (backoff 20s/40s/60s)
   max_retries: 3
   # Nombre max de corrélations à analyser par run (0 = illimité)

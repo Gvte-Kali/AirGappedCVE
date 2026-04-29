@@ -1,0 +1,2 @@
+#!/bin/bash
+mariadb -h 127.0.0.1 -u avea -pdevpassword --skip-ssl asset_vuln_manager -e "TRUNCATE TABLE correlations; TRUNCATE TABLE correlation_rejects;"

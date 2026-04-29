@@ -501,7 +501,10 @@
             <td>${esc(a.vendor_nom || '')}</td>
             <td>${esc(a.model_nom || '')}</td>
             <td><code>${esc(a.adresse_ip || '')}</code></td>
-            <td>${esc(a.systeme_exploitation || '—')} ${a.version_os ? esc(a.version_os) : ''}</td>
+            <td>${esc(a.os_version_nom
+                ? (a.os_version_nom + (a.os_version_ver ? ' ' + a.os_version_ver : ''))
+                : (a.systeme_exploitation || '—') + (a.version_os ? ' ' + a.version_os : '')
+            )}</td>
             <td><span class="badge bg-${badgeCriticite(a.niveau_criticite)}">${esc(a.niveau_criticite || '')}</span></td>
             <td>${badgeStatut(a.statut_operationnel || '')}</td>
             <td class="text-nowrap">
@@ -614,20 +617,14 @@
             const input = document.getElementById('filtreClientSearch');
             const hidden = document.getElementById('filtreClientId');
             const box = document.getElementById('filtreClientSuggestions');
-            let debounceTimer;
+            let debounce;
 
-            input.addEventListener('input', () => {
-                const q = input.value.trim();
-                hidden.value = '';
-                document.getElementById('filtreSiteSearch').disabled = true;
-                document.getElementById('filtreSiteSearch').placeholder = 'Choisir d\'abord un client…';
-                document.getElementById('filtreSiteId').value = '';
-                document.getElementById('filtreSiteSearch').value = '';
-                if (q.length < 2) { hideSuggestionBox(box); filtrerAssets(); return; }
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(async () => {
+            async function doSearch() {
+                clearTimeout(debounce);
+                debounce = setTimeout(async () => {
                     try {
-                        const r = await fetch(`${API_CLIENTS}?search=${encodeURIComponent(q)}&limit=10`);
+                        const q = input.value.trim();
+                        const r = await fetch(`${API_CLIENTS}?search=${encodeURIComponent(q)}&limit=100`);
                         const items = await r.json();
                         renderSuggestions(box, items, 'nom', 'id', (item) => {
                             input.value = item.nom;
@@ -637,7 +634,18 @@
                             filtrerAssets();
                         });
                     } catch (e) { console.error(e); }
-                }, 250);
+                }, 100);
+            }
+
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', () => {
+                hidden.value = '';
+                document.getElementById('filtreSiteSearch').disabled = true;
+                document.getElementById('filtreSiteSearch').placeholder = 'Choisir d\'abord un client…';
+                document.getElementById('filtreSiteId').value = '';
+                document.getElementById('filtreSiteSearch').value = '';
+                filtrerAssets();
+                doSearch();
             });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
@@ -649,17 +657,16 @@
             const input = document.getElementById('filtreSiteSearch');
             const hidden = document.getElementById('filtreSiteId');
             const box = document.getElementById('filtreSiteSuggestions');
-            let debounceTimer;
+            let debounce;
 
-            input.addEventListener('input', () => {
-                const q = input.value.trim();
-                hidden.value = '';
-                if (q.length < 2) { hideSuggestionBox(box); filtrerAssets(); return; }
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(async () => {
+            async function doSearch() {
+                clearTimeout(debounce);
+                debounce = setTimeout(async () => {
                     try {
+                        const q = input.value.trim();
                         const clientId = document.getElementById('filtreClientId').value;
-                        const params = new URLSearchParams({ search: q, limit: 10 });
+                        const params = new URLSearchParams({ limit: 100 });
+                        if (q) params.append('search', q);
                         if (clientId) params.append('client_id', clientId);
                         const r = await fetch(`${API_SITES}?${params}`);
                         const items = await r.json();
@@ -669,7 +676,14 @@
                             filtrerAssets();
                         });
                     } catch (e) { console.error(e); }
-                }, 250);
+                }, 100);
+            }
+
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', () => {
+                hidden.value = '';
+                filtrerAssets();
+                doSearch();
             });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
@@ -681,20 +695,14 @@
             const input = document.getElementById('assetClientSearch');
             const hidden = document.getElementById('assetClientId');
             const box = document.getElementById('assetClientSuggestions');
-            let debounceTimer;
+            let debounce;
 
-            input.addEventListener('input', () => {
-                const q = input.value.trim();
-                hidden.value = '';
-                document.getElementById('assetSiteSearch').disabled = true;
-                document.getElementById('assetSiteSearch').placeholder = 'Choisir d\'abord un client…';
-                document.getElementById('assetSiteId').value = '';
-                document.getElementById('assetSiteSearch').value = '';
-                if (q.length < 2) { hideSuggestionBox(box); return; }
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(async () => {
+            async function doSearch() {
+                clearTimeout(debounce);
+                debounce = setTimeout(async () => {
                     try {
-                        const r = await fetch(`${API_CLIENTS}?search=${encodeURIComponent(q)}&limit=10`);
+                        const q = input.value.trim();
+                        const r = await fetch(`${API_CLIENTS}?search=${encodeURIComponent(q)}&limit=100`);
                         const items = await r.json();
                         renderSuggestions(box, items, 'nom', 'id', (item) => {
                             input.value = item.nom;
@@ -703,7 +711,17 @@
                             document.getElementById('assetSiteSearch').placeholder = 'Rechercher un site…';
                         });
                     } catch (e) { console.error(e); }
-                }, 250);
+                }, 100);
+            }
+
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', () => {
+                hidden.value = '';
+                document.getElementById('assetSiteSearch').disabled = true;
+                document.getElementById('assetSiteSearch').placeholder = 'Choisir d\'abord un client…';
+                document.getElementById('assetSiteId').value = '';
+                document.getElementById('assetSiteSearch').value = '';
+                doSearch();
             });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
@@ -715,17 +733,16 @@
             const input = document.getElementById('assetSiteSearch');
             const hidden = document.getElementById('assetSiteId');
             const box = document.getElementById('assetSiteSuggestions');
-            let debounceTimer;
+            let debounce;
 
-            input.addEventListener('input', () => {
-                const q = input.value.trim();
-                hidden.value = '';
-                if (q.length < 2) { hideSuggestionBox(box); return; }
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(async () => {
+            async function doSearch() {
+                clearTimeout(debounce);
+                debounce = setTimeout(async () => {
                     try {
+                        const q = input.value.trim();
                         const clientId = document.getElementById('assetClientId').value;
-                        const params = new URLSearchParams({ search: q, limit: 10 });
+                        const params = new URLSearchParams({ limit: 100 });
+                        if (q) params.append('search', q);
                         if (clientId) params.append('client_id', clientId);
                         const r = await fetch(`${API_SITES}?${params}`);
                         const items = await r.json();
@@ -734,7 +751,13 @@
                             hidden.value = item.id;
                         });
                     } catch (e) { console.error(e); }
-                }, 250);
+                }, 100);
+            }
+
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', () => {
+                hidden.value = '';
+                doSearch();
             });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
@@ -746,22 +769,14 @@
             const input = document.getElementById('assetFabricantSearch');
             const hidden = document.getElementById('assetFabricantId');
             const box = document.getElementById('assetFabricantSuggestions');
-            let debounceTimer;
+            let debounce;
 
-            input.addEventListener('input', () => {
-                const q = input.value.trim();
-                hidden.value = '';
-                document.getElementById('assetModeleSearch').disabled = true;
-                document.getElementById('assetModeleSearch').placeholder = 'Choisir d\'abord un fabricant…';
-                document.getElementById('assetModeleId').value = '';
-                document.getElementById('assetModeleSearch').value = '';
-
-                if (q.length < 2) { hideSuggestionBox(box); return; }
-
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(async () => {
+            async function doSearch() {
+                clearTimeout(debounce);
+                debounce = setTimeout(async () => {
                     try {
-                        const r = await fetch(`${API_FABRICANTS}?search=${encodeURIComponent(q)}&limit=10`);
+                        const q = input.value.trim();
+                        const r = await fetch(`${API_FABRICANTS}?search=${encodeURIComponent(q)}&limit=100`);
                         const data = await r.json();
                         const items = data.vendors || [];
                         renderSuggestions(box, items, 'nom', 'id', (item) => {
@@ -770,12 +785,19 @@
                             document.getElementById('assetModeleSearch').disabled = false;
                             document.getElementById('assetModeleSearch').placeholder = 'Rechercher un modèle…';
                         });
-                    } catch (e) {
-                        console.error('Erreur recherche fabricants:', e);
-                    }
-                }, 250);
-            });
+                    } catch (e) { console.error('Erreur recherche fabricants:', e); }
+                }, 100);
+            }
 
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', () => {
+                hidden.value = '';
+                document.getElementById('assetModeleSearch').disabled = true;
+                document.getElementById('assetModeleSearch').placeholder = 'Choisir d\'abord un fabricant…';
+                document.getElementById('assetModeleId').value = '';
+                document.getElementById('assetModeleSearch').value = '';
+                doSearch();
+            });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
 
@@ -786,17 +808,16 @@
             const input = document.getElementById('assetModeleSearch');
             const hidden = document.getElementById('assetModeleId');
             const box = document.getElementById('assetModeleSuggestions');
-            let debounceTimer;
+            let debounce;
 
-            input.addEventListener('input', () => {
-                const q = input.value.trim();
-                hidden.value = '';
-                if (q.length < 2) { hideSuggestionBox(box); return; }
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(async () => {
+            async function doSearch() {
+                clearTimeout(debounce);
+                debounce = setTimeout(async () => {
                     try {
+                        const q = input.value.trim();
                         const fabricantId = document.getElementById('assetFabricantId').value;
-                        const params = new URLSearchParams({ search: q, limit: 10 });
+                        const params = new URLSearchParams({ limit: 100 });
+                        if (q) params.append('search', q);
                         if (fabricantId) params.append('vendor_id', fabricantId);
                         const r = await fetch(`${API_MODELES}?${params}`);
                         const data = await r.json();
@@ -805,13 +826,39 @@
                             input.value = item.nom;
                             hidden.value = item.id;
                         });
+                        if (fabricantId && q.length >= 1) {
+                            const div = document.createElement('div');
+                            div.className = 'suggestion-item text-primary';
+                            div.textContent = `➕ Créer le modèle "${q}" pour ce fabricant`;
+                            div.addEventListener('mousedown', async (e) => {
+                                e.preventDefault();
+                                try {
+                                    const res = await fetch(API_MODELES, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ nom: q, vendor_id: parseInt(fabricantId) })
+                                    });
+                                    if (!res.ok) throw new Error(await res.text());
+                                    const newModel = await res.json();
+                                    input.value = q;
+                                    hidden.value = newModel.id;
+                                    hideSuggestionBox(box);
+                                } catch (err) { console.error('Erreur création modèle:', err); }
+                            });
+                            box.appendChild(div);
+                            showSuggestionBox(box);
+                        }
                     } catch (e) { console.error('Erreur recherche modèles:', e); }
-                }, 250);
-            });
+                }, 100);
+            }
 
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', () => {
+                hidden.value = '';
+                doSearch();
+            });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
-
 
         // ═══════════════════════════════════════════════════════════
         //  TYPEAHEAD : OS NOM (MODAL, niveau 1)
@@ -824,19 +871,16 @@
             const versionId = document.getElementById('assetOsVersionId');
             let debounce;
 
-            input.addEventListener('input', () => {
-                const q = input.value.trim();
-                hidden.value = '';
-                versionInput.disabled = true;
-                versionInput.value = '';
-                versionId.value = '';
-                if (q.length < 2) { hideSuggestionBox(box); return; }
+            async function doSearch() {
                 clearTimeout(debounce);
                 debounce = setTimeout(async () => {
                     try {
-                        const r = await fetch(`${API_OS_VERSIONS}?search=${encodeURIComponent(q)}&limit=100`);
+                        const q = input.value.trim();
+                        const params = new URLSearchParams({ limit: 100 });
+                        if (q) params.append('search', q);
+                        const r = await fetch(`${API_OS_VERSIONS}?${params}`);
                         const data = await r.json();
-                        const noms = [...new Set(data.map(d => d.os_nom))].slice(0, 10);
+                        const noms = [...new Set(data.map(d => d.os_nom))].slice(0, 20);
                         renderSuggestions(box, noms.map(n => ({ nom: n })), 'nom', 'nom', (item) => {
                             input.value = item.nom;
                             hidden.value = item.nom;
@@ -844,7 +888,16 @@
                             versionInput.placeholder = 'Rechercher une version…';
                         });
                     } catch (e) { console.error('Erreur OS nom typeahead:', e); }
-                }, 250);
+                }, 100);
+            }
+
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', () => {
+                hidden.value = '';
+                versionInput.disabled = true;
+                versionInput.value = '';
+                versionId.value = '';
+                doSearch();
             });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
@@ -859,15 +912,14 @@
             const osNom = document.getElementById('assetOsNom');
             let debounce;
 
-            input.addEventListener('input', () => {
-                const q = input.value.trim();
-                const nom = osNom.value;
-                hidden.value = '';
-                if (!nom) { hideSuggestionBox(box); return; }
+            async function doSearch() {
                 clearTimeout(debounce);
                 debounce = setTimeout(async () => {
                     try {
-                        const params = new URLSearchParams({ limit: 20 });
+                        const q = input.value.trim();
+                        const nom = osNom.value;
+                        if (!nom) { hideSuggestionBox(box); return; }
+                        const params = new URLSearchParams({ limit: 50 });
                         if (q) params.append('search', q);
                         const r = await fetch(`${API_OS_VERSIONS}?${params}`);
                         const data = await r.json();
@@ -883,7 +935,13 @@
                             }
                         );
                     } catch (e) { console.error('Erreur OS version typeahead:', e); }
-                }, 250);
+                }, 100);
+            }
+
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', () => {
+                hidden.value = '';
+                doSearch();
             });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
@@ -895,16 +953,15 @@
             const input = document.getElementById('assetFwSearch');
             const hidden = document.getElementById('assetFwVersionId');
             const box = document.getElementById('assetFwSuggestions');
-            let debounceTimer;
+            let debounce;
 
-            input.addEventListener('input', () => {
-                const q = input.value.trim();
-                hidden.value = '';
-                if (q.length < 2) { hideSuggestionBox(box); return; }
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(async () => {
+            async function doSearch() {
+                clearTimeout(debounce);
+                debounce = setTimeout(async () => {
                     try {
-                        const params = new URLSearchParams({ search: q, limit: 10, type_produit: 'firmware' });
+                        const q = input.value.trim();
+                        const params = new URLSearchParams({ limit: 100, type_produit: 'firmware' });
+                        if (q) params.append('search', q);
                         const r = await fetch(`${API_OS_VERSIONS}?${params}`);
                         const items = await r.json();
                         renderSuggestions(box, items, 'label', 'id', (item) => {
@@ -912,7 +969,13 @@
                             hidden.value = item.id;
                         });
                     } catch (e) { console.error('Erreur Firmware typeahead:', e); }
-                }, 250);
+                }, 100);
+            }
+
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', () => {
+                hidden.value = '';
+                doSearch();
             });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }
@@ -924,16 +987,15 @@
             const input = document.getElementById('assetBiosSearch');
             const hidden = document.getElementById('assetBiosVersionId');
             const box = document.getElementById('assetBiosSuggestions');
-            let debounceTimer;
+            let debounce;
 
-            input.addEventListener('input', () => {
-                const q = input.value.trim();
-                hidden.value = '';
-                if (q.length < 2) { hideSuggestionBox(box); return; }
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(async () => {
+            async function doSearch() {
+                clearTimeout(debounce);
+                debounce = setTimeout(async () => {
                     try {
-                        const params = new URLSearchParams({ search: q, limit: 10, type_produit: 'bios' });
+                        const q = input.value.trim();
+                        const params = new URLSearchParams({ limit: 100, type_produit: 'bios' });
+                        if (q) params.append('search', q);
                         const r = await fetch(`${API_OS_VERSIONS}?${params}`);
                         const items = await r.json();
                         renderSuggestions(box, items, 'label', 'id', (item) => {
@@ -941,7 +1003,13 @@
                             hidden.value = item.id;
                         });
                     } catch (e) { console.error('Erreur BIOS typeahead:', e); }
-                }, 250);
+                }, 100);
+            }
+
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', () => {
+                hidden.value = '';
+                doSearch();
             });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
         }

@@ -1,0 +1,181 @@
+# ═══════════════════════════════════════════════════════════════════════
+# vuln_types.yml — Classification des vulnérabilités
+# Contexte : Systèmes d'information pénitentiaires (air-gapped)
+#
+# Décision Mistral :
+#   passer_mistral: true  → CVE envoyée à Mistral pour analyse approfondie
+#   passer_mistral: false → CVE ignorée (faux positif certain en contexte prison)
+#
+# Priorité patch (pour les CVE passant à Mistral) :
+#   4 = critique  → patch urgent
+#   3 = haute     → patch prioritaire
+#   2 = moyenne   → patch planifié
+#   1 = basse     → surveiller
+#   0 = ignorer   → jamais patcher (non pertinent)
+# ═══════════════════════════════════════════════════════════════════════
+
+types:
+
+  # ── CRITIQUE — Passer à Mistral ──────────────────────────────────────
+
+  RCE:
+    label: "Remote Code Execution"
+    priorite: 4
+    passer_mistral: true
+    raison: "Exécution de code arbitraire — critique même en réseau local"
+    cwe_ids: [CWE-78, CWE-94, CWE-77, CWE-502, CWE-95, CWE-96]
+    keywords: ["remote code execution", "arbitrary code execution", "execute arbitrary", "code execution", "RCE"]
+
+  CmdInjection:
+    label: "Command Injection"
+    priorite: 4
+    passer_mistral: true
+    raison: "Injection de commandes OS — exploitable en réseau local"
+    cwe_ids: [CWE-77, CWE-78, CWE-88, CWE-917]
+    keywords: ["command injection", "shell injection", "OS command", "inject command"]
+
+  MemCorrupt:
+    label: "Memory Corruption"
+    priorite: 4
+    passer_mistral: true
+    raison: "Corruption mémoire — peut mener à RCE ou crash système"
+    cwe_ids: [CWE-119, CWE-120, CWE-121, CWE-122, CWE-787, CWE-416, CWE-415, CWE-843, CWE-125, CWE-190, CWE-476]
+    keywords: ["buffer overflow", "heap overflow", "stack overflow", "use after free", "out of bounds", "memory corruption", "type confusion"]
+
+  FirmwareBIOS:
+    label: "Firmware / BIOS"
+    priorite: 4
+    passer_mistral: true
+    raison: "Vulnérabilité firmware/BIOS — persistante et difficile à détecter"
+    cwe_ids: [CWE-1231, CWE-1233, CWE-1191, CWE-1189]
+    keywords: ["firmware", "BIOS", "UEFI", "SMM", "SMI handler", "bootloader", "secure boot"]
+
+  # ── HAUTE — Passer à Mistral ─────────────────────────────────────────
+
+  LPE:
+    label: "Local Privilege Escalation"
+    priorite: 3
+    passer_mistral: true
+    raison: "Escalade de privilèges — critique avec utilisateurs internes potentiellement malveillants"
+    cwe_ids: [CWE-269, CWE-264, CWE-266, CWE-732, CWE-250, CWE-426, CWE-427, CWE-270, CWE-271, CWE-272]
+    keywords: ["privilege escalation", "escalation of privilege", "gain privilege", "elevate privilege", "local privilege", "SYSTEM privilege", "root privilege"]
+
+  DoS:
+    label: "Denial of Service"
+    priorite: 3
+    passer_mistral: true
+    raison: "Interruption de service — critique pour systèmes pénitentiaires (disponibilité obligatoire)"
+    cwe_ids: [CWE-400, CWE-770, CWE-404, CWE-835, CWE-674, CWE-833]
+    keywords: ["denial of service", "denial-of-service", "cause a denial", "crash", "hang", "infinite loop", "resource exhaustion", "DoS"]
+
+  AuthBypass:
+    label: "Authentication Bypass"
+    priorite: 3
+    passer_mistral: true
+    raison: "Contournement d'authentification — risque élevé avec personnel interne"
+    cwe_ids: [CWE-287, CWE-288, CWE-290, CWE-306, CWE-302, CWE-303, CWE-304, CWE-305]
+    keywords: ["authentication bypass", "bypass authentication", "unauthenticated", "without authentication", "bypass login"]
+
+  FileWrite:
+    label: "Arbitrary File Write"
+    priorite: 3
+    passer_mistral: true
+    raison: "Ecriture arbitraire — peut compromettre l'integrite du systeme"
+    cwe_ids: [CWE-22, CWE-23, CWE-36, CWE-73, CWE-434]
+    keywords: ["arbitrary file write", "file write", "write arbitrary", "path traversal", "directory traversal"]
+
+  # ── MOYENNE — Passer à Mistral ───────────────────────────────────────
+
+  SecurityBypass:
+    label: "Security Feature Bypass"
+    priorite: 2
+    passer_mistral: true
+    raison: "Contournement de securite — a evaluer selon le composant"
+    cwe_ids: [CWE-284, CWE-285, CWE-862, CWE-863, CWE-693, CWE-358]
+    keywords: ["security feature bypass", "bypass security", "security bypass", "bypass restriction"]
+
+  SQLi:
+    label: "SQL Injection"
+    priorite: 2
+    passer_mistral: true
+    raison: "Injection SQL — pertinent si interface web interne"
+    cwe_ids: [CWE-89, CWE-564, CWE-943]
+    keywords: ["sql injection", "SQLi"]
+
+  RaceCondition:
+    label: "Race Condition"
+    priorite: 2
+    passer_mistral: true
+    raison: "Condition de course — exploitabilite variable selon le contexte"
+    cwe_ids: [CWE-362, CWE-364, CWE-366, CWE-367]
+    keywords: ["race condition", "TOCTOU", "time of check", "time of use"]
+
+  # ── BASSE — Passer à Mistral pour information ────────────────────────
+
+  InfoDisc:
+    label: "Information Disclosure"
+    priorite: 1
+    passer_mistral: true
+    raison: "Fuite d'infos — moins critique en air-gap mais a connaitre"
+    cwe_ids: [CWE-200, CWE-201, CWE-203, CWE-209, CWE-532, CWE-359]
+    keywords: ["information disclosure", "disclose sensitive", "information leak", "sensitive information", "read arbitrary"]
+
+  WeakCrypto:
+    label: "Weak Cryptography"
+    priorite: 1
+    passer_mistral: true
+    raison: "Crypto faible — a connaitre pour la conformite"
+    cwe_ids: [CWE-326, CWE-327, CWE-328, CWE-330, CWE-331, CWE-338, CWE-347, CWE-311, CWE-312, CWE-319]
+    keywords: ["weak encryption", "weak cryptography", "cleartext", "plaintext password", "weak hash", "MD5", "SHA1"]
+
+  Misconfiguration:
+    label: "Misconfiguration"
+    priorite: 1
+    passer_mistral: true
+    raison: "Mauvaise configuration — utile pour audit"
+    cwe_ids: [CWE-16, CWE-1188, CWE-453]
+    keywords: ["misconfiguration", "insecure default", "default credential", "default password"]
+
+  # ── IGNORER — Ne pas passer à Mistral ───────────────────────────────
+
+  XSS:
+    label: "Cross-Site Scripting"
+    priorite: 0
+    passer_mistral: false
+    raison: "XSS non pertinent en air-gap — pas d'exposition web externe"
+    cwe_ids: [CWE-79, CWE-80, CWE-81, CWE-82, CWE-83, CWE-84, CWE-85, CWE-86, CWE-87]
+    keywords: ["cross-site scripting", "XSS", "script injection"]
+
+  CSRF:
+    label: "Cross-Site Request Forgery"
+    priorite: 0
+    passer_mistral: false
+    raison: "CSRF non pertinent en air-gap"
+    cwe_ids: [CWE-352]
+    keywords: ["cross-site request forgery", "CSRF"]
+
+  SSRF:
+    label: "Server-Side Request Forgery"
+    priorite: 0
+    passer_mistral: false
+    raison: "SSRF non pertinent en air-gap — pas d'acces internet"
+    cwe_ids: [CWE-918]
+    keywords: ["server-side request forgery", "SSRF"]
+
+  OpenRedirect:
+    label: "Open Redirect"
+    priorite: 0
+    passer_mistral: false
+    raison: "Redirection ouverte — non pertinent sans acces internet"
+    cwe_ids: [CWE-601]
+    keywords: ["open redirect", "url redirection", "redirect"]
+
+  # ── INCONNU — Passer à Mistral par prudence ──────────────────────────
+
+  Unknown:
+    label: "Unknown / Unclassified"
+    priorite: 2
+    passer_mistral: true
+    raison: "Type non determinable automatiquement — Mistral decide"
+    cwe_ids: []
+    keywords: []
