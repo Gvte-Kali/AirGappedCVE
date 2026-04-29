@@ -490,36 +490,37 @@ def build_cve_cache(cur, vendors: list) -> dict:
     return cache
 
 
-def get_asset_version_tokens(asset: dict) -> list:
+def get_asset_version_tokens(asset: dict) -> list[str]:
     """
-    Extrait les tokens version pertinents selon le type d'équipement.
-    PC/Laptop/Serveur/Raspberry Pi → systeme_exploitation + version_os uniquement.
-    Autres → tous les champs version.
+    Retourne les tokens version pour le matching.
+    Utilise les FK normalisées en priorité, fallback sur texte libre.
     """
+    type_eq = (asset.get("type_equipement") or "").lower()
     os_based_types = cfg_corr("os_based_types", ["pc", "laptop", "serveur", "raspberry_pi"])
-    type_eq = asset.get("type_equipement") or ""
+    tokens = set()
 
     if type_eq in os_based_types:
-        fields = [
-            asset.get("systeme_exploitation"),
-            asset.get("version_os"),
-        ]
+        if asset.get("os_nvd_product"):
+            tokens.add(asset["os_nvd_product"])
+        if asset.get("os_version_label"):
+            tokens.update(re.findall(r'[a-zA-Z0-9]{3,}', asset["os_version_label"]))
+        for field in [asset.get("systeme_exploitation"), asset.get("version_os")]:
+            if field:
+                tokens.update(re.findall(r'\b\d{4,}\b', field))
+                tokens.update(re.findall(r'\b\d+[Hh]\d+\b', field))
     else:
-        fields = [
-            asset.get("systeme_exploitation"),
-            asset.get("version_os"),
-            asset.get("version_firmware"),
-            asset.get("version_bios"),
-        ]
+        if asset.get("fw_nvd_product"):
+            tokens.add(asset["fw_nvd_product"])
+        if asset.get("fw_version_label"):
+            tokens.update(re.findall(r'[a-zA-Z0-9]{3,}', asset["fw_version_label"]))
+        if asset.get("bios_nvd_product"):
+            tokens.add(asset["bios_nvd_product"])
+        for field in [asset.get("version_firmware"), asset.get("version_bios"),
+                      asset.get("systeme_exploitation")]:
+            if field:
+                tokens.update(re.findall(r'\b\d+\.\d+[\.\d]*\b', field))
 
-    tokens = []
-    for field in fields:
-        if not field:
-            continue
-        tokens.append(field.strip())
-        tokens.extend(re.findall(r'[a-zA-Z0-9]{3,}', field))
-        tokens.extend(re.findall(r'\d+(?:\.\d+)+', field))
-    return list(set(filter(None, tokens)))
+    return list(filter(None, tokens))
 
 
 def detect_os_vendor(asset: dict) -> str | None:
@@ -541,29 +542,32 @@ def detect_os_vendor(asset: dict) -> str | None:
     return None
 
 
-def get_correlation_vendor(asset: dict) -> tuple:
+def get_correlation_vendor(asset: dict) -> tuple[str | None, str]:
     """
     Retourne (vendor_cve, raison) selon le type d'équipement.
 
-    PC/Laptop/Serveur/Raspberry Pi → détecte le vendor depuis l'OS.
-    Autres → utilise le vendor matériel (nvd_vendor).
+    Priorité :
+      1. os_version_id renseigné → utilise os_nvd_vendor (match exact garanti)
+      2. Type OS-based sans os_version_id → détecte depuis systeme_exploitation (fallback)
+      3. Type vendor-based → utilise le vendor matériel
     """
-    type_eq = asset.get("type_equipement") or ""
+    type_eq = (asset.get("type_equipement") or "").lower()
     os_based_types = cfg_corr("os_based_types", ["pc", "laptop", "serveur", "raspberry_pi"])
 
     if type_eq in os_based_types:
+        if asset.get("os_nvd_vendor"):
+            return asset["os_nvd_vendor"], f"FK os_version → {asset['os_nvd_vendor']}"
         vendor = detect_os_vendor(asset)
         if vendor:
-            return vendor, f"OS détecté → vendor={vendor}"
-        return None, (
-            f"Type {type_eq} nécessite un OS détectable "
-            f"(systeme_exploitation ou version_os) — asset ignoré"
-        )
+            return vendor, f"OS textuel détecté → {vendor} (pas de FK — assigne un OS normalisé)"
+        return None, f"Type {type_eq} sans OS normalisé ni OS textuel reconnu — asset ignoré"
     else:
+        if asset.get("fw_nvd_vendor"):
+            return asset["fw_nvd_vendor"], f"FK fw_version → {asset['fw_nvd_vendor']}"
         vendor = asset.get("nvd_vendor")
         if vendor:
             return vendor, f"Vendor matériel → {vendor}"
-        return None, "Pas de vendor matériel sur l'asset — asset ignoré"
+        return None, "Pas de vendor matériel — asset ignoré"
 
 
 def get_cve_version_tokens(cve: dict) -> list:
@@ -601,8 +605,8 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
     """
     Passe unique de corrélation :
     - Vendor CVE déterminé par get_correlation_vendor() (OS ou matériel)
-    - Match version obligatoire si version_match_required=True
-    - Match produit : bonus sur le score, jamais bloquant
+    - Pré-filtre les CVE par produit exact si FK normalisée disponible
+    - Fallback : matching flou sur product_matches_asset
     """
     vendor_cve, raison = get_correlation_vendor(asset)
 
@@ -614,11 +618,34 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
     if verbose:
         print(f"    [vendor_match] {raison}")
 
-    cves = cve_cache.get(vendor_cve, [])
-    if not cves:
+    all_cves = cve_cache.get(vendor_cve, [])
+
+    if not all_cves:
         if verbose:
             print(f"    [vendor_match] SKIP — 0 CVE en cache pour {vendor_cve}")
         return
+
+    # ── Filtre produit (pré-filtrage avant la boucle) ─────────────────
+    type_eq = (asset.get("type_equipement") or "").lower()
+    os_based_types = cfg_corr("os_based_types", ["pc", "laptop", "serveur", "raspberry_pi"])
+
+    if type_eq in os_based_types and asset.get("os_nvd_product"):
+        target_product = asset["os_nvd_product"]
+        cves = [c for c in all_cves if c.get("produit") == target_product]
+        if verbose:
+            print(f"    [vendor_match] Filtre exact produit={target_product} "
+                  f"→ {len(cves)}/{len(all_cves)} CVE retenues")
+    elif type_eq not in os_based_types and asset.get("fw_nvd_product"):
+        target_product = asset["fw_nvd_product"]
+        cves = [c for c in all_cves if c.get("produit") == target_product]
+        if verbose:
+            print(f"    [vendor_match] Filtre exact firmware={target_product} "
+                  f"→ {len(cves)}/{len(all_cves)} CVE retenues")
+    else:
+        cves = [c for c in all_cves if product_matches_asset(c.get("produit"), asset)]
+        if verbose:
+            print(f"    [vendor_match] Fallback matching flou "
+                  f"→ {len(cves)}/{len(all_cves)} CVE retenues")
 
     version_match_required = cfg_corr("version_match_required", True)
     version_min_chars = cfg_corr("version_match_min_chars", 4)
@@ -753,21 +780,39 @@ def correlate(
     ensure_indexes(conn)
 
     cur.execute("""
-        SELECT a.id AS asset_id, a.nom_interne, a.type_equipement,
-               a.systeme_exploitation, a.version_os, a.version_firmware,
-               a.version_bios, a.niveau_criticite, a.statut_operationnel,
-               pv.nvd_vendor, pm.nvd_product, pm.nom AS model_nom,
-               ov.nvd_product AS os_nvd_product,
-               fw.nvd_product AS fw_nvd_product,
-               bv.nvd_product AS bios_nvd_product
+        SELECT
+            a.id                  AS asset_id,
+            a.nom_interne,
+            a.type_equipement,
+            a.niveau_criticite,
+            a.statut_operationnel,
+            pv.nvd_vendor,
+            pm.nvd_product,
+            a.os_version_id,
+            osv.nvd_vendor        AS os_nvd_vendor,
+            osv.nvd_product       AS os_nvd_product,
+            osv.os_nom            AS os_nom,
+            osv.version           AS os_version_label,
+            a.fw_version_id,
+            fwv.nvd_vendor        AS fw_nvd_vendor,
+            fwv.nvd_product       AS fw_nvd_product,
+            fwv.os_nom            AS fw_nom,
+            fwv.version           AS fw_version_label,
+            a.bios_version_id,
+            biosv.nvd_vendor      AS bios_nvd_vendor,
+            biosv.nvd_product     AS bios_nvd_product,
+            a.systeme_exploitation,
+            a.version_os,
+            a.version_firmware,
+            a.version_bios
         FROM assets a
-        JOIN product_vendors pv  ON pv.id = a.vendor_id
-        LEFT JOIN product_models pm  ON pm.id = a.model_id
-        LEFT JOIN os_versions ov     ON ov.id = a.os_version_id
-        LEFT JOIN os_versions fw     ON fw.id = a.fw_version_id
-        LEFT JOIN os_versions bv     ON bv.id = a.bios_version_id
-        JOIN sites s ON s.id = a.site_id
-        JOIN clients c ON c.id = s.client_id
+        JOIN product_vendors pv     ON pv.id   = a.vendor_id
+        LEFT JOIN product_models pm ON pm.id   = a.model_id
+        LEFT JOIN os_versions osv   ON osv.id  = a.os_version_id
+        LEFT JOIN os_versions fwv   ON fwv.id  = a.fw_version_id
+        LEFT JOIN os_versions biosv ON biosv.id = a.bios_version_id
+        JOIN sites s                ON s.id    = a.site_id
+        JOIN clients c              ON c.id    = s.client_id
         WHERE a.statut_operationnel NOT IN ('hors_service', 'inactif')
           AND a.vendor_id IS NOT NULL
     """)
@@ -779,6 +824,13 @@ def correlate(
         raise typer.Exit()
 
     print(f"Assets à analyser : {len(assets)}")
+
+    print("\n[ASSETS] État normalisation OS :")
+    for asset in assets:
+        os_info = asset.get("os_nvd_product") or "⚠️  non normalisé"
+        fw_info = asset.get("fw_nvd_product") or "—"
+        print(f"  {asset['nom_interne']:20s} | OS: {os_info:30s} | FW: {fw_info}")
+    print()
 
     print("\n[STRATÉGIE PAR ASSET]")
     vendors_uniques = set()
