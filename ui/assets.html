@@ -484,33 +484,33 @@
             afficherPagination(page, totalPages, totalAssetsCount);
 
             tbody.innerHTML = assets.map(a => `
-        <tr>
-            <td><strong>${esc(a.nom_interne || '')}</strong></td>
-            <td>${esc(a.client_nom || '')}</td>
-            <td>${esc(a.site_nom || '')}</td>
-            <td><span class="badge bg-secondary">${esc(a.type_equipement_label || a.type_equipement || '')}</span></td>
-            <td>${esc(a.vendor_nom || '')}</td>
-            <td>${esc(a.model_nom || '')}</td>
-            <td><code>${esc(a.adresse_ip || '')}</code></td>
-            <td>${esc(a.os_version_nom
-                ? (a.os_version_nom + (a.os_version_ver ? ' ' + a.os_version_ver : ''))
-                : (a.systeme_exploitation || '—') + (a.version_os ? ' ' + a.version_os : '')
-            )}</td>
-            <td><span class="badge bg-${badgeCriticite(a.niveau_criticite)}">${esc(a.niveau_criticite || '')}</span></td>
-            <td>${badgeStatut(a.statut_operationnel || '')}</td>
-            <td class="text-nowrap">
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="voirAsset(${a.id})" title="Voir">
-                    👁️
-                </button>
-                <button class="btn btn-sm btn-outline-warning me-1" onclick="editerAsset(${a.id})" title="Modifier">
-                    ✏️
-                </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="supprimerAsset(${a.id})" title="Supprimer">
-                    🗑️
-                </button>
-            </td>
-        </tr>
-    `).join('');
+                <tr>
+                    <td><strong>${esc(a.nom_interne || '')}</strong></td>
+                    <td>${esc(a.client_nom || '')}</td>
+                    <td>${esc(a.site_nom || '')}</td>
+                    <td><span class="badge bg-secondary">${esc(a.type_equipement_label || a.type_equipement || '')}</span></td>
+                    <td>${esc(a.vendor_nom || '')}</td>
+                    <td>${esc(a.model_nom || '')}</td>
+                    <td><code>${esc(a.adresse_ip || '')}</code></td>
+                    <td>${esc(a.os_version_nom
+                        ? (a.os_version_nom + (a.os_version_ver ? ' ' + a.os_version_ver : ''))
+                        : (a.systeme_exploitation || '—') + (a.version_os ? ' ' + a.version_os : '')
+                    )}</td>
+                    <td><span class="badge bg-${badgeCriticite(a.niveau_criticite)}">${esc(a.niveau_criticite || '')}</span></td>
+                    <td>${badgeStatut(a.statut_operationnel || '')}</td>
+                    <td class="text-nowrap">
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="voirAsset(${a.id})" title="Voir">
+                            👁️
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning me-1" onclick="editerAsset(${a.id})" title="Modifier">
+                            ✏️
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="supprimerAsset(${a.id})" title="Supprimer">
+                            🗑️
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
         // ═══════════════════════════════════════════════════════════

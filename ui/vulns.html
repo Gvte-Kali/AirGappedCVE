@@ -485,54 +485,60 @@
             const tbody = document.getElementById('tableBody');
 
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" class="text-center">Aucune vulnérabilité trouvée</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center">Aucune vulnérabilité trouvée</td></tr>';
                 return;
             }
 
             tbody.innerHTML = data.map(v => `
-                <tr>
-                    <td><code>${v.cve_id || 'N/A'}</code></td>
-                    <td>
-                        <strong>${v.asset_nom || 'N/A'}</strong><br>
-                        <small class="text-muted">${v.type_equipement || ''}</small>
-                    </td>
-                    <td>
-                        <small>
-                            ${v.client_nom || 'N/A'}<br>
-                            📍 ${v.site_nom || 'N/A'}
-                        </small>
-                    </td>
-                    <td><span class="badge badge-${v.statut || 'nouveau'}">${formatStatut(v.statut)}</span></td>
-                    <td><span class="badge badge-${v.priorite || 'basse'}">${(v.priorite || 'N/A').toUpperCase()}</span></td>
-                    <td><span class="badge badge-${v.type_correlation || 'informatif'}">${formatTypeCorrelation(v.type_correlation)}</span></td>
-                    <td><strong>${v.score_contextuel !== null ? v.score_contextuel : 'N/A'}</strong></td>
-                    <td>
-                        <span class="badge bg-secondary">${v.cvss_v3_score || 'N/A'}</span>
-                        <small>${v.cvss_v3_severity || ''}</small>
-                    </td>
-                    <td>
-                        ${v.exploitable_air_gap === 1
-                    ? '<span class="text-air-gap">⚠️ Oui</span>'
-                    : v.exploitable_air_gap === 0
-                        ? '<span class="text-no-air-gap">✓ Non</span>'
-                        : '<span class="text-muted">?</span>'}
-                    </td>
-                    <td><small>${formatDate(v.date_detection)}</small></td>
-                    <td>
-                        <div class="d-flex gap-1">
-                            <button class="btn btn-sm btn-info" onclick="afficherDetails(${v.id})" title="Détails">
-                                👁️
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="changerStatut(${v.id}, 'faux_positif')" title="Faux Positif">
-                                ❌
-                            </button>
-                            <button class="btn btn-sm btn-success" onclick="changerStatut(${v.id}, 'confirme')" title="Patch">
-                                🩹
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
+        <tr>
+            <td><code>${v.cve_id || 'N/A'}</code></td>
+            <td>
+                <strong>${v.asset_nom || 'N/A'}</strong><br>
+                <small class="text-muted">${v.type_equipement || ''}</small>
+            </td>
+            <td>
+                <small>
+                    ${v.client_nom || 'N/A'}<br>
+                    📍 ${v.site_nom || 'N/A'}
+                </small>
+            </td>
+            <td><span class="badge badge-${v.statut || 'nouveau'}">${formatStatut(v.statut)}</span></td>
+            <td><span class="badge badge-${v.priorite || 'basse'}">${(v.priorite || 'N/A').toUpperCase()}</span></td>
+            <td>
+                <span class="cvss-wrap" title="${v.cve_description || 'Description non disponible'}">
+                    <span class="badge bg-secondary">${v.cvss_v3_score || 'N/A'}</span>
+                    <small>${v.cvss_v3_severity || ''}</small>
+                </span>
+            </td>
+            <td>
+                ${v.type_correlation === 'affirme'
+                    ? '<span class="text-success">✓ Oui</span>'
+                    : '<span class="text-muted">— Non</span>'}
+            </td>
+            <td>
+                <small>
+                    ${formatDate(v.date_detection)}
+                    ${formatHeure(v.date_detection)}
+                </small>
+            </td>
+            <td>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-info" onclick="afficherDetails(${v.id})" title="Détails">
+                        🔍
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="changerStatut(${v.id}, 'faux_positif')" title="Faux positif">
+                        ✖
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="changerStatut(${v.id}, 'confirme')" title="Confirmer">
+                        ✅
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="changerStatut(${v.id}, 'patche')" title="Patcher">
+                        🩹
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
         }
 
         function formatStatut(statut) {
@@ -559,6 +565,12 @@
             if (!dateStr) return 'N/A';
             const d = new Date(dateStr);
             return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function formatHeure(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            return `<br><span class="text-muted" style="font-size:0.75em">${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>`;
         }
 
         function afficherPagination(total) {
@@ -658,7 +670,7 @@
                             <select class="form-select" id="editStatut">
                                 <option value="nouveau" ${v.statut === 'nouveau' ? 'selected' : ''}>Nouveau</option>
                                 <option value="en_analyse" ${v.statut === 'en_analyse' ? 'selected' : ''}>En analyse</option>
-                                <option value="confirme" ${v.statut === 'confirme' ? 'selected' : ''}>Confirmé</option>
+                                <option value="confirme" ${v.statut === 'confirme' ? 'selected' : ''} selected>Confirmé</option>
                                 <option value="mitige" ${v.statut === 'mitige' ? 'selected' : ''}>Mitigé</option>
                                 <option value="faux_positif" ${v.statut === 'faux_positif' ? 'selected' : ''}>Faux positif</option>
                                 <option value="patche" ${v.statut === 'patche' ? 'selected' : ''}>Patché</option>
