@@ -80,6 +80,28 @@ CREATE TABLE `product_models` (
   CONSTRAINT `product_models_ibfk_1` FOREIGN KEY (`vendor_id`) REFERENCES `product_vendors` (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 -- ─────────────────────────────────────────────────────────────────────
+-- Référentiel OS/firmware/BIOS (aligné NVD)
+-- ─────────────────────────────────────────────────────────────────────
+DROP TABLE IF EXISTS `os_versions`;
+CREATE TABLE `os_versions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `os_nom` varchar(255) NOT NULL
+    COMMENT 'Nom affiché : "Windows Server", "DSM", "FortiOS"',
+  `version` varchar(100) DEFAULT NULL
+    COMMENT 'Version affichée : "2022", "24H2", "9.1.2"',
+  `nvd_vendor` varchar(255) NOT NULL
+    COMMENT 'Vendor NVD exact : "microsoft", "synology"',
+  `nvd_product` varchar(255) NOT NULL
+    COMMENT 'Produit NVD exact : "windows_server_2022"',
+  `type_produit` enum('os','firmware','bios') DEFAULT 'os',
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_nvd` (`nvd_vendor`,`nvd_product`),
+  KEY `idx_os_nom` (`os_nom`),
+  KEY `idx_nvd_vendor` (`nvd_vendor`),
+  KEY `idx_type_produit` (`type_produit`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- ─────────────────────────────────────────────────────────────────────
 -- Assets et leurs logiciels installés
 -- ─────────────────────────────────────────────────────────────────────
 DROP TABLE IF EXISTS `assets`;
@@ -88,6 +110,12 @@ CREATE TABLE `assets` (
   `site_id` int(11) NOT NULL,
   `vendor_id` int(11) DEFAULT NULL,
   `model_id` int(11) DEFAULT NULL,
+  `os_version_id` int(11) DEFAULT NULL
+    COMMENT 'FK os_versions — OS installé (nvd_product exact)',
+  `fw_version_id` int(11) DEFAULT NULL
+    COMMENT 'FK os_versions — Firmware installé (nvd_product exact)',
+  `bios_version_id` int(11) DEFAULT NULL
+    COMMENT 'FK os_versions — BIOS/UEFI (nvd_product exact)',
   `nom_interne` varchar(255) NOT NULL,
   `type_equipement` enum(
     'serveur',
@@ -135,11 +163,15 @@ CREATE TABLE `assets` (
   KEY `idx_criticite` (`niveau_criticite`),
   KEY `fk_assets_vendor` (`vendor_id`),
   KEY `fk_assets_model` (`model_id`),
+  KEY `fk_assets_os_version` (`os_version_id`),
+  KEY `fk_assets_fw_version` (`fw_version_id`),
+  KEY `fk_assets_bios_version` (`bios_version_id`),
   CONSTRAINT `assets_ibfk_1` FOREIGN KEY (`site_id`) REFERENCES `sites` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_assets_model` FOREIGN KEY (`model_id`) REFERENCES `product_models` (`id`) ON DELETE
-  SET NULL,
-    CONSTRAINT `fk_assets_vendor` FOREIGN KEY (`vendor_id`) REFERENCES `product_vendors` (`id`) ON DELETE
-  SET NULL
+  CONSTRAINT `fk_assets_model` FOREIGN KEY (`model_id`) REFERENCES `product_models` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_assets_vendor` FOREIGN KEY (`vendor_id`) REFERENCES `product_vendors` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_assets_os_version` FOREIGN KEY (`os_version_id`) REFERENCES `os_versions` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_assets_fw_version` FOREIGN KEY (`fw_version_id`) REFERENCES `os_versions` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_assets_bios_version` FOREIGN KEY (`bios_version_id`) REFERENCES `os_versions` (`id`) ON DELETE SET NULL
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 DROP TABLE IF EXISTS `asset_software`;
 CREATE TABLE `asset_software` (

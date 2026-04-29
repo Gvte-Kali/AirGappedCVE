@@ -12,3 +12,18 @@
     - Faire le premier téléchargement des pages json nvd avec /script/download_nvd.py
     - Importer les Fabricants et Modèles dans la bdd avec /scripts/import_vendors_models.py
     - Importer les cve qui correspondent aux fabricants/modèles avec /scripts/cve_sync.py
+    - Importer les os et versions os avec /scripts/extract_os_versions.py
+
+Créer une documentation fiable sur ce modèle : 
+docs/
+├── index.md              # Accueil / présentation du projet
+├── installation.md       # Prérequis, installation, config BDD
+├── configuration.md      # config.yml, correlations_map.yml expliqués
+├── scripts/
+│   ├── nvd_sync.md       # Comment alimenter la BDD CVE
+│   ├── correlate.md      # Pipeline de corrélation
+│   ├── analyze.md        # Analyse Mistral
+│   └── build_map.md      # build_correlations_map.py
+├── architecture.md       # Schéma BDD, flux de données
+└── api.md                # Endpoints FastAPI
+Fichiers .md dans /docs  →  MkDocs génère le site  →  GitHub Pages l'héberge

@@ -14,6 +14,9 @@ class AssetCreate(BaseModel):
     type_equipement: str
     vendor_id: Optional[int] = None
     model_id: Optional[int] = None
+    os_version_id: Optional[int] = None
+    fw_version_id: Optional[int] = None
+    bios_version_id: Optional[int] = None
     numero_serie: Optional[str] = None
     adresse_ip: Optional[str] = None
     adresse_mac: Optional[str] = None
@@ -36,6 +39,9 @@ class AssetUpdate(BaseModel):
     type_equipement: Optional[str] = None
     vendor_id: Optional[int] = None
     model_id: Optional[int] = None
+    os_version_id: Optional[int] = None
+    fw_version_id: Optional[int] = None
+    bios_version_id: Optional[int] = None
     numero_serie: Optional[str] = None
     adresse_ip: Optional[str] = None
     adresse_mac: Optional[str] = None
@@ -112,6 +118,18 @@ def list_assets(
                     v.nom            AS vendor_nom,
                     a.model_id,
                     m.nom            AS model_nom,
+                    a.os_version_id,
+                    ov.os_nom        AS os_version_nom,
+                    ov.version       AS os_version_ver,
+                    ov.nvd_product   AS os_nvd_product,
+                    a.fw_version_id,
+                    fw.os_nom        AS fw_version_nom,
+                    fw.version       AS fw_version_ver,
+                    fw.nvd_product   AS fw_nvd_product,
+                    a.bios_version_id,
+                    bv.os_nom        AS bios_version_nom,
+                    bv.version       AS bios_version_ver,
+                    bv.nvd_product   AS bios_nvd_product,
                     a.numero_serie,
                     a.adresse_ip,
                     a.adresse_mac,
@@ -135,8 +153,11 @@ def list_assets(
                 FROM assets a
                 JOIN sites s        ON a.site_id   = s.id
                 JOIN clients c      ON s.client_id = c.id
-                LEFT JOIN product_vendors v ON a.vendor_id  = v.id
-                LEFT JOIN product_models m  ON a.model_id   = m.id
+                LEFT JOIN product_vendors v  ON a.vendor_id      = v.id
+                LEFT JOIN product_models m   ON a.model_id       = m.id
+                LEFT JOIN os_versions ov     ON a.os_version_id  = ov.id
+                LEFT JOIN os_versions fw     ON a.fw_version_id  = fw.id
+                LEFT JOIN os_versions bv     ON a.bios_version_id = bv.id
                 {where_sql}
                 ORDER BY c.nom ASC, s.nom ASC, a.nom_interne ASC
                 {limit_sql}
@@ -162,14 +183,26 @@ def get_asset(asset_id: int):
                     a.*,
                     v.nom        AS vendor_nom,
                     m.nom        AS model_nom,
+                    ov.os_nom    AS os_version_nom,
+                    ov.version   AS os_version_ver,
+                    ov.nvd_product AS os_nvd_product,
+                    fw.os_nom    AS fw_version_nom,
+                    fw.version   AS fw_version_ver,
+                    fw.nvd_product AS fw_nvd_product,
+                    bv.os_nom    AS bios_version_nom,
+                    bv.version   AS bios_version_ver,
+                    bv.nvd_product AS bios_nvd_product,
                     s.nom        AS site_nom,
                     c.id         AS client_id,
                     c.nom        AS client_nom
                 FROM assets a
-                JOIN sites s        ON a.site_id   = s.id
-                JOIN clients c      ON s.client_id = c.id
-                LEFT JOIN product_vendors v ON a.vendor_id  = v.id
-                LEFT JOIN product_models m  ON a.model_id   = m.id
+                JOIN sites s         ON a.site_id       = s.id
+                JOIN clients c       ON s.client_id     = c.id
+                LEFT JOIN product_vendors v  ON a.vendor_id      = v.id
+                LEFT JOIN product_models m   ON a.model_id       = m.id
+                LEFT JOIN os_versions ov     ON a.os_version_id  = ov.id
+                LEFT JOIN os_versions fw     ON a.fw_version_id  = fw.id
+                LEFT JOIN os_versions bv     ON a.bios_version_id = bv.id
                 WHERE a.id = %s
             """, (asset_id,))
             row = cursor.fetchone()
@@ -199,21 +232,25 @@ def create_asset(asset: AssetCreate):
             cursor.execute("""
                 INSERT INTO assets (
                     site_id, nom_interne, type_equipement,
-                    vendor_id, model_id, numero_serie,
-                    adresse_ip, adresse_mac, hostname,
+                    vendor_id, model_id,
+                    os_version_id, fw_version_id, bios_version_id,
+                    numero_serie, adresse_ip, adresse_mac, hostname,
                     systeme_exploitation, version_os, version_firmware, version_bios,
                     date_installation, date_fin_garantie,
                     niveau_criticite, statut_operationnel,
                     proprietes_specifiques, notes
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s,
+                    %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s, %s, %s, %s,
                     %s, %s, %s, %s, %s, %s
                 )
             """, (
                 asset.site_id, asset.nom_interne, asset.type_equipement,
-                asset.vendor_id, asset.model_id, asset.numero_serie,
-                asset.adresse_ip, asset.adresse_mac, asset.hostname,
+                asset.vendor_id, asset.model_id,
+                asset.os_version_id, asset.fw_version_id, asset.bios_version_id,
+                asset.numero_serie, asset.adresse_ip, asset.adresse_mac, asset.hostname,
                 asset.systeme_exploitation, asset.version_os, asset.version_firmware, asset.version_bios,
                 asset.date_installation, asset.date_fin_garantie,
                 asset.niveau_criticite, asset.statut_operationnel,
@@ -250,6 +287,9 @@ def update_asset(asset_id: int, asset: AssetUpdate):
                     type_equipement        = %s,
                     vendor_id              = %s,
                     model_id               = %s,
+                    os_version_id          = %s,
+                    fw_version_id          = %s,
+                    bios_version_id        = %s,
                     numero_serie           = %s,
                     adresse_ip             = %s,
                     adresse_mac            = %s,
@@ -271,6 +311,9 @@ def update_asset(asset_id: int, asset: AssetUpdate):
                 asset.type_equipement      if asset.type_equipement      is not None else existing["type_equipement"],
                 asset.vendor_id            if asset.vendor_id            is not None else existing["vendor_id"],
                 asset.model_id             if asset.model_id             is not None else existing["model_id"],
+                asset.os_version_id        if asset.os_version_id        is not None else existing["os_version_id"],
+                asset.fw_version_id        if asset.fw_version_id        is not None else existing["fw_version_id"],
+                asset.bios_version_id      if asset.bios_version_id      is not None else existing["bios_version_id"],
                 asset.numero_serie         if asset.numero_serie         is not None else existing["numero_serie"],
                 asset.adresse_ip           if asset.adresse_ip           is not None else existing["adresse_ip"],
                 asset.adresse_mac          if asset.adresse_mac          is not None else existing["adresse_mac"],

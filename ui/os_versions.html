@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <title>OS &amp; Versions</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/app-search.css">
+    <link rel="stylesheet" href="/static/app-premium.css">
+</head>
+
+<body>
+
+    <!-- ─── NAVBAR ─────────────────────────────────────────── -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="nav">
+                <div class="d-flex ms-auto align-items-center gap-3">
+                    <div class="position-relative am-search" data-am-search-root>
+                        <input class="form-control form-control-sm" type="search"
+                            placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
+                        <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
+                    </div>
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/vulns">Vulnérabilités</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
+                                Référentiels
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
+                                <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
+                                <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
+                                <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
+                                <li><a class="dropdown-item active" href="/ui/os-versions">🖥️ OS &amp; Versions</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="/docs">API Docs</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/scripts/console">Console</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ─── CONTENU ────────────────────────────────────────── -->
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <h6 class="section-title mb-2">Référentiel NVD</h6>
+                <h1 class="fw-bold m-0 stat-number">OS &amp; VERSIONS</h1>
+            </div>
+            <span id="resultatCount" class="text-secondary fs-6"></span>
+        </div>
+
+        <!-- ─── FILTRES ────────────────────────────────────── -->
+        <div class="card p-3 mb-3">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label">Recherche</label>
+                    <input type="text" class="form-control" id="filtreSearch"
+                        placeholder="OS, version, produit NVD…" autocomplete="off">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Type</label>
+                    <select class="form-select" id="filtreType">
+                        <option value="">Tous</option>
+                        <option value="os">OS</option>
+                        <option value="firmware">Firmware</option>
+                        <option value="bios">BIOS</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Vendor NVD</label>
+                    <select class="form-select" id="filtreVendor">
+                        <option value="">Tous</option>
+                    </select>
+                </div>
+                <div class="col-md-1 d-flex">
+                    <button class="btn btn-outline-secondary flex-fill" onclick="resetFiltres()" title="Réinitialiser">✖</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── TABLEAU ────────────────────────────────────── -->
+        <div class="card p-3">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>OS</th>
+                            <th>Version</th>
+                            <th>Vendor NVD</th>
+                            <th>Produit NVD</th>
+                            <th>Type</th>
+                            <th>Ajouté le</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="6" class="text-center text-secondary">Chargement…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/bootstrap.bundle.min.js"></script>
+    <script src="/static/app-search.js"></script>
+    <script>
+        const API = '/api/os-versions';
+        const PAGE_SIZE = 50;
+        let page = 1;
+        let total = 0;
+        let debounceTimer;
+
+        // ═══════════════════════════════════════════════════════════
+        //  UTILITAIRES
+        // ═══════════════════════════════════════════════════════════
+        function esc(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function badgeType(type) {
+            const map = {
+                'os':       'badge bg-primary',
+                'firmware': 'badge bg-warning text-dark',
+                'bios':     'badge bg-purple',
+            };
+            return `<span class="${map[type] || 'badge bg-secondary'}">${esc(type)}</span>`;
+        }
+
+        function formatDate(dt) {
+            if (!dt) return '—';
+            return String(dt).slice(0, 10);
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  PAGINATION
+        // ═══════════════════════════════════════════════════════════
+        function afficherPagination() {
+            let container = document.getElementById('paginationContainer');
+            if (!container) {
+                const table = document.getElementById('tableBody')?.closest('table');
+                if (!table) return;
+                container = document.createElement('div');
+                container.id = 'paginationContainer';
+                container.className = 'mt-3';
+                table.parentNode.insertBefore(container, table.nextSibling);
+            }
+            const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            container.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Page ${page} / ${totalPages}</span>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary me-1"
+                            onclick="changerPage(${page - 1})" ${page <= 1 ? 'disabled' : ''}>◀ Précédent</button>
+                        <button class="btn btn-sm btn-outline-secondary"
+                            onclick="changerPage(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>Suivant ▶</button>
+                    </div>
+                </div>`;
+        }
+
+        function changerPage(p) { page = p; charger(); }
+
+        // ═══════════════════════════════════════════════════════════
+        //  CHARGEMENT
+        // ═══════════════════════════════════════════════════════════
+        async function charger() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+
+            const params = new URLSearchParams({ limit: PAGE_SIZE, skip: (page - 1) * PAGE_SIZE });
+            const search = document.getElementById('filtreSearch').value.trim();
+            const type   = document.getElementById('filtreType').value;
+            const vendor = document.getElementById('filtreVendor').value;
+            if (search) params.append('search', search);
+            if (type)   params.append('type_produit', type);
+            if (vendor) params.append('vendor', vendor);
+
+            try {
+                const r = await fetch(`${API}?${params}`);
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                total = parseInt(r.headers.get('X-Total-Count') || '0', 10);
+                document.getElementById('resultatCount').textContent =
+                    `${total} entrée${total > 1 ? 's' : ''}`;
+
+                const rows = await r.json();
+                if (!rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary">Aucun résultat</td></tr>';
+                    const c = document.getElementById('paginationContainer');
+                    if (c) c.style.display = 'none';
+                    return;
+                }
+
+                tbody.innerHTML = rows.map(row => `
+                    <tr>
+                        <td><strong>${esc(row.os_nom)}</strong></td>
+                        <td><code>${esc(row.version || '—')}</code></td>
+                        <td><span class="text-secondary">${esc(row.nvd_vendor)}</span></td>
+                        <td><code class="text-info">${esc(row.nvd_product)}</code></td>
+                        <td>${badgeType(row.type_produit)}</td>
+                        <td class="text-secondary">${formatDate(row.created_at)}</td>
+                    </tr>`).join('');
+
+                afficherPagination();
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Erreur : ${esc(e.message)}</td></tr>`;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  FILTRES
+        // ═══════════════════════════════════════════════════════════
+        function resetFiltres() {
+            document.getElementById('filtreSearch').value = '';
+            document.getElementById('filtreType').value = '';
+            document.getElementById('filtreVendor').value = '';
+            page = 1;
+            charger();
+        }
+
+        async function chargerVendors() {
+            try {
+                const r = await fetch(`${API}/vendors`);
+                const vendors = await r.json();
+                const sel = document.getElementById('filtreVendor');
+                vendors.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v;
+                    opt.textContent = v;
+                    sel.appendChild(opt);
+                });
+            } catch (e) { console.error('Erreur chargement vendors:', e); }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  INIT
+        // ═══════════════════════════════════════════════════════════
+        (async () => {
+            await chargerVendors();
+
+            document.getElementById('filtreSearch').addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => { page = 1; charger(); }, 300);
+            });
+            document.getElementById('filtreType').addEventListener('change', () => { page = 1; charger(); });
+            document.getElementById('filtreVendor').addEventListener('change', () => { page = 1; charger(); });
+
+            charger();
+        })();
+    </script>
+
+    <style>
+        .bg-purple { background-color: #6f42c1 !important; }
+    </style>
+
+</body>
+</html>

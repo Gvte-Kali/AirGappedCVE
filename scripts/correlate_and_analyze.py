@@ -625,19 +625,40 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
     product_bonus = cfg_corr("product_match_bonus", True)
     product_min_chars = cfg_corr("product_match_min_chars", 6)
 
+    # Produits NVD exacts depuis les FK os_versions (match direct, priorité maximale)
+    exact_products = set(filter(None, [
+        asset.get("os_nvd_product"),
+        asset.get("fw_nvd_product"),
+        asset.get("bios_nvd_product"),
+    ]))
+    has_fk = bool(exact_products)
+
     asset_tokens = get_asset_version_tokens(asset)
     has_version_info = bool(asset_tokens)
 
-    candidates = retenues = rejetees_version = 0
+    candidates = retenues = rejetees_version = fk_matches = 0
 
     for cve in cves:
         if cve.get("fabricant") != vendor_cve:
             continue
 
         candidates += 1
+        cve_produit = cve.get("produit") or ""
+
+        # ── Match exact FK (os_version_id / fw_version_id / bios_version_id) ──
+        if has_fk and cve_produit in exact_products:
+            cwes = get_cwes_for_cve(cur, cve["cve_id"])
+            score, priorite = calc_pre_triage_score(cve, asset, "affirme", cwes)
+            result = insert_correlation(cur, asset["asset_id"], cve["cve_id"],
+                                        "affirme", "vendor_product", score, priorite)
+            stats[result] = stats.get(result, 0) + 1
+            retenues += 1
+            fk_matches += 1
+            continue
+
+        # ── Match version fuzzy (fallback) ────────────────────────────
         cve_tokens = get_cve_version_tokens(cve)
 
-        # ── Match version ─────────────────────────────────────────────
         version_matched = False
         best_version_score = 0
 
@@ -670,7 +691,6 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
         # ── Match produit (bonus) ──────────────────────────────────────
         product_score = 0
         if product_bonus:
-            cve_produit = cve.get("produit") or ""
             for field in [asset.get("nvd_product"), asset.get("systeme_exploitation"),
                           asset.get("version_os")]:
                 if field:
@@ -707,8 +727,9 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
         retenues += 1
 
     if verbose:
-        print(f"    [vendor_match] {candidates} candidates → {retenues} retenues "
-              f"({rejetees_version} rejet version)")
+        fk_info = f" ({fk_matches} exact FK)" if fk_matches else ""
+        print(f"    [vendor_match] {candidates} candidates → {retenues} retenues"
+              f"{fk_info} ({rejetees_version} rejet version)")
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -735,10 +756,16 @@ def correlate(
         SELECT a.id AS asset_id, a.nom_interne, a.type_equipement,
                a.systeme_exploitation, a.version_os, a.version_firmware,
                a.version_bios, a.niveau_criticite, a.statut_operationnel,
-               pv.nvd_vendor, pm.nvd_product, pm.nom AS model_nom
+               pv.nvd_vendor, pm.nvd_product, pm.nom AS model_nom,
+               ov.nvd_product AS os_nvd_product,
+               fw.nvd_product AS fw_nvd_product,
+               bv.nvd_product AS bios_nvd_product
         FROM assets a
-        JOIN product_vendors pv ON pv.id = a.vendor_id
-        LEFT JOIN product_models pm ON pm.id = a.model_id
+        JOIN product_vendors pv  ON pv.id = a.vendor_id
+        LEFT JOIN product_models pm  ON pm.id = a.model_id
+        LEFT JOIN os_versions ov     ON ov.id = a.os_version_id
+        LEFT JOIN os_versions fw     ON fw.id = a.fw_version_id
+        LEFT JOIN os_versions bv     ON bv.id = a.bios_version_id
         JOIN sites s ON s.id = a.site_id
         JOIN clients c ON c.id = s.client_id
         WHERE a.statut_operationnel NOT IN ('hors_service', 'inactif')

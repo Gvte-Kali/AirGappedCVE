@@ -1,5 +1,5 @@
 from routers.scripts import router as scripts_router
-from routers import clients, sites, assets, vendors, models, documents, correlations
+from routers import clients, sites, assets, vendors, models, documents, correlations, os_versions
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -27,6 +27,7 @@ app.include_router(correlations.router,
 app.include_router(vendors.router,      prefix="/api",
                    tags=["Fabricants"])
 app.include_router(models.router,       prefix="/api")
+app.include_router(os_versions.router,                          tags=["OS Versions"])
 
 # Router Scripts
 app.include_router(scripts_router)
@@ -65,6 +66,11 @@ def ui_vendors():
 @app.get("/ui/models")
 def ui_models():
     return FileResponse("ui/models.html")
+
+
+@app.get("/ui/os-versions")
+def ui_os_versions():
+    return FileResponse("ui/os_versions.html")
 
 
 @app.get("/ui/documents")

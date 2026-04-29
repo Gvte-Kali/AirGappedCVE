@@ -69,6 +69,7 @@
                                 </li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
+                                <li><a class="dropdown-item" href="/ui/os-versions">🖥️ OS &amp; Versions</a></li>
                             </ul>
                         </li>
                         <li class="nav-item"><a class="nav-link" href="/docs">API Docs</a></li>
@@ -261,26 +262,45 @@
                             <label class="form-label">Hostname</label>
                             <input type="text" class="form-control" id="assetHostname">
                         </div>
-                        <!-- OS -->
-                        <div class="col-md-4">
+                        <!-- OS nom (niveau 1) -->
+                        <div class="col-md-6">
                             <label class="form-label">Système d'exploitation</label>
-                            <input type="text" class="form-control" id="assetOS"
-                                placeholder="ex: Windows Server, FortiOS">
+                            <div class="search-wrapper">
+                                <input type="text" class="form-control" id="assetOsNomSearch"
+                                    placeholder="Ex: Windows Server, DSM…" autocomplete="off">
+                                <input type="hidden" id="assetOsNom">
+                                <div class="suggestion-box" id="assetOsNomSuggestions"></div>
+                            </div>
                         </div>
-                        <!-- Version OS -->
-                        <div class="col-md-4">
+                        <!-- OS version (niveau 2) -->
+                        <div class="col-md-6">
                             <label class="form-label">Version OS</label>
-                            <input type="text" class="form-control" id="assetVersionOS" placeholder="ex: 2022, 7.2.1">
+                            <div class="search-wrapper">
+                                <input type="text" class="form-control" id="assetOsVersionSearch"
+                                    placeholder="Choisir d'abord un OS…" autocomplete="off" disabled>
+                                <input type="hidden" id="assetOsVersionId">
+                                <div class="suggestion-box" id="assetOsVersionSuggestions"></div>
+                            </div>
                         </div>
                         <!-- Firmware -->
                         <div class="col-md-4">
-                            <label class="form-label">Version firmware</label>
-                            <input type="text" class="form-control" id="assetFirmware">
+                            <label class="form-label">Firmware</label>
+                            <div class="search-wrapper">
+                                <input type="text" class="form-control" id="assetFwSearch"
+                                    placeholder="Ex: FortiOS, IOS XE…" autocomplete="off">
+                                <input type="hidden" id="assetFwVersionId">
+                                <div class="suggestion-box" id="assetFwSuggestions"></div>
+                            </div>
                         </div>
                         <!-- BIOS -->
                         <div class="col-md-4">
-                            <label class="form-label">Version BIOS</label>
-                            <input type="text" class="form-control" id="assetBios">
+                            <label class="form-label">BIOS / UEFI</label>
+                            <div class="search-wrapper">
+                                <input type="text" class="form-control" id="assetBiosSearch"
+                                    placeholder="Ex: AMI BIOS…" autocomplete="off">
+                                <input type="hidden" id="assetBiosVersionId">
+                                <div class="suggestion-box" id="assetBiosSuggestions"></div>
+                            </div>
                         </div>
                         <!-- Date installation -->
                         <div class="col-md-4">
@@ -357,6 +377,7 @@
         const API_SITES = '/api/sites/';
         const API_FABRICANTS = '/api/vendors';
         const API_MODELES = '/api/models';
+        const API_OS_VERSIONS = '/api/os-versions';
 
         const PAGE_SIZE = 20;
         let page = 1;
@@ -566,7 +587,7 @@
             items.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'suggestion-item';
-                div.textContent = item[labelKey];
+                div.textContent = typeof labelKey === 'function' ? labelKey(item) : item[labelKey];
                 div.addEventListener('mousedown', (e) => {
                     e.preventDefault();
                     onSelect(item);
@@ -793,6 +814,139 @@
 
 
         // ═══════════════════════════════════════════════════════════
+        //  TYPEAHEAD : OS NOM (MODAL, niveau 1)
+        // ═══════════════════════════════════════════════════════════
+        function initOsNomTypeahead() {
+            const input = document.getElementById('assetOsNomSearch');
+            const hidden = document.getElementById('assetOsNom');
+            const box = document.getElementById('assetOsNomSuggestions');
+            const versionInput = document.getElementById('assetOsVersionSearch');
+            const versionId = document.getElementById('assetOsVersionId');
+            let debounce;
+
+            input.addEventListener('input', () => {
+                const q = input.value.trim();
+                hidden.value = '';
+                versionInput.disabled = true;
+                versionInput.value = '';
+                versionId.value = '';
+                if (q.length < 2) { hideSuggestionBox(box); return; }
+                clearTimeout(debounce);
+                debounce = setTimeout(async () => {
+                    try {
+                        const r = await fetch(`${API_OS_VERSIONS}?search=${encodeURIComponent(q)}&limit=100`);
+                        const data = await r.json();
+                        const noms = [...new Set(data.map(d => d.os_nom))].slice(0, 10);
+                        renderSuggestions(box, noms.map(n => ({ nom: n })), 'nom', 'nom', (item) => {
+                            input.value = item.nom;
+                            hidden.value = item.nom;
+                            versionInput.disabled = false;
+                            versionInput.placeholder = 'Rechercher une version…';
+                        });
+                    } catch (e) { console.error('Erreur OS nom typeahead:', e); }
+                }, 250);
+            });
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  TYPEAHEAD : OS VERSION (MODAL, niveau 2)
+        // ═══════════════════════════════════════════════════════════
+        function initOsVersionTypeahead() {
+            const input = document.getElementById('assetOsVersionSearch');
+            const hidden = document.getElementById('assetOsVersionId');
+            const box = document.getElementById('assetOsVersionSuggestions');
+            const osNom = document.getElementById('assetOsNom');
+            let debounce;
+
+            input.addEventListener('input', () => {
+                const q = input.value.trim();
+                const nom = osNom.value;
+                hidden.value = '';
+                if (!nom) { hideSuggestionBox(box); return; }
+                clearTimeout(debounce);
+                debounce = setTimeout(async () => {
+                    try {
+                        const params = new URLSearchParams({ limit: 20 });
+                        if (q) params.append('search', q);
+                        const r = await fetch(`${API_OS_VERSIONS}?${params}`);
+                        const data = await r.json();
+                        const filtered = data.filter(d => d.os_nom === nom);
+                        renderSuggestions(box, filtered,
+                            d => d.version ? `${d.version} (${d.nvd_product})` : `— (${d.nvd_product})`,
+                            'id',
+                            (item) => {
+                                input.value = item.version
+                                    ? `${item.version} (${item.nvd_product})`
+                                    : `— (${item.nvd_product})`;
+                                hidden.value = item.id;
+                            }
+                        );
+                    } catch (e) { console.error('Erreur OS version typeahead:', e); }
+                }, 250);
+            });
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  TYPEAHEAD : FIRMWARE (MODAL)
+        // ═══════════════════════════════════════════════════════════
+        function initFwTypeahead() {
+            const input = document.getElementById('assetFwSearch');
+            const hidden = document.getElementById('assetFwVersionId');
+            const box = document.getElementById('assetFwSuggestions');
+            let debounceTimer;
+
+            input.addEventListener('input', () => {
+                const q = input.value.trim();
+                hidden.value = '';
+                if (q.length < 2) { hideSuggestionBox(box); return; }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const params = new URLSearchParams({ search: q, limit: 10, type_produit: 'firmware' });
+                        const r = await fetch(`${API_OS_VERSIONS}?${params}`);
+                        const items = await r.json();
+                        renderSuggestions(box, items, 'label', 'id', (item) => {
+                            input.value = item.label;
+                            hidden.value = item.id;
+                        });
+                    } catch (e) { console.error('Erreur Firmware typeahead:', e); }
+                }, 250);
+            });
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  TYPEAHEAD : BIOS (MODAL)
+        // ═══════════════════════════════════════════════════════════
+        function initBiosTypeahead() {
+            const input = document.getElementById('assetBiosSearch');
+            const hidden = document.getElementById('assetBiosVersionId');
+            const box = document.getElementById('assetBiosSuggestions');
+            let debounceTimer;
+
+            input.addEventListener('input', () => {
+                const q = input.value.trim();
+                hidden.value = '';
+                if (q.length < 2) { hideSuggestionBox(box); return; }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const params = new URLSearchParams({ search: q, limit: 10, type_produit: 'bios' });
+                        const r = await fetch(`${API_OS_VERSIONS}?${params}`);
+                        const items = await r.json();
+                        renderSuggestions(box, items, 'label', 'id', (item) => {
+                            input.value = item.label;
+                            hidden.value = item.id;
+                        });
+                    } catch (e) { console.error('Erreur BIOS typeahead:', e); }
+                }, 250);
+            });
+            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
+        }
+
+        // ═══════════════════════════════════════════════════════════
         //  RESET FORMULAIRE
         // ═══════════════════════════════════════════════════════════
         function resetFormulaireAsset() {
@@ -803,10 +957,19 @@
             document.getElementById('assetIP').value = '';
             document.getElementById('assetMAC').value = '';
             document.getElementById('assetHostname').value = '';
-            document.getElementById('assetOS').value = '';
-            document.getElementById('assetVersionOS').value = '';
-            document.getElementById('assetFirmware').value = '';
-            document.getElementById('assetBios').value = '';
+            // OS typeahead (two-level)
+            document.getElementById('assetOsNomSearch').value = '';
+            document.getElementById('assetOsNom').value = '';
+            document.getElementById('assetOsVersionSearch').value = '';
+            document.getElementById('assetOsVersionSearch').disabled = true;
+            document.getElementById('assetOsVersionSearch').placeholder = 'Choisir d\'abord un OS…';
+            document.getElementById('assetOsVersionId').value = '';
+            // Firmware typeahead
+            document.getElementById('assetFwSearch').value = '';
+            document.getElementById('assetFwVersionId').value = '';
+            // BIOS typeahead
+            document.getElementById('assetBiosSearch').value = '';
+            document.getElementById('assetBiosVersionId').value = '';
             document.getElementById('assetDateInstall').value = '';
             document.getElementById('assetFinGarantie').value = '';
             document.getElementById('assetCriticite').value = 'moyen';
@@ -863,10 +1026,31 @@
             document.getElementById('assetIP').value = a.adresse_ip || a.ip_address || '';
             document.getElementById('assetMAC').value = a.adresse_mac || a.mac_address || '';
             document.getElementById('assetHostname').value = a.hostname || '';
-            document.getElementById('assetOS').value = a.systeme_exploitation || a.os_nom || '';
-            document.getElementById('assetVersionOS').value = a.version_os || a.os_version || '';
-            document.getElementById('assetFirmware').value = a.version_firmware || a.firmware_version || '';
-            document.getElementById('assetBios').value = a.version_bios || '';
+            // OS typeahead (two-level)
+            if (a.os_version_id) {
+                document.getElementById('assetOsNom').value = a.os_version_nom || '';
+                document.getElementById('assetOsNomSearch').value = a.os_version_nom || '';
+                document.getElementById('assetOsVersionId').value = a.os_version_id;
+                document.getElementById('assetOsVersionSearch').value = a.os_version_ver
+                    ? `${a.os_version_ver} (${a.os_nvd_product || ''})`
+                    : `— (${a.os_nvd_product || ''})`;
+                document.getElementById('assetOsVersionSearch').disabled = false;
+                document.getElementById('assetOsVersionSearch').placeholder = 'Rechercher une version…';
+            }
+            // Firmware typeahead
+            document.getElementById('assetFwVersionId').value = a.fw_version_id ? String(a.fw_version_id) : '';
+            if (a.fw_version_id && a.fw_version_nom) {
+                document.getElementById('assetFwSearch').value = (a.fw_version_nom + ' ' + (a.fw_version_ver || '')).trim();
+            } else {
+                document.getElementById('assetFwSearch').value = '';
+            }
+            // BIOS typeahead
+            document.getElementById('assetBiosVersionId').value = a.bios_version_id ? String(a.bios_version_id) : '';
+            if (a.bios_version_id && a.bios_version_nom) {
+                document.getElementById('assetBiosSearch').value = (a.bios_version_nom + ' ' + (a.bios_version_ver || '')).trim();
+            } else {
+                document.getElementById('assetBiosSearch').value = '';
+            }
             document.getElementById('assetDateInstall').value = a.date_installation || '';
             document.getElementById('assetFinGarantie').value = a.date_fin_garantie || a.fin_garantie || '';
             document.getElementById('assetCriticite').value = a.niveau_criticite || a.criticite || 'moyen';
@@ -927,14 +1111,13 @@
                 type_equipement: type,
                 vendor_id: document.getElementById('assetFabricantId').value ? parseInt(document.getElementById('assetFabricantId').value) : null,
                 model_id: document.getElementById('assetModeleId').value ? parseInt(document.getElementById('assetModeleId').value) : null,
+                os_version_id: document.getElementById('assetOsVersionId').value ? parseInt(document.getElementById('assetOsVersionId').value) : null,
+                fw_version_id: document.getElementById('assetFwVersionId').value ? parseInt(document.getElementById('assetFwVersionId').value) : null,
+                bios_version_id: document.getElementById('assetBiosVersionId').value ? parseInt(document.getElementById('assetBiosVersionId').value) : null,
                 numero_serie: document.getElementById('assetSerie').value.trim() || null,
                 adresse_ip: document.getElementById('assetIP').value.trim() || null,
                 adresse_mac: document.getElementById('assetMAC').value.trim() || null,
                 hostname: document.getElementById('assetHostname').value.trim() || null,
-                systeme_exploitation: document.getElementById('assetOS').value.trim() || null,
-                version_os: document.getElementById('assetVersionOS').value.trim() || null,
-                version_firmware: document.getElementById('assetFirmware').value.trim() || null,
-                version_bios: document.getElementById('assetBios').value.trim() || null,
                 date_installation: document.getElementById('assetDateInstall').value || null,
                 date_fin_garantie: document.getElementById('assetFinGarantie').value || null,
                 niveau_criticite: document.getElementById('assetCriticite').value,
@@ -999,6 +1182,10 @@
             initModalSiteTypeahead();
             initFabricantTypeahead();
             initModeleTypeahead();
+            initOsNomTypeahead();
+            initOsVersionTypeahead();
+            initFwTypeahead();
+            initBiosTypeahead();
 
             page = 1;
             await chargerAssets();
