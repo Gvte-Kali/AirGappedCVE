@@ -59,7 +59,7 @@ correlation:
     - autre
 
   # ── Mode dry-run ( n'insère rien en bdd ) ─────────────────────────────────────────────────────
-  dry_run: true
+  dry_run: false
 
   # ── Verbosité ────────────────────────────────────────────────────────
   verbose: true

@@ -1,11 +1,17 @@
+==========
+En cours |
+==========
 1. /scripts/correlate_and_analyze.py : 
-    - Affiner la détection des cve afin de ne pas torp en envoyer à Mistral
-
-
-
+    - Affiner la détection des cve afin de ne pas trop en envoyer à Mistral
 
 2. Réfaction page vulnérabilités
 3. Dégager Grafana qui ne nous servira plus
+
+
+===================================================
+Idées pour la fin du projet avant la mise en prod |
+===================================================
+
 
 !! En dernier !! . Créer un script de first install, ce script va être long : 
     - Créer la bdd avec /sql/schema.sql ( voir si install.sh ne le fait pas déjà )
