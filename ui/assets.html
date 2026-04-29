@@ -69,6 +69,7 @@
                                 </li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
+                                <li><a class="dropdown-item" href="/ui/equipment-types">⚙️ Types d'équipements</a></li>
                                 <li><a class="dropdown-item" href="/ui/os-versions">🖥️ OS &amp; Versions</a></li>
                             </ul>
                         </li>
@@ -210,16 +211,6 @@
                             <label class="form-label">Type d'équipement *</label>
                             <select class="form-select" id="assetType">
                                 <option value="">-- Choisir --</option>
-                                <option value="serveur">Serveur</option>
-                                <option value="nas">NAS</option>
-                                <option value="pc">PC</option>
-                                <option value="laptop">Laptop</option>
-                                <option value="lecteur_biometrique">Lecteur biométrique</option>
-                                <option value="switch">Switch</option>
-                                <option value="routeur">Routeur</option>
-                                <option value="parefeu">Pare-feu</option>
-                                <option value="camera_ip">Caméra IP</option>
-                                <option value="autre">Autre</option>
                             </select>
                         </div>
                         <!-- Fabricant -->
@@ -296,8 +287,8 @@
                         <div class="col-md-4">
                             <label class="form-label">BIOS / UEFI</label>
                             <div class="search-wrapper">
-                                <input type="text" class="form-control" id="assetBiosSearch"
-                                    placeholder="Ex: AMI BIOS…" autocomplete="off">
+                                <input type="text" class="form-control" id="assetBiosSearch" placeholder="Ex: AMI BIOS…"
+                                    autocomplete="off">
                                 <input type="hidden" id="assetBiosVersionId">
                                 <div class="suggestion-box" id="assetBiosSuggestions"></div>
                             </div>
@@ -497,7 +488,7 @@
             <td><strong>${esc(a.nom_interne || '')}</strong></td>
             <td>${esc(a.client_nom || '')}</td>
             <td>${esc(a.site_nom || '')}</td>
-            <td><span class="badge bg-secondary">${esc(a.type_equipement || '')}</span></td>
+            <td><span class="badge bg-secondary">${esc(a.type_equipement_label || a.type_equipement || '')}</span></td>
             <td>${esc(a.vendor_nom || '')}</td>
             <td>${esc(a.model_nom || '')}</td>
             <td><code>${esc(a.adresse_ip || '')}</code></td>
@@ -572,6 +563,17 @@
                 </td>
             </tr>`;
             }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  TYPES D'ÉQUIPEMENTS (chargement dynamique)
+        // ═══════════════════════════════════════════════════════════
+        async function chargerTypesEquipement() {
+            const r = await fetch('/api/equipment-types');
+            const types = await r.json();
+            const select = document.getElementById('assetType');
+            select.innerHTML = '<option value="">-- Choisir --</option>' +
+                types.map(t => `<option value="${t.id}">${t.label}</option>`).join('');
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -836,7 +838,12 @@
                                     const res = await fetch(API_MODELES, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ nom: q, vendor_id: parseInt(fabricantId) })
+                                        body: JSON.stringify({
+                                            vendor_id: parseInt(fabricantId),
+                                            nom: q,
+                                            nvd_product: q.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, ''),
+                                            type_produit: 'hardware'
+                                        })
                                     });
                                     if (!res.ok) throw new Error(await res.text());
                                     const newModel = await res.json();
@@ -964,10 +971,16 @@
                         if (q) params.append('search', q);
                         const r = await fetch(`${API_OS_VERSIONS}?${params}`);
                         const items = await r.json();
-                        renderSuggestions(box, items, 'label', 'id', (item) => {
-                            input.value = item.label;
-                            hidden.value = item.id;
-                        });
+                        renderSuggestions(box, items,
+                            item => item.version ? `${item.os_nom} ${item.version}` : item.os_nom,
+                            'id',
+                            (item) => {
+                                input.value = item.version
+                                    ? `${item.os_nom} ${item.version}`
+                                    : item.os_nom;
+                                hidden.value = item.id;
+                            }
+                        );
                     } catch (e) { console.error('Erreur Firmware typeahead:', e); }
                 }, 100);
             }
@@ -998,10 +1011,16 @@
                         if (q) params.append('search', q);
                         const r = await fetch(`${API_OS_VERSIONS}?${params}`);
                         const items = await r.json();
-                        renderSuggestions(box, items, 'label', 'id', (item) => {
-                            input.value = item.label;
-                            hidden.value = item.id;
-                        });
+                        renderSuggestions(box, items,
+                            item => item.version ? `${item.os_nom} ${item.version}` : item.os_nom,
+                            'id',
+                            (item) => {
+                                input.value = item.version
+                                    ? `${item.os_nom} ${item.version}`
+                                    : item.os_nom;
+                                hidden.value = item.id;
+                            }
+                        );
                     } catch (e) { console.error('Erreur BIOS typeahead:', e); }
                 }, 100);
             }
@@ -1089,7 +1108,7 @@
 
             document.getElementById('assetId').value = a.id;
             document.getElementById('assetNom').value = a.nom_interne || a.nom || '';
-            document.getElementById('assetType').value = a.type_equipement || '';
+            document.getElementById('assetType').value = a.equipment_type_id ? String(a.equipment_type_id) : '';
             document.getElementById('assetSerie').value = a.numero_serie || '';
             document.getElementById('assetIP').value = a.adresse_ip || a.ip_address || '';
             document.getElementById('assetMAC').value = a.adresse_mac || a.mac_address || '';
@@ -1176,7 +1195,7 @@
             const payload = {
                 site_id: parseInt(siteId),
                 nom_interne: nom,
-                type_equipement: type,
+                equipment_type_id: parseInt(type) || null,
                 vendor_id: document.getElementById('assetFabricantId').value ? parseInt(document.getElementById('assetFabricantId').value) : null,
                 model_id: document.getElementById('assetModeleId').value ? parseInt(document.getElementById('assetModeleId').value) : null,
                 os_version_id: document.getElementById('assetOsVersionId').value ? parseInt(document.getElementById('assetOsVersionId').value) : null,
@@ -1255,6 +1274,7 @@
             initFwTypeahead();
             initBiosTypeahead();
 
+            await chargerTypesEquipement();
             page = 1;
             await chargerAssets();
 

@@ -132,9 +132,12 @@
                                 <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
                                 <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
                                 <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
-                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
+                                <li><a class="dropdown-item" href="/ui/equipment-types">⚙️ Types d'équipements</a></li>
                                 <li><a class="dropdown-item" href="/ui/os-versions">🖥️ OS &amp; Versions</a></li>
                             </ul>
                         </li>
@@ -178,13 +181,17 @@
             <div class="col-md-3">
                 <div class="card p-4 h-100">
                     <div class="stat-label">Impact Haut</div>
-                    <div class="stat-number text-warning" style="background: linear-gradient(135deg, #f0883e 0%, #ffc107 100%); background-clip: text; -webkit-background-clip: text;" id="stat-haute">0</div>
+                    <div class="stat-number text-warning"
+                        style="background: linear-gradient(135deg, #f0883e 0%, #ffc107 100%); background-clip: text; -webkit-background-clip: text;"
+                        id="stat-haute">0</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card p-4 h-100">
                     <div class="stat-label">Référentiel</div>
-                    <div class="stat-number" style="background: linear-gradient(135deg, #3fb950 0%, #b8ffbd 100%); background-clip: text; -webkit-background-clip: text;">CVE</div>
+                    <div class="stat-number"
+                        style="background: linear-gradient(135deg, #3fb950 0%, #b8ffbd 100%); background-clip: text; -webkit-background-clip: text;">
+                        CVE</div>
                 </div>
             </div>
         </div>
@@ -194,14 +201,17 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div class="d-flex align-items-center gap-2">
                     <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                    <h6 class="m-0 fw-bold" id="progressMessage text-uppercase small" style="letter-spacing: 0.1em;">Opération en cours</h6>
+                    <h6 class="m-0 fw-bold" id="progressMessage text-uppercase small" style="letter-spacing: 0.1em;">
+                        Opération en cours</h6>
                 </div>
                 <button class="btn btn-sm btn-link text-muted" onclick="fermerProgress()">Masquer</button>
             </div>
             <div class="progress mb-4" style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px;">
-                <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar" role="progressbar" style="width: 0%"></div>
+                <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar" role="progressbar"
+                    style="width: 0%"></div>
             </div>
-            <div class="bg-black bg-opacity-25 p-3 rounded" id="logsContainer" style="max-height: 250px; overflow-y: auto;">
+            <div class="bg-black bg-opacity-25 p-3 rounded" id="logsContainer"
+                style="max-height: 250px; overflow-y: auto;">
                 <div id="logsContent"></div>
             </div>
         </div>
@@ -213,7 +223,8 @@
                 <div class="col-md-3">
                     <label class="form-label stat-label">Client</label>
                     <div class="position-relative">
-                        <input type="text" class="form-control" id="filtreClientSearch" placeholder="Ex: Acme Corp…" autocomplete="off">
+                        <input type="text" class="form-control" id="filtreClientSearch" placeholder="Ex: Acme Corp…"
+                            autocomplete="off">
                         <input type="hidden" id="filtreClientId">
                         <div class="suggestion-box" id="filtreClientSuggestions"></div>
                     </div>
@@ -221,7 +232,8 @@
                 <div class="col-md-3">
                     <label class="form-label stat-label">Site</label>
                     <div class="position-relative">
-                        <input type="text" class="form-control" id="filtreSiteSearch" placeholder="Ex: Paris…" autocomplete="off">
+                        <input type="text" class="form-control" id="filtreSiteSearch" placeholder="Ex: Paris…"
+                            autocomplete="off">
                         <input type="hidden" id="filtreSiteId">
                         <div class="suggestion-box" id="filtreSiteSuggestions"></div>
                     </div>
@@ -306,7 +318,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                    <button type="button" class="btn btn-primary" onclick="sauvegarderModification()">💾 Sauvegarder</button>
+                    <button type="button" class="btn btn-primary" onclick="sauvegarderModification()">💾
+                        Sauvegarder</button>
                 </div>
             </div>
         </div>
@@ -499,10 +512,10 @@
                     </td>
                     <td>
                         ${v.exploitable_air_gap === 1
-                            ? '<span class="text-air-gap">⚠️ Oui</span>'
-                            : v.exploitable_air_gap === 0
-                            ? '<span class="text-no-air-gap">✓ Non</span>'
-                            : '<span class="text-muted">?</span>'}
+                    ? '<span class="text-air-gap">⚠️ Oui</span>'
+                    : v.exploitable_air_gap === 0
+                        ? '<span class="text-no-air-gap">✓ Non</span>'
+                        : '<span class="text-muted">?</span>'}
                     </td>
                     <td><small>${formatDate(v.date_detection)}</small></td>
                     <td>
@@ -811,7 +824,7 @@
                     // Mise à jour des logs
                     const logsContent = document.getElementById('logsContent');
                     const logsContainer = document.getElementById('logsContainer');
-                    
+
                     if (status.logs && status.logs.length > 0) {
                         logsContent.innerHTML = status.logs.join('<br>');
                         // Auto-scroll si on est proche du bas

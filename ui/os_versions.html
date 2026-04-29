@@ -41,7 +41,9 @@
                                 </li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
-                                <li><a class="dropdown-item active" href="/ui/os-versions">🖥️ OS &amp; Versions</a></li>
+                                <li><a class="dropdown-item" href="/ui/equipment-types">⚙️ Types d'équipements</a></li>
+                                <li><a class="dropdown-item active" href="/ui/os-versions">🖥️ OS &amp; Versions</a>
+                                </li>
                             </ul>
                         </li>
                         <li class="nav-item"><a class="nav-link" href="/docs">API Docs</a></li>
@@ -67,8 +69,8 @@
             <div class="row g-2 align-items-end">
                 <div class="col-md-5">
                     <label class="form-label">Recherche</label>
-                    <input type="text" class="form-control" id="filtreSearch"
-                        placeholder="OS, version, produit NVD…" autocomplete="off">
+                    <input type="text" class="form-control" id="filtreSearch" placeholder="OS, version, produit NVD…"
+                        autocomplete="off">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Type</label>
@@ -86,7 +88,8 @@
                     </select>
                 </div>
                 <div class="col-md-1 d-flex">
-                    <button class="btn btn-outline-secondary flex-fill" onclick="resetFiltres()" title="Réinitialiser">✖</button>
+                    <button class="btn btn-outline-secondary flex-fill" onclick="resetFiltres()"
+                        title="Réinitialiser">✖</button>
                 </div>
             </div>
         </div>
@@ -136,9 +139,9 @@
 
         function badgeType(type) {
             const map = {
-                'os':       'badge bg-primary',
+                'os': 'badge bg-primary',
                 'firmware': 'badge bg-warning text-dark',
-                'bios':     'badge bg-purple',
+                'bios': 'badge bg-purple',
             };
             return `<span class="${map[type] || 'badge bg-secondary'}">${esc(type)}</span>`;
         }
@@ -185,10 +188,10 @@
 
             const params = new URLSearchParams({ limit: PAGE_SIZE, skip: (page - 1) * PAGE_SIZE });
             const search = document.getElementById('filtreSearch').value.trim();
-            const type   = document.getElementById('filtreType').value;
+            const type = document.getElementById('filtreType').value;
             const vendor = document.getElementById('filtreVendor').value;
             if (search) params.append('search', search);
-            if (type)   params.append('type_produit', type);
+            if (type) params.append('type_produit', type);
             if (vendor) params.append('vendor', vendor);
 
             try {
@@ -265,8 +268,11 @@
     </script>
 
     <style>
-        .bg-purple { background-color: #6f42c1 !important; }
+        .bg-purple {
+            background-color: #6f42c1 !important;
+        }
     </style>
 
 </body>
+
 </html>
