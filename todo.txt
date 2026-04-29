@@ -2,7 +2,10 @@
 En cours |
 ==========
 1. /scripts/correlate_and_analyze.py : 
-    - Affiner la détection des cve afin de ne pas trop en envoyer à Mistral
+    - Affiner la détection des cve afin de ne pas trop en envoyer à Mistral ( temps très long à cause des 15secs de délai )
+    - IMPORTANT : Ajouter une logique d'accès physique : 
+        - En gros le but est d'indiquer si l'asset est physiquement accessible ou non, ce qui permet de faire du pré-triage plus efficace.
+        - On évite les privilege escalation sur le serveur par exemple
 
 2. Réfaction page vulnérabilités
 3. Dégager Grafana qui ne nous servira plus

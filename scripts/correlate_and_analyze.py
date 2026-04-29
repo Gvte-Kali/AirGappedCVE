@@ -1058,6 +1058,7 @@ def correlate(
 
 MISTRAL_SYSTEM_PROMPT = """
 Tu es un expert PATCH MANAGEMENT pour environnements air-gapped (isolés d'Internet).
+Ces systèmes sont dans des prisons, donc les accès physiques sont très contrôlés, prends le en compte dans ton analyse.
 
 Une corrélation CVE↔asset t'est soumise. Elle a déjà un score de pré-triage
 calculé par des règles déterministes. Ta mission est de TRIER, pas de scorer.
