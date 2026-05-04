@@ -288,7 +288,9 @@
                             <th>Localisation</th>
                             <th>Statut</th>
                             <th>Priorité</th>
-                            <th>Détection</th>
+                            <th>Score CVSS</th>
+                            <th>Confirmé IA</th>
+                            <th>Vérifié le</th>
                             <th class="pe-4">Actions</th>
                         </tr>
                     </thead>
@@ -485,7 +487,7 @@
             const tbody = document.getElementById('tableBody');
 
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center">Aucune vulnérabilité trouvée</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" class="text-center">Aucune vulnérabilité trouvée</td></tr>';
                 return;
             }
 

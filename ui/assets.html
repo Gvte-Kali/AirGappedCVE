@@ -272,6 +272,13 @@
                                 <input type="hidden" id="assetOsVersionId">
                                 <div class="suggestion-box" id="assetOsVersionSuggestions"></div>
                             </div>
+                            <div id="wrapVersionOsLibre" style="display:none; margin-top: 6px;">
+                                <input type="text" class="form-control form-control-sm" id="assetVersionOsLibre"
+                                    placeholder="Version exacte (ex: 7.3.2-86009)">
+                                <div class="form-text text-warning">
+                                    ⚠️ Version non normalisée — corrélation en mode <em>informatif</em>
+                                </div>
+                            </div>
                         </div>
                         <!-- Firmware -->
                         <div class="col-md-4">
@@ -868,6 +875,17 @@
         }
 
         // ═══════════════════════════════════════════════════════════
+        //  VERSION OS LIBRE
+        // ═══════════════════════════════════════════════════════════
+        function toggleVersionOsLibre() {
+            const hasFK = document.getElementById('assetOsVersionId').value;
+            const osNom = document.getElementById('assetOsNomSearch').value.trim();
+            const wrap = document.getElementById('wrapVersionOsLibre');
+            wrap.style.display = (osNom && !hasFK) ? 'block' : 'none';
+            if (hasFK) document.getElementById('assetVersionOsLibre').value = '';
+        }
+
+        // ═══════════════════════════════════════════════════════════
         //  TYPEAHEAD : OS NOM (MODAL, niveau 1)
         // ═══════════════════════════════════════════════════════════
         function initOsNomTypeahead() {
@@ -893,6 +911,7 @@
                             hidden.value = item.nom;
                             versionInput.disabled = false;
                             versionInput.placeholder = 'Rechercher une version…';
+                            toggleVersionOsLibre();
                         });
                     } catch (e) { console.error('Erreur OS nom typeahead:', e); }
                 }, 100);
@@ -904,6 +923,7 @@
                 versionInput.disabled = true;
                 versionInput.value = '';
                 versionId.value = '';
+                toggleVersionOsLibre();
                 doSearch();
             });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
@@ -939,6 +959,7 @@
                                     ? `${item.version} (${item.nvd_product})`
                                     : `— (${item.nvd_product})`;
                                 hidden.value = item.id;
+                                toggleVersionOsLibre();
                             }
                         );
                     } catch (e) { console.error('Erreur OS version typeahead:', e); }
@@ -948,6 +969,7 @@
             input.addEventListener('focus', doSearch);
             input.addEventListener('input', () => {
                 hidden.value = '';
+                toggleVersionOsLibre();
                 doSearch();
             });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
@@ -1051,6 +1073,8 @@
             document.getElementById('assetOsVersionSearch').disabled = true;
             document.getElementById('assetOsVersionSearch').placeholder = 'Choisir d\'abord un OS…';
             document.getElementById('assetOsVersionId').value = '';
+            document.getElementById('assetVersionOsLibre').value = '';
+            document.getElementById('wrapVersionOsLibre').style.display = 'none';
             // Firmware typeahead
             document.getElementById('assetFwSearch').value = '';
             document.getElementById('assetFwVersionId').value = '';
@@ -1123,6 +1147,19 @@
                     : `— (${a.os_nvd_product || ''})`;
                 document.getElementById('assetOsVersionSearch').disabled = false;
                 document.getElementById('assetOsVersionSearch').placeholder = 'Rechercher une version…';
+                toggleVersionOsLibre();
+            } else {
+                document.getElementById('assetOsNomSearch').value = a.systeme_exploitation || '';
+                document.getElementById('assetOsNom').value = a.systeme_exploitation || '';
+                document.getElementById('assetOsVersionSearch').disabled = false;
+                document.getElementById('assetOsVersionSearch').placeholder = 'Rechercher une version normalisée…';
+                toggleVersionOsLibre();
+                const nomOs = a.systeme_exploitation || '';
+                const versionRaw = a.version_os || '';
+                const versionLibre = (nomOs && versionRaw.startsWith(nomOs))
+                    ? versionRaw.slice(nomOs.length).trim()
+                    : versionRaw;
+                document.getElementById('assetVersionOsLibre').value = versionLibre;
             }
             // Firmware typeahead
             document.getElementById('assetFwVersionId').value = a.fw_version_id ? String(a.fw_version_id) : '';
@@ -1198,7 +1235,15 @@
                 equipment_type_id: parseInt(type) || null,
                 vendor_id: document.getElementById('assetFabricantId').value ? parseInt(document.getElementById('assetFabricantId').value) : null,
                 model_id: document.getElementById('assetModeleId').value ? parseInt(document.getElementById('assetModeleId').value) : null,
-                os_version_id: document.getElementById('assetOsVersionId').value ? parseInt(document.getElementById('assetOsVersionId').value) : null,
+                os_version_id: (() => { const v = document.getElementById('assetOsVersionId').value; return v ? parseInt(v) : null; })(),
+                version_os: (() => {
+                    const osVersionId = document.getElementById('assetOsVersionId').value;
+                    if (osVersionId) return null;
+                    const versionLibre = document.getElementById('assetVersionOsLibre').value.trim();
+                    if (!versionLibre) return null;
+                    const osNom = document.getElementById('assetOsNomSearch').value.trim();
+                    return osNom ? `${osNom} ${versionLibre}` : versionLibre;
+                })(),
                 fw_version_id: document.getElementById('assetFwVersionId').value ? parseInt(document.getElementById('assetFwVersionId').value) : null,
                 bios_version_id: document.getElementById('assetBiosVersionId').value ? parseInt(document.getElementById('assetBiosVersionId').value) : null,
                 numero_serie: document.getElementById('assetSerie').value.trim() || null,
