@@ -54,7 +54,29 @@
         <div class="d-flex justify-content-between align-items-end mb-5">
             <div>
                 <h6 class="section-title mb-2">Partenaires & Comptes</h6>
-                <h1 class="fw-bold m-0 stat-number">CLIENTS</h1>
+                <div class="d-flex align-items-center gap-2">
+                    <h1 class="fw-bold m-0 stat-number">CLIENTS</h1>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary rounded-circle"
+                            style="width:28px;height:28px;padding:0;font-size:0.8rem;"
+                            type="button" data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside">?</button>
+                        <div class="dropdown-menu p-3" style="width:380px;background:#161b22;border-color:#30363d;">
+                            <h6 class="fw-bold mb-3" style="color:#c9d1d9;">👥 Clients — Guide</h6>
+                            <p class="small text-muted mb-3">Les clients sont les organisations dont vous gérez les équipements. Chaque client peut avoir plusieurs sites, et chaque site peut avoir plusieurs assets.</p>
+                            <hr style="border-color:#30363d;">
+                            <p class="small fw-bold mb-1" style="color:#c9d1d9;">Hiérarchie</p>
+                            <ul class="small text-muted mb-3 ps-3">
+                                <li class="mb-1"><strong style="color:#58a6ff;">Client</strong> → Sites → Assets</li>
+                                <li class="mb-1">Supprimer un client supprime en cascade tous ses sites et assets.</li>
+                                <li class="mb-1">Les rapports de vulnérabilités peuvent être filtrés par client.</li>
+                            </ul>
+                            <hr style="border-color:#30363d;">
+                            <p class="small fw-bold mb-1" style="color:#c9d1d9;">Environnement air-gap</p>
+                            <p class="small text-muted mb-0">Tous les environnements clients sont considérés comme air-gappés. Le moteur de corrélation pénalise automatiquement les CVE exploitables uniquement via Internet.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalClient">
                 + Nouveau client

@@ -78,7 +78,26 @@
         <div class="d-flex justify-content-between align-items-end mb-5">
             <div>
                 <h6 class="section-title mb-2">Cartographie Réseau</h6>
-                <h1 class="fw-bold m-0 stat-number">SITES</h1>
+                <div class="d-flex align-items-center gap-2">
+                    <h1 class="fw-bold m-0 stat-number">SITES</h1>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary rounded-circle"
+                            style="width:28px;height:28px;padding:0;font-size:0.8rem;"
+                            type="button" data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside">?</button>
+                        <div class="dropdown-menu p-3" style="width:380px;background:#161b22;border-color:#30363d;">
+                            <h6 class="fw-bold mb-3" style="color:#c9d1d9;">🏢 Sites — Guide</h6>
+                            <p class="small text-muted mb-3">Les sites sont les localisations physiques des équipements d'un client. Chaque site peut contenir plusieurs assets. Les vulnérabilités peuvent être filtrées par site.</p>
+                            <hr style="border-color:#30363d;">
+                            <p class="small fw-bold mb-1" style="color:#c9d1d9;">Utilisation</p>
+                            <ul class="small text-muted mb-0 ps-3">
+                                <li class="mb-1">Un site appartient toujours à un client.</li>
+                                <li class="mb-1">Supprimer un site supprime en cascade tous ses assets et leurs corrélations CVE.</li>
+                                <li class="mb-1">Le contact local est la personne à joindre lors d'une intervention sur site.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSite">
                 + Nouveau site

@@ -279,24 +279,32 @@ def is_version_affected(asset_version, cve_version_ranges):
     if not cve_version_ranges:
         return True
 
-    for v_range in cve_version_ranges:
-        # "-" = version de base, wildcard seulement si pas d'autres contraintes
-        if v_range.get("version_exact") == "-":
-            has_other_bounds = any(
-                r.get("version_end_excluding") or r.get("version_end_including") or
-                r.get("version_start_including") or r.get("version_start_excluding")
-                for r in cve_version_ranges if r != v_range
-            )
-            if not has_other_bounds:
-                return True
-            continue  # ignorer ce range, les autres ont des bornes précises
+    # Vérifie s'il existe des ranges avec des bornes réelles (hors "-")
+    has_real_bounds = any(
+        r.get("version_end_excluding") or r.get("version_end_including") or
+        r.get("version_start_including") or r.get("version_start_excluding")
+        for r in cve_version_ranges
+    )
 
-        # Version exacte
-        if v_range.get("version_exact") and v_range["version_exact"] not in ("*", "-"):
-            if compare_versions(asset_version, v_range["version_exact"]) == 0:
+    for v_range in cve_version_ranges:
+        exact = v_range.get("version_exact")
+
+        # "-" = version de base NVD (wildcard Microsoft/Synology)
+        if exact == "-":
+            # Si d'autres ranges ont des bornes précises → ignorer ce range
+            # Ces bornes s'appliquent à d'autres produits ou versions spécifiques
+            if has_real_bounds:
+                continue
+            # Aucun autre range avec bornes → prudence, considérer affecté
+            return True
+
+        # Version exacte normale
+        if exact and exact != "*":
+            if compare_versions(asset_version, exact) == 0:
                 return True
             continue
 
+        # Range avec bornes
         in_range = True
         if v_range.get("version_start_including"):
             if compare_versions(asset_version, v_range["version_start_including"]) < 0:
@@ -312,8 +320,8 @@ def is_version_affected(asset_version, cve_version_ranges):
                 in_range = False
         if in_range:
             return True
-    return False
 
+    return False
 
 # ═══════════════════════════════════════════════════════════════════════
 # PARSING CPE
@@ -814,11 +822,11 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
             except Exception:
                 versions_data = []
 
-            asset_product = asset.get("os_nvd_product") or asset.get("fw_nvd_product") or ""
+            asset_product = next((p for p in exact_products if p == cve_produit), "")
             if asset_product:
-                versions_data_filtered = [r for r in versions_data if r.get("product", "") == asset_product]
-                if versions_data_filtered:
-                    versions_data = versions_data_filtered
+                filtered = [r for r in versions_data if r.get("product", "") == asset_product]
+                if filtered:
+                    versions_data = filtered
 
             asset_version_exacte = (
                 asset.get("version_os") or
@@ -900,11 +908,15 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
         except Exception:
             versions_data = []
 
-        asset_product = asset.get("os_nvd_product") or asset.get("fw_nvd_product") or ""
+        asset_product = (
+            asset.get("os_nvd_product") or
+            asset.get("fw_nvd_product") or
+            asset.get("bios_nvd_product") or ""
+        )
         if asset_product:
-            versions_data_filtered = [r for r in versions_data if r.get("product", "") == asset_product]
-            if versions_data_filtered:
-                versions_data = versions_data_filtered
+            filtered = [r for r in versions_data if r.get("product", "") == asset_product]
+            if filtered:
+                versions_data = filtered
 
         asset_version_exacte = (
             asset.get("version_os") or
