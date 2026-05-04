@@ -24,8 +24,7 @@ app.include_router(
     assets.router,       prefix="/api/assets",       tags=["Assets"])
 app.include_router(correlations.router,
                    prefix="/api/correlations", tags=["Vulnérabilités"])
-app.include_router(vendors.router,      prefix="/api",
-                   tags=["Fabricants"])
+app.include_router(vendors.router,      prefix="/api")
 app.include_router(models.router,       prefix="/api")
 app.include_router(os_versions.router,                          tags=["OS Versions"])
 app.include_router(equipment_types.router)
