@@ -280,8 +280,19 @@ def is_version_affected(asset_version, cve_version_ranges):
         return True
 
     for v_range in cve_version_ranges:
+        # "-" = version de base, wildcard seulement si pas d'autres contraintes
+        if v_range.get("version_exact") == "-":
+            has_other_bounds = any(
+                r.get("version_end_excluding") or r.get("version_end_including") or
+                r.get("version_start_including") or r.get("version_start_excluding")
+                for r in cve_version_ranges if r != v_range
+            )
+            if not has_other_bounds:
+                return True
+            continue  # ignorer ce range, les autres ont des bornes précises
+
         # Version exacte
-        if v_range.get("version_exact") and v_range["version_exact"] != "*":
+        if v_range.get("version_exact") and v_range["version_exact"] not in ("*", "-"):
             if compare_versions(asset_version, v_range["version_exact"]) == 0:
                 return True
             continue
@@ -798,6 +809,35 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
 
         # ── Match exact FK (os_version_id / fw_version_id / bios_version_id) ──
         if has_fk and cve_produit in exact_products:
+            try:
+                versions_data = json.loads(cve.get("versions_affectees") or "[]")
+            except Exception:
+                versions_data = []
+
+            asset_product = asset.get("os_nvd_product") or asset.get("fw_nvd_product") or ""
+            if asset_product:
+                versions_data_filtered = [r for r in versions_data if r.get("product", "") == asset_product]
+                if versions_data_filtered:
+                    versions_data = versions_data_filtered
+
+            asset_version_exacte = (
+                asset.get("version_os") or
+                asset.get("version_firmware") or
+                asset.get("version_bios")
+            )
+
+            if asset_version_exacte and versions_data:
+                if not is_version_affected(asset_version_exacte, versions_data):
+                    log_reject(
+                        cur, asset["asset_id"], cve["cve_id"],
+                        "version_hors_range",
+                        f"FK match mais version {asset_version_exacte} hors range CVE",
+                        asset_version_exacte,
+                        versions_data
+                    )
+                    rejetees_version += 1
+                    continue
+
             cwes = get_cwes_for_cve(cur, cve["cve_id"])
             type_attaque, passer_mistral, priorite_type = classify_cve_type(
                 cve["cve_id"], cve.get("description", ""), cwes
@@ -853,6 +893,36 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
                     s = common_chars_count(cve_produit, field)
                     if s > product_score:
                         product_score = s
+
+        # ── Vérification range CVE (version exacte) ───────────────────
+        try:
+            versions_data = json.loads(cve.get("versions_affectees") or "[]")
+        except Exception:
+            versions_data = []
+
+        asset_product = asset.get("os_nvd_product") or asset.get("fw_nvd_product") or ""
+        if asset_product:
+            versions_data_filtered = [r for r in versions_data if r.get("product", "") == asset_product]
+            if versions_data_filtered:
+                versions_data = versions_data_filtered
+
+        asset_version_exacte = (
+            asset.get("version_os") or
+            asset.get("version_firmware") or
+            asset.get("version_bios")
+        )
+
+        if asset_version_exacte and versions_data:
+            if not is_version_affected(asset_version_exacte, versions_data):
+                log_reject(
+                    cur, asset["asset_id"], cve["cve_id"],
+                    "version_hors_range",
+                    f"Version asset {asset_version_exacte} hors range CVE",
+                    asset_version_exacte,
+                    versions_data
+                )
+                rejetees_version += 1
+                continue
 
         # ── Type de corrélation ────────────────────────────────────────
         if version_matched and has_version_info and best_version_score >= version_min_chars:

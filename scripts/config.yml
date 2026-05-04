@@ -13,7 +13,7 @@ correlation:
 
   # ── Limite cache par vendor ────────────────────────────────────────────
   # Max CVE chargées par vendor, triées par score DESC (0 = illimité)
-  vendor_cve_limit: 2000
+  vendor_cve_limit: 0
 
   # ── Mapping OS textuel → vendor NVD ──────────────────────────────────
   # Utilisé pour PC/Laptop/Serveur/Raspberry Pi qui ignorent leur vendor matériel
@@ -62,7 +62,7 @@ correlation:
   dry_run: false
 
   # ── Verbosité ────────────────────────────────────────────────────────
-  verbose: true
+  verbose: false
 
 mistral:
   # Modèle Mistral à utiliser
@@ -76,7 +76,7 @@ mistral:
   # Nombre max de tokens en sortie par appel
   max_tokens: 512
   # Ré-analyser les corrélations déjà analysées
-  force: false
+  force: true
 
 rapport:
   # Répertoire de sortie des PDFs (relatif à la racine du projet)

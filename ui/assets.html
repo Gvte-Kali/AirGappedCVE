@@ -273,8 +273,13 @@
                                 <div class="suggestion-box" id="assetOsVersionSuggestions"></div>
                             </div>
                             <div id="wrapVersionOsLibre" style="display:none; margin-top: 6px;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted">Version exacte</small>
+                                    <a href="#" class="text-info" style="font-size:0.75rem;"
+                                       onclick="afficherAideVersion(); return false;">❓ Format attendu</a>
+                                </div>
                                 <input type="text" class="form-control form-control-sm" id="assetVersionOsLibre"
-                                    placeholder="Version exacte (ex: 7.3.2-86009)">
+                                    placeholder="ex: 7.3.2-86009">
                                 <div class="form-text text-warning">
                                     ⚠️ Version non normalisée — corrélation en mode <em>informatif</em>
                                 </div>
@@ -359,6 +364,75 @@
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                     <button class="btn btn-danger" id="btnConfirmSupprimer">🗑️ Supprimer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── MODAL AIDE FORMAT VERSION ──────────────────────── -->
+    <div class="modal fade" id="modalAideVersion" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">❓ Format de version attendu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">
+                        Saisissez uniquement la partie <strong>version</strong> — le nom de l'OS est déjà capturé dans le champ du dessus.
+                    </p>
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Système</th>
+                                <th>Exemple de valeur à saisir</th>
+                                <th>Résultat stocké</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Synology DSM</td>
+                                <td><code>7.3.2-86009</code></td>
+                                <td><code>DSM 7.3.2-86009</code></td>
+                            </tr>
+                            <tr>
+                                <td>Windows Server</td>
+                                <td><code>2022 21H2</code></td>
+                                <td><code>Windows Server 2022 21H2</code></td>
+                            </tr>
+                            <tr>
+                                <td>Windows 10 / 11</td>
+                                <td><code>22H2</code></td>
+                                <td><code>Windows 10 22H2</code></td>
+                            </tr>
+                            <tr>
+                                <td>Axis AXIS OS</td>
+                                <td><code>11.11.93</code></td>
+                                <td><code>AXIS OS 11.11.93</code></td>
+                            </tr>
+                            <tr>
+                                <td>Hikvision</td>
+                                <td><code>V4.62.000</code></td>
+                                <td><code>Hikvision V4.62.000</code></td>
+                            </tr>
+                            <tr>
+                                <td>Raspberry Pi OS</td>
+                                <td><code>Bookworm 12.7</code></td>
+                                <td><code>Raspberry Pi OS Bookworm 12.7</code></td>
+                            </tr>
+                            <tr>
+                                <td>Fortinet FortiOS</td>
+                                <td><code>7.4.5</code></td>
+                                <td><code>FortiOS 7.4.5</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="alert alert-warning py-2 mb-0" style="font-size:0.85rem;">
+                        Si la version que vous saisissez commence déjà par le nom de l'OS (ex: <code>DSM 7.3.2</code>), elle sera stockée telle quelle sans duplication.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
                 </div>
             </div>
         </div>
@@ -877,6 +951,10 @@
         // ═══════════════════════════════════════════════════════════
         //  VERSION OS LIBRE
         // ═══════════════════════════════════════════════════════════
+        function afficherAideVersion() {
+            new bootstrap.Modal(document.getElementById('modalAideVersion')).show();
+        }
+
         function toggleVersionOsLibre() {
             const hasFK = document.getElementById('assetOsVersionId').value;
             const osNom = document.getElementById('assetOsNomSearch').value.trim();
@@ -1238,11 +1316,12 @@
                 os_version_id: (() => { const v = document.getElementById('assetOsVersionId').value; return v ? parseInt(v) : null; })(),
                 version_os: (() => {
                     const osVersionId = document.getElementById('assetOsVersionId').value;
-                    if (osVersionId) return null;
                     const versionLibre = document.getElementById('assetVersionOsLibre').value.trim();
-                    if (!versionLibre) return null;
                     const osNom = document.getElementById('assetOsNomSearch').value.trim();
-                    return osNom ? `${osNom} ${versionLibre}` : versionLibre;
+                    if (osVersionId) return null;
+                    if (!versionLibre) return null;
+                    if (versionLibre.toLowerCase().startsWith(osNom.toLowerCase())) return versionLibre;
+                    return osNom ? `${osNom} ${versionLibre}`.trim() : versionLibre;
                 })(),
                 fw_version_id: document.getElementById('assetFwVersionId').value ? parseInt(document.getElementById('assetFwVersionId').value) : null,
                 bios_version_id: document.getElementById('assetBiosVersionId').value ? parseInt(document.getElementById('assetBiosVersionId').value) : null,

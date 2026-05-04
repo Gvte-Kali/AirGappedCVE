@@ -217,62 +217,197 @@
         </div>
 
         <!-- Filtres Redesign -->
-        <div class="card p-4 mb-5">
-            <h6 class="section-title">🔍 CRITÈRES DE RECHERCHE</h6>
-            <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label stat-label">Client</label>
-                    <div class="position-relative">
-                        <input type="text" class="form-control" id="filtreClientSearch" placeholder="Ex: Acme Corp…"
-                            autocomplete="off">
-                        <input type="hidden" id="filtreClientId">
-                        <div class="suggestion-box" id="filtreClientSuggestions"></div>
-                    </div>
+        <div class="card mb-5">
+            <div class="p-4" style="cursor:pointer" onclick="toggleFiltres()">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="section-title m-0">🔍 CRITÈRES DE RECHERCHE</h6>
+                    <span id="filtreChevron" style="font-size:1.2rem; transition: transform .2s">▼</span>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label stat-label">Site</label>
-                    <div class="position-relative">
-                        <input type="text" class="form-control" id="filtreSiteSearch" placeholder="Ex: Paris…"
-                            autocomplete="off">
-                        <input type="hidden" id="filtreSiteId">
-                        <div class="suggestion-box" id="filtreSiteSuggestions"></div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label stat-label">Statut</label>
-                    <select class="form-select" id="filtreStatut">
-                        <option value="">Tous les statuts</option>
-                        <option value="nouveau">Nouveau</option>
-                        <option value="en_analyse">En analyse</option>
-                        <option value="confirme">Confirmé</option>
-                        <option value="mitige">Mitigé</option>
-                        <option value="faux_positif">Faux positif</option>
-                        <option value="patche">Patché</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label stat-label">Priorité</label>
-                    <select class="form-select" id="filtrePriorite">
-                        <option value="">Toutes priorités</option>
-                        <option value="critique">Critique</option>
-                        <option value="haute">Haute</option>
-                        <option value="moyenne">Moyenne</option>
-                        <option value="basse">Basse</option>
-                    </select>
-                </div>
-                <div class="col-md-2 d-flex gap-2">
-                    <button class="btn btn-primary w-100" onclick="chargerVulnerabilites()">🔍</button>
-                    <button class="btn btn-outline-secondary" onclick="reinitialiserFiltres()">🔄</button>
-                </div>
+                <div id="filtreResume" class="text-muted small mt-1" style="font-size:0.8rem"></div>
             </div>
-            <div class="row g-3 mt-1">
-                <div class="col-md-6">
-                    <label class="form-label stat-label">Nom d'Asset</label>
-                    <input type="text" class="form-control" id="filtreAsset" placeholder="Filtrer par nom de machine…">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label stat-label">Identifiant CVE</label>
-                    <input type="text" class="form-control" id="filtreCVE" placeholder="Ex: CVE-2024-...">
+            <div id="filtrePanneau" style="display:none; border-top: 1px solid #30363d;">
+                <div class="p-4">
+                    <div class="row g-3">
+
+                        <!-- Client -->
+                        <div class="col-md-3">
+                            <label class="form-label stat-label">Client</label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control" id="filtreClientSearch"
+                                    placeholder="Tous les clients…" autocomplete="off">
+                                <input type="hidden" id="filtreClientId">
+                                <div class="suggestion-box" id="filtreClientSuggestions"></div>
+                            </div>
+                        </div>
+
+                        <!-- Site (indépendant du client) -->
+                        <div class="col-md-3">
+                            <label class="form-label stat-label">Site</label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control" id="filtreSiteSearch"
+                                    placeholder="Tous les sites…" autocomplete="off">
+                                <input type="hidden" id="filtreSiteId">
+                                <div class="suggestion-box" id="filtreSiteSuggestions"></div>
+                            </div>
+                        </div>
+
+                        <!-- Type d'équipement -->
+                        <div class="col-md-3">
+                            <label class="form-label stat-label">Type d'équipement</label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control" id="filtreTypeSearch"
+                                    placeholder="Tous les types…" autocomplete="off">
+                                <input type="hidden" id="filtreTypeId">
+                                <div class="suggestion-box" id="filtreTypeSuggestions"></div>
+                            </div>
+                        </div>
+
+                        <!-- Fabricant -->
+                        <div class="col-md-3">
+                            <label class="form-label stat-label">Fabricant</label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control" id="filtreFabricantSearch"
+                                    placeholder="Tous les fabricants…" autocomplete="off">
+                                <input type="hidden" id="filtreFabricantId">
+                                <div class="suggestion-box" id="filtreFabricantSuggestions"></div>
+                            </div>
+                        </div>
+
+                        <!-- Modèle -->
+                        <div class="col-md-3">
+                            <label class="form-label stat-label">Modèle</label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control" id="filtreModeleSearch"
+                                    placeholder="Tous les modèles…" autocomplete="off">
+                                <input type="hidden" id="filtreModeleId">
+                                <div class="suggestion-box" id="filtreModeleSuggestions"></div>
+                            </div>
+                        </div>
+
+                        <!-- OS -->
+                        <div class="col-md-3">
+                            <label class="form-label stat-label">Système d'exploitation</label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control" id="filtreOsSearch" placeholder="Tous les OS…"
+                                    autocomplete="off">
+                                <input type="hidden" id="filtreOsId">
+                                <div class="suggestion-box" id="filtreOsSuggestions"></div>
+                            </div>
+                        </div>
+
+                        <!-- Version OS -->
+                        <div class="col-md-3">
+                            <label class="form-label stat-label">Version OS</label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control" id="filtreVersionOs"
+                                    placeholder="ex: 7.1.1, 2022…" autocomplete="off">
+                                <div class="suggestion-box" id="filtreVersionOsSuggestions"></div>
+                            </div>
+                        </div>
+
+                        <!-- Firmware -->
+                        <div class="col-md-3">
+                            <label class="form-label stat-label">Firmware</label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control" id="filtreFirmwareSearch"
+                                    placeholder="Tous les firmwares…" autocomplete="off">
+                                <input type="hidden" id="filtreFirmwareId">
+                                <div class="suggestion-box" id="filtreFirmwareSuggestions"></div>
+                            </div>
+                        </div>
+
+                        <!-- Nom d'asset -->
+                        <div class="col-md-3">
+                            <label class="form-label stat-label">Nom d'asset</label>
+                            <input type="text" class="form-control" id="filtreAsset" placeholder="Filtrer par nom…">
+                        </div>
+
+                        <!-- CVE -->
+                        <div class="col-md-3">
+                            <label class="form-label stat-label">Identifiant CVE</label>
+                            <input type="text" class="form-control" id="filtreCVE" placeholder="ex: CVE-2024-...">
+                        </div>
+
+                        <!-- Statut (multiselect) -->
+                        <div class="col-md-3">
+                            <label class="form-label stat-label">Statut</label>
+                            <div class="card p-2" style="background:#0d1117; border-color:#30363d">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small class="text-muted" style="font-size:0.7rem">
+                                        <a href="#" onclick="toutCocher('statut'); return false;">Tout</a> /
+                                        <a href="#" onclick="toutDecocher('statut'); return false;">Aucun</a>
+                                    </small>
+                                </div>
+                                <div class="d-flex flex-column gap-1">
+                                    <label class="d-flex align-items-center gap-2 m-0"
+                                        style="font-size:0.82rem; cursor:pointer">
+                                        <input type="checkbox" class="filtre-statut" value="nouveau" checked> Nouveau
+                                    </label>
+                                    <label class="d-flex align-items-center gap-2 m-0"
+                                        style="font-size:0.82rem; cursor:pointer">
+                                        <input type="checkbox" class="filtre-statut" value="en_analyse" checked> En
+                                        analyse
+                                    </label>
+                                    <label class="d-flex align-items-center gap-2 m-0"
+                                        style="font-size:0.82rem; cursor:pointer">
+                                        <input type="checkbox" class="filtre-statut" value="confirme" checked> Confirmé
+                                    </label>
+                                    <label class="d-flex align-items-center gap-2 m-0"
+                                        style="font-size:0.82rem; cursor:pointer">
+                                        <input type="checkbox" class="filtre-statut" value="mitige"> Mitigé
+                                    </label>
+                                    <label class="d-flex align-items-center gap-2 m-0"
+                                        style="font-size:0.82rem; cursor:pointer">
+                                        <input type="checkbox" class="filtre-statut" value="faux_positif"> Faux positif
+                                    </label>
+                                    <label class="d-flex align-items-center gap-2 m-0"
+                                        style="font-size:0.82rem; cursor:pointer">
+                                        <input type="checkbox" class="filtre-statut" value="patche"> Patché
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Priorité (multiselect) -->
+                        <div class="col-md-3">
+                            <label class="form-label stat-label">Priorité</label>
+                            <div class="card p-2" style="background:#0d1117; border-color:#30363d">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small class="text-muted" style="font-size:0.7rem">
+                                        <a href="#" onclick="toutCocher('priorite'); return false;">Tout</a> /
+                                        <a href="#" onclick="toutDecocher('priorite'); return false;">Aucun</a>
+                                    </small>
+                                </div>
+                                <div class="d-flex flex-column gap-1">
+                                    <label class="d-flex align-items-center gap-2 m-0"
+                                        style="font-size:0.82rem; cursor:pointer">
+                                        <input type="checkbox" class="filtre-priorite" value="critique" checked>
+                                        Critique
+                                    </label>
+                                    <label class="d-flex align-items-center gap-2 m-0"
+                                        style="font-size:0.82rem; cursor:pointer">
+                                        <input type="checkbox" class="filtre-priorite" value="haute" checked> Haute
+                                    </label>
+                                    <label class="d-flex align-items-center gap-2 m-0"
+                                        style="font-size:0.82rem; cursor:pointer">
+                                        <input type="checkbox" class="filtre-priorite" value="moyenne" checked> Moyenne
+                                    </label>
+                                    <label class="d-flex align-items-center gap-2 m-0"
+                                        style="font-size:0.82rem; cursor:pointer">
+                                        <input type="checkbox" class="filtre-priorite" value="basse" checked> Basse
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Boutons -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button class="btn btn-primary" onclick="chargerVulnerabilites()">🔍 Rechercher</button>
+                        <button class="btn btn-outline-secondary" onclick="reinitialiserFiltres()">🔄
+                            Réinitialiser</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -366,107 +501,263 @@
             document.querySelectorAll('.suggestion-box').forEach(b => hideSuggestionBox(b));
         });
 
+        // ═══════════════════════════════════════════════════════════════
+        //  PANNEAU FILTRES
+        // ═══════════════════════════════════════════════════════════════
+        let filtrePanneauOuvert = false;
+
+        function toggleFiltres() {
+            filtrePanneauOuvert = !filtrePanneauOuvert;
+            document.getElementById('filtrePanneau').style.display = filtrePanneauOuvert ? 'block' : 'none';
+            document.getElementById('filtreChevron').style.transform = filtrePanneauOuvert ? 'rotate(180deg)' : '';
+        }
+
+        function toutCocher(groupe) {
+            document.querySelectorAll(`.filtre-${groupe}`).forEach(cb => cb.checked = true);
+        }
+
+        function toutDecocher(groupe) {
+            document.querySelectorAll(`.filtre-${groupe}`).forEach(cb => cb.checked = false);
+        }
+
+        function getFiltresStatut() {
+            return [...document.querySelectorAll('.filtre-statut:checked')].map(cb => cb.value);
+        }
+
+        function getFiltresPriorite() {
+            return [...document.querySelectorAll('.filtre-priorite:checked')].map(cb => cb.value);
+        }
+
+        function mettreAJourResume() {
+            const parts = [];
+            const client = document.getElementById('filtreClientSearch').value;
+            const site = document.getElementById('filtreSiteSearch').value;
+            const type = document.getElementById('filtreTypeSearch').value;
+            const fabricant = document.getElementById('filtreFabricantSearch').value;
+            const os = document.getElementById('filtreOsSearch').value;
+            const asset = document.getElementById('filtreAsset').value;
+            const cve = document.getElementById('filtreCVE').value;
+            const statuts = getFiltresStatut();
+            const priorites = getFiltresPriorite();
+            if (client) parts.push(`Client: ${client}`);
+            if (site) parts.push(`Site: ${site}`);
+            if (type) parts.push(`Type: ${type}`);
+            if (fabricant) parts.push(`Fabricant: ${fabricant}`);
+            if (os) parts.push(`OS: ${os}`);
+            if (asset) parts.push(`Asset: ${asset}`);
+            if (cve) parts.push(`CVE: ${cve}`);
+            if (statuts.length < 6) parts.push(`Statuts: ${statuts.join(', ')}`);
+            if (priorites.length < 4) parts.push(`Priorités: ${priorites.join(', ')}`);
+            document.getElementById('filtreResume').textContent = parts.length ? parts.join(' · ') : 'Aucun filtre actif';
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  SUGGESTION BOX GÉNÉRIQUE
+        // ═══════════════════════════════════════════════════════════════
+        function makeSuggestionBox(inputId, hiddenId, boxId, fetcher, labelFn, onSelect) {
+            const input = document.getElementById(inputId);
+            const hidden = hiddenId ? document.getElementById(hiddenId) : null;
+            const box = document.getElementById(boxId);
+            let debounce;
+
+            async function doSearch() {
+                clearTimeout(debounce);
+                debounce = setTimeout(async () => {
+                    const q = input.value.trim();
+                    try {
+                        const items = await fetcher(q);
+                        box.innerHTML = '';
+                        if (!items.length) {
+                            box.innerHTML = '<div class="suggestion-item text-secondary">Aucun résultat</div>';
+                            box.style.display = 'block';
+                            return;
+                        }
+                        items.slice(0, 20).forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'suggestion-item';
+                            div.textContent = labelFn(item);
+                            div.addEventListener('mousedown', e => {
+                                e.preventDefault();
+                                input.value = labelFn(item);
+                                if (hidden) hidden.value = item.id || item.value || labelFn(item);
+                                box.style.display = 'none';
+                                onSelect && onSelect(item);
+                            });
+                            box.appendChild(div);
+                        });
+                        box.style.display = 'block';
+                    } catch (e) { console.error(e); }
+                }, 150);
+            }
+
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', () => {
+                if (hidden) hidden.value = '';
+                doSearch();
+            });
+            input.addEventListener('blur', () => setTimeout(() => box.style.display = 'none', 200));
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  INIT TYPEAHEADS FILTRES
+        // ═══════════════════════════════════════════════════════════════
+        function initFiltresTypeaheads() {
+            // Client
+            makeSuggestionBox('filtreClientSearch', 'filtreClientId', 'filtreClientSuggestions',
+                q => fetch(`/api/clients/?search=${encodeURIComponent(q)}&limit=20`).then(r => r.json()),
+                i => i.nom
+            );
+
+            // Site (indépendant du client)
+            makeSuggestionBox('filtreSiteSearch', 'filtreSiteId', 'filtreSiteSuggestions',
+                q => fetch(`/api/sites/?search=${encodeURIComponent(q)}&limit=20`).then(r => r.json()),
+                i => i.nom
+            );
+
+            // Type d'équipement
+            makeSuggestionBox('filtreTypeSearch', 'filtreTypeId', 'filtreTypeSuggestions',
+                async q => {
+                    const r = await fetch('/api/equipment-types');
+                    const all = await r.json();
+                    return all.filter(t => !q || t.label.toLowerCase().includes(q.toLowerCase())).slice(0, 20);
+                },
+                i => i.label
+            );
+
+            // Fabricant
+            makeSuggestionBox('filtreFabricantSearch', 'filtreFabricantId', 'filtreFabricantSuggestions',
+                async q => {
+                    const r = await fetch(`/api/vendors?search=${encodeURIComponent(q)}&limit=20`);
+                    const data = await r.json();
+                    return data.vendors || data || [];
+                },
+                i => i.nom
+            );
+
+            // Modèle
+            makeSuggestionBox('filtreModeleSearch', 'filtreModeleId', 'filtreModeleSuggestions',
+                async q => {
+                    const fabricantId = document.getElementById('filtreFabricantId').value;
+                    const params = new URLSearchParams({ limit: 20 });
+                    if (q) params.append('search', q);
+                    if (fabricantId) params.append('vendor_id', fabricantId);
+                    const r = await fetch(`/api/models?${params}`);
+                    const data = await r.json();
+                    return data.models || data || [];
+                },
+                i => i.nom
+            );
+
+            // OS
+            makeSuggestionBox('filtreOsSearch', 'filtreOsId', 'filtreOsSuggestions',
+                async q => {
+                    const params = new URLSearchParams({ limit: 20 });
+                    if (q) params.append('search', q);
+                    const r = await fetch(`/api/os-versions?${params}`);
+                    const data = await r.json();
+                    const noms = [...new Set(data.map(d => d.os_nom))];
+                    return noms.map(n => ({ id: n, nom: n }));
+                },
+                i => i.nom
+            );
+
+            // Version OS (texte libre avec suggestions)
+            makeSuggestionBox('filtreVersionOs', null, 'filtreVersionOsSuggestions',
+                async q => {
+                    const params = new URLSearchParams({ limit: 20 });
+                    if (q) params.append('search', q);
+                    const r = await fetch(`/api/os-versions?${params}`);
+                    const data = await r.json();
+                    return data.filter(d => d.version).map(d => ({ id: d.version, nom: d.version }));
+                },
+                i => i.nom
+            );
+
+            // Firmware
+            makeSuggestionBox('filtreFirmwareSearch', 'filtreFirmwareId', 'filtreFirmwareSuggestions',
+                async q => {
+                    const params = new URLSearchParams({ limit: 20, type_produit: 'firmware' });
+                    if (q) params.append('search', q);
+                    const r = await fetch(`/api/os-versions?${params}`);
+                    const data = await r.json();
+                    return data.map(d => ({ id: d.id, nom: d.version ? `${d.os_nom} ${d.version}` : d.os_nom }));
+                },
+                i => i.nom
+            );
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  RÉINITIALISER
+        // ═══════════════════════════════════════════════════════════════
+        function reinitialiserFiltres() {
+            ['filtreClientSearch', 'filtreSiteSearch', 'filtreTypeSearch', 'filtreFabricantSearch',
+                'filtreModeleSearch', 'filtreOsSearch', 'filtreVersionOs', 'filtreFirmwareSearch',
+                'filtreAsset', 'filtreCVE'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+            ['filtreClientId', 'filtreSiteId', 'filtreTypeId', 'filtreFabricantId',
+                'filtreModeleId', 'filtreOsId', 'filtreFirmwareId'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+            toutCocher('statut');
+            toutCocher('priorite');
+            mettreAJourResume();
+            chargerVulnerabilites();
+        }
+
         async function chargerVulnerabilites(page = 1) {
             pageActuelle = page;
             const skip = (page - 1) * itemsParPage;
 
-            const statut = document.getElementById('filtreStatut').value;
-            const priorite = document.getElementById('filtrePriorite').value;
+            const params = new URLSearchParams({ limit: itemsParPage, skip });
+
             const clientId = document.getElementById('filtreClientId').value;
             const siteId = document.getElementById('filtreSiteId').value;
+            const typeId = document.getElementById('filtreTypeId').value;
+            const fabricantId = document.getElementById('filtreFabricantId').value;
+            const modeleId = document.getElementById('filtreModeleId').value;
+            const osNom = document.getElementById('filtreOsSearch').value;
+            const versionOs = document.getElementById('filtreVersionOs').value;
+            const firmware = document.getElementById('filtreFirmwareSearch').value;
+            const asset = document.getElementById('filtreAsset').value;
+            const cve = document.getElementById('filtreCVE').value;
+            const statuts = getFiltresStatut();
+            const priorites = getFiltresPriorite();
 
-            let url = `/api/correlations/?limit=${itemsParPage}&skip=${skip}`;
-            if (statut) url += `&statut=${statut}`;
-            if (priorite) url += `&priorite=${priorite}`;
-            if (clientId) url += `&client_id=${clientId}`;
-            if (siteId) url += `&site_id=${siteId}`;
+            if (clientId) params.append('client_id', clientId);
+            if (siteId) params.append('site_id', siteId);
+            if (typeId) params.append('equipment_type_id', typeId);
+            if (fabricantId) params.append('vendor_id', fabricantId);
+            if (modeleId) params.append('model_id', modeleId);
+            if (osNom) params.append('os_nom', osNom);
+            if (versionOs) params.append('version_os', versionOs);
+            if (firmware) params.append('firmware', firmware);
+            if (asset) params.append('asset_nom', asset);
+            if (cve) params.append('cve_id', cve);
+            statuts.forEach(s => params.append('statut', s));
+            priorites.forEach(p => params.append('priorite', p));
 
             try {
-                const response = await fetch(url);
+                const response = await fetch(`/api/correlations/?${params}`);
                 const data = await response.json();
                 const total = parseInt(response.headers.get('X-Total-Count') || '0');
-
                 afficherTableau(data);
                 afficherPagination(total);
                 chargerStats();
+                mettreAJourResume();
             } catch (e) {
                 console.error('Erreur:', e);
                 document.getElementById('tableBody').innerHTML =
-                    '<tr><td colspan="11" class="text-center text-danger">Erreur de chargement</td></tr>';
+                    '<tr><td colspan="9" class="text-center text-danger">Erreur de chargement</td></tr>';
             }
-        }
-
-        function initFiltreClientTypeahead() {
-            const input = document.getElementById('filtreClientSearch');
-            const hidden = document.getElementById('filtreClientId');
-            const box = document.getElementById('filtreClientSuggestions');
-            let debounceTimer;
-
-            input.addEventListener('input', () => {
-                const q = input.value.trim();
-                hidden.value = '';
-                if (q.length < 2) { hideSuggestionBox(box); return; }
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(async () => {
-                    try {
-                        const r = await fetch(`/api/clients/?search=${encodeURIComponent(q)}&limit=10`);
-                        const items = await r.json();
-                        renderSuggestions(box, items, 'nom', 'id', (item) => {
-                            input.value = item.nom;
-                            hidden.value = item.id;
-                            chargerVulnerabilites();
-                        });
-                    } catch (e) { console.error(e); }
-                }, 250);
-            });
-            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
-        }
-
-        function initFiltreSiteTypeahead() {
-            const input = document.getElementById('filtreSiteSearch');
-            const hidden = document.getElementById('filtreSiteId');
-            const box = document.getElementById('filtreSiteSuggestions');
-            let debounceTimer;
-
-            input.addEventListener('input', () => {
-                const q = input.value.trim();
-                hidden.value = '';
-                if (q.length < 2) { hideSuggestionBox(box); return; }
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(async () => {
-                    try {
-                        const clientId = document.getElementById('filtreClientId').value;
-                        const params = new URLSearchParams({ search: q, limit: 10 });
-                        if (clientId) params.append('client_id', clientId);
-                        const r = await fetch(`/api/sites/?${params}`);
-                        const items = await r.json();
-                        renderSuggestions(box, items, 'nom', 'id', (item) => {
-                            input.value = item.nom;
-                            hidden.value = item.id;
-                            chargerVulnerabilites();
-                        });
-                    } catch (e) { console.error(e); }
-                }, 250);
-            });
-            input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
-        }
-
-        function reinitialiserFiltres() {
-            document.getElementById('filtreClientSearch').value = '';
-            document.getElementById('filtreClientId').value = '';
-            document.getElementById('filtreSiteSearch').value = '';
-            document.getElementById('filtreSiteId').value = '';
-            document.getElementById('filtreStatut').value = '';
-            document.getElementById('filtrePriorite').value = '';
-            document.getElementById('filtreAsset').value = '';
-            document.getElementById('filtreCVE').value = '';
-            chargerVulnerabilites();
         }
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', () => {
-            initFiltreClientTypeahead();
-            initFiltreSiteTypeahead();
+            initFiltresTypeaheads();
+            mettreAJourResume();
             chargerVulnerabilites();
         });
 
@@ -759,26 +1050,6 @@
             }
         }
 
-        // Filtrage en temps réel sur le tableau
-        document.getElementById('filtreAsset').addEventListener('input', filtrerTableau);
-        document.getElementById('filtreCVE').addEventListener('input', filtrerTableau);
-
-        function filtrerTableau() {
-            const assetFilter = document.getElementById('filtreAsset').value.toLowerCase();
-            const cveFilter = document.getElementById('filtreCVE').value.toLowerCase();
-            const rows = document.querySelectorAll('#tableBody tr');
-
-            rows.forEach(row => {
-                const assetText = row.cells[1]?.textContent.toLowerCase() || '';
-                const cveText = row.cells[0]?.textContent.toLowerCase() || '';
-
-                const matchAsset = assetFilter === '' || assetText.includes(assetFilter);
-                const matchCVE = cveFilter === '' || cveText.includes(cveFilter);
-
-                row.style.display = matchAsset && matchCVE ? '' : 'none';
-            });
-        }
-
         // ─── Gestion de la corrélation ─────────────────────────
         let intervalProgress = null;
 
@@ -892,8 +1163,6 @@
             }
         }
 
-        // Chargement initial
-        chargerVulnerabilites();
     </script>
 </body>
 

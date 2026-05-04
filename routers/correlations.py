@@ -1,3 +1,4 @@
+from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Response, Query, BackgroundTasks
 import logging
 from pathlib import Path
@@ -52,28 +53,36 @@ def list_correlations(
     response: Response,
     limit: int = Query(50, ge=1),
     skip: int = Query(0, ge=0),
-    statut: Optional[str] = None,
-    priorite: Optional[str] = None,
+    statut: List[str] = Query(default=[]),
+    priorite: List[str] = Query(default=[]),
     asset_id: Optional[int] = None,
     client_id: Optional[int] = None,
     site_id: Optional[int] = None,
+    equipment_type_id: Optional[int] = None,
+    vendor_id: Optional[int] = None,
+    model_id: Optional[int] = None,
+    os_nom: Optional[str] = None,
+    version_os: Optional[str] = None,
+    firmware: Optional[str] = None,
+    asset_nom: Optional[str] = None,
+    cve_id: Optional[str] = None,
     nolimit: bool = False
 ):
-    """Liste les corrélations avec filtres optionnels"""
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # Construction des filtres
             where_clauses = []
             params = []
 
             if statut:
-                where_clauses.append("co.statut = %s")
-                params.append(statut)
+                placeholders = ",".join(["%s"] * len(statut))
+                where_clauses.append(f"co.statut IN ({placeholders})")
+                params.extend(statut)
 
             if priorite:
-                where_clauses.append("co.priorite = %s")
-                params.append(priorite)
+                placeholders = ",".join(["%s"] * len(priorite))
+                where_clauses.append(f"co.priorite IN ({placeholders})")
+                params.extend(priorite)
 
             if asset_id:
                 where_clauses.append("co.asset_id = %s")
@@ -87,28 +96,65 @@ def list_correlations(
                 where_clauses.append("s.id = %s")
                 params.append(site_id)
 
+            if equipment_type_id:
+                where_clauses.append("a.equipment_type_id = %s")
+                params.append(equipment_type_id)
+
+            if vendor_id:
+                where_clauses.append("a.vendor_id = %s")
+                params.append(vendor_id)
+
+            if model_id:
+                where_clauses.append("a.model_id = %s")
+                params.append(model_id)
+
+            if os_nom:
+                where_clauses.append("ov.os_nom LIKE %s")
+                params.append(f"%{os_nom}%")
+
+            if version_os:
+                where_clauses.append("(a.version_os LIKE %s OR ov.version LIKE %s)")
+                params.extend([f"%{version_os}%", f"%{version_os}%"])
+
+            if firmware:
+                where_clauses.append("fwv.os_nom LIKE %s")
+                params.append(f"%{firmware}%")
+
+            if asset_nom:
+                where_clauses.append("a.nom_interne LIKE %s")
+                params.append(f"%{asset_nom}%")
+
+            if cve_id:
+                where_clauses.append("co.cve_id LIKE %s")
+                params.append(f"%{cve_id}%")
+
             where_sql = "WHERE " + " AND ".join(where_clauses) if where_clauses else ""
 
-            # 1. Get total count
-            cursor.execute(f"""
-                SELECT COUNT(*) as total
-                FROM correlations co
+            joins = """
                 JOIN assets a ON a.id = co.asset_id
                 JOIN sites s ON s.id = a.site_id
                 JOIN clients cl ON cl.id = s.client_id
+                LEFT JOIN cve cv ON cv.cve_id = co.cve_id
+                LEFT JOIN os_versions ov ON ov.id = a.os_version_id
+                LEFT JOIN os_versions fwv ON fwv.id = a.fw_version_id
+            """
+
+            cursor.execute(f"""
+                SELECT COUNT(*) as total
+                FROM correlations co
+                {joins}
                 {where_sql}
             """, params)
             total_count = cursor.fetchone()["total"]
             response.headers["X-Total-Count"] = str(total_count)
 
-            # 2. Get data
             limit_sql = ""
             limit_params = []
             if not nolimit:
                 limit_sql = "LIMIT %s OFFSET %s"
                 limit_params.extend([limit, skip])
 
-            query = f"""
+            cursor.execute(f"""
                 SELECT
                     co.id,
                     co.asset_id,
@@ -125,28 +171,24 @@ def list_correlations(
                     co.date_resolution,
                     a.nom_interne AS asset_nom,
                     a.type_equipement,
+                    a.version_os,
                     s.nom AS site_nom,
                     cl.nom AS client_nom,
                     cv.cvss_v3_score,
                     cv.cvss_v3_severity,
                     cv.description AS cve_description
                 FROM correlations co
-                JOIN assets a ON a.id = co.asset_id
-                JOIN sites s ON s.id = a.site_id
-                JOIN clients cl ON cl.id = s.client_id
-                LEFT JOIN cve cv ON cv.cve_id = co.cve_id
+                {joins}
                 {where_sql}
                 ORDER BY
                     FIELD(co.priorite, 'critique', 'haute', 'moyenne', 'basse'),
                     co.score_contextuel DESC,
                     co.date_detection DESC
                 {limit_sql}
-            """
-            cursor.execute(query, params + limit_params)
+            """, params + limit_params)
             return cursor.fetchall()
     finally:
         conn.close()
-
 
 @router.get("/{correlation_id}")
 def get_correlation(correlation_id: int):

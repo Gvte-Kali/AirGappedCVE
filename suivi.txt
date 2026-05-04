@@ -1,0 +1,90 @@
+═══════════════════════════════════════════════════════════════
+  SUIVI DES ÉTAPES — Asset & Vulnerability Manager
+  Dernière mise à jour : 04/05/2026
+═══════════════════════════════════════════════════════════════
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  BLOC A — VERSION OS LIBRE + MOTEUR DE CORRÉLATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[✅] A1  — routers/assets.py : null-or-empty sur version_os/fw/bios
+[✅] A2  — assets.html : champ libre version OS + toggleVersionOsLibre
+           + sauvegarderAsset() + editerAsset() + reset
+[✅] A3  — Vérification en base + correction doublon NAS (id=8)
+[✅] A5  — Fix moteur : is_version_affected() dans bloc fuzzy match
+[✅] A7  — Fix moteur : is_version_affected() dans bloc FK aussi
+[✅] A8  — TEST NAS 7.1.1 : corrélations trouvées ✅
+           TEST NAS 7.2.2 : 0 corrélation, NAS patché ✅
+[✅] A11 — Fix is_version_affected() : "-" traité comme wildcard
+           → Windows Server : corrélations remontent ✅
+[✅] A12 — INVESTIGATION CVE-2021-26563 : "-" trop agressif,
+           retourne True même quand d'autres ranges excluent la version
+
+[ ] A13 — Fix is_version_affected() plus fin sur "-" :
+           • Filtrer versions_affectees par produit de l'asset avant
+             d'appeler is_version_affected() (dans bloc FK et fuzzy)
+           • Dans is_version_affected() : si version_exact="-" ET
+             autres ranges avec bornes → ignorer ce range (continue)
+             Si version_exact="-" ET aucun autre range → return True
+           → À faire via Claude Code
+
+[ ] A14 — TEST final moteur après A13 :
+           NAS 7.1.1 → CVE-2021-26563 (before 6.2.4) : doit être rejeté
+           Serveur Windows 2016 → CVE version_exact="-" : doit remonter
+           Serveur Windows 2022 → CVE windows_server_2016 : doit être rejeté
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  BLOC B — FILTRES PAGE VULNÉRABILITÉS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[✅] B1 — vulns.html : panneau filtres expandable avec typeaheads
+          (Client, Site, Type, Fabricant, Modèle, OS, Version OS,
+          Firmware, Asset, CVE, Statut multiselect, Priorité multiselect)
+[✅] B2 — vulns.html : suppression filtrerTableau() et listeners inline
+          qui bloquaient le chargement
+[✅] B3 — routers/correlations.py : list_correlations() mise à jour
+          • statut et priorite → List[str] avec IN (...)
+          • Ajout : equipment_type_id, vendor_id, model_id,
+            os_nom, version_os, firmware, asset_nom, cve_id
+          • Ajout JOIN os_versions pour filtres OS/firmware
+          • from typing import Optional, List
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  BLOC C — RÉFÉRENTIEL FORMATS DE VERSIONS
+  (fusionné avec la page os-versions existante)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] C1 — MariaDB : ALTER TABLE os_versions
+         ADD COLUMN format_version VARCHAR(255) DEFAULT NULL
+         ADD COLUMN ou_trouver VARCHAR(500) DEFAULT NULL
+
+[ ] C2 — routers/os_versions.py : ajouter format_version + ou_trouver
+         dans GET et PUT
+
+[ ] C3 — ui/os-versions.html : colonnes éditables inline
+         format_version + ou_trouver
+
+[ ] C4 — assets.html : lien ❓ → /ui/os-versions target="_blank"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  BLOC D — MOTEUR DE CORRÉLATION (statuts Mistral)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] D1 — correlate_and_analyze.py : VERDICT_TO_STATUT
+         "informatif" → "nouveau"
+
+[ ] D2 — correlate_and_analyze.py : UPDATE Mistral
+         type_correlation = "informatif" quand verdict informatif
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ORDRE D'EXÉCUTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  → PRIORITAIRE : A13 (fix is_version_affected produit-aware)
+  Ensuite : A14 → C1 → C2 → C3 → C4 → D1 → D2
+
+═══════════════════════════════════════════════════════════════
