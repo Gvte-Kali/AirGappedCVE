@@ -102,6 +102,11 @@
             font-family: 'JetBrains Mono', 'Fira Code', monospace;
             font-size: 0.8rem;
         }
+
+        thead.sticky-header th {
+            background-color: #0d1117;
+            box-shadow: 0 1px 0 #30363d;
+        }
     </style>
 </head>
 
@@ -443,10 +448,10 @@
         </div>
 
         <!-- Main Data Table Container -->
-        <div class="card overflow-hidden mb-5">
-            <div class="table-responsive">
+        <div class="card mb-5">
+            <div class="table-responsive" style="overflow: visible;">
                 <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-black bg-opacity-25">
+                    <thead class="sticky-header" style="position: sticky; top: 56px; z-index: 10;">
                         <tr>
                             <th class="ps-4">CVE</th>
                             <th>Asset / IP</th>
