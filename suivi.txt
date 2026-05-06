@@ -1,90 +1,154 @@
 ═══════════════════════════════════════════════════════════════
   SUIVI DES ÉTAPES — Asset & Vulnerability Manager
-  Dernière mise à jour : 04/05/2026
+  Dernière mise à jour : 05/05/2026
 ═══════════════════════════════════════════════════════════════
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOC A — VERSION OS LIBRE + MOTEUR DE CORRÉLATION
+  BLOC A — VERSION OS LIBRE + MOTEUR DE CORRÉLATION    ✅
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-[✅] A1  — routers/assets.py : null-or-empty sur version_os/fw/bios
-[✅] A2  — assets.html : champ libre version OS + toggleVersionOsLibre
-           + sauvegarderAsset() + editerAsset() + reset
-[✅] A3  — Vérification en base + correction doublon NAS (id=8)
-[✅] A5  — Fix moteur : is_version_affected() dans bloc fuzzy match
-[✅] A7  — Fix moteur : is_version_affected() dans bloc FK aussi
-[✅] A8  — TEST NAS 7.1.1 : corrélations trouvées ✅
-           TEST NAS 7.2.2 : 0 corrélation, NAS patché ✅
-[✅] A11 — Fix is_version_affected() : "-" traité comme wildcard
-           → Windows Server : corrélations remontent ✅
-[✅] A12 — INVESTIGATION CVE-2021-26563 : "-" trop agressif,
-           retourne True même quand d'autres ranges excluent la version
-
-[ ] A13 — Fix is_version_affected() plus fin sur "-" :
-           • Filtrer versions_affectees par produit de l'asset avant
-             d'appeler is_version_affected() (dans bloc FK et fuzzy)
-           • Dans is_version_affected() : si version_exact="-" ET
-             autres ranges avec bornes → ignorer ce range (continue)
-             Si version_exact="-" ET aucun autre range → return True
-           → À faire via Claude Code
-
-[ ] A14 — TEST final moteur après A13 :
-           NAS 7.1.1 → CVE-2021-26563 (before 6.2.4) : doit être rejeté
-           Serveur Windows 2016 → CVE version_exact="-" : doit remonter
-           Serveur Windows 2022 → CVE windows_server_2016 : doit être rejeté
+[✅] Tous les fix moteur + version OS libre + tests validés.
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOC B — FILTRES PAGE VULNÉRABILITÉS
+  BLOC B — FILTRES PAGE VULNÉRABILITÉS                 ✅
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-[✅] B1 — vulns.html : panneau filtres expandable avec typeaheads
-          (Client, Site, Type, Fabricant, Modèle, OS, Version OS,
-          Firmware, Asset, CVE, Statut multiselect, Priorité multiselect)
-[✅] B2 — vulns.html : suppression filtrerTableau() et listeners inline
-          qui bloquaient le chargement
-[✅] B3 — routers/correlations.py : list_correlations() mise à jour
-          • statut et priorite → List[str] avec IN (...)
-          • Ajout : equipment_type_id, vendor_id, model_id,
-            os_nom, version_os, firmware, asset_nom, cve_id
-          • Ajout JOIN os_versions pour filtres OS/firmware
-          • from typing import Optional, List
+[✅] Panneau expandable + typeaheads + backend List[str].
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOC C — RÉFÉRENTIEL FORMATS DE VERSIONS
+  BLOC C — BOUTONS ? D'AIDE CONTEXTUELLE               ✅
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[✅] Toutes les pages avec data-bs-auto-close="outside".
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  BLOC D — THEAD STICKY SUR PAGE VULNS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[✅] D1 — vulns.html : thead sticky (même logique que equipment-types)
+         • overflow-hidden → overflow:visible sur le card parent
+         • thead : position:sticky; top:56px; z-index:10;
+         • CSS : thead th { background:#0d1117; box-shadow:0 1px 0 #30363d; }
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  BLOC E — DOCUMENTATION GITHUB PAGES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Répertoire : /docs — thème : Just the Docs (Jekyll)
+Activation : GitHub Settings → Pages → Source → docs/ folder
+
+[ ] E1 — Créer docs/_config.yml (Just the Docs, thème dark, recherche)
+[ ] E2 — Créer docs/index.md (page d'accueil + présentation projet)
+
+[ ] E3 — Section 1 : Introduction & Vue d'ensemble
+         • Contexte, objectif, contrainte air-gap
+         • Architecture globale (schéma composants)
+         • Stack technique
+         • Flux de données bout en bout
+
+[ ] E4 — Section 2 : Installation & Déploiement
+         • Prérequis (Ubuntu Server, Python, MariaDB)
+         • Installation pas à pas
+         • Configuration (.env, config.yml)
+         • Déploiement systemd sur Raspberry Pi 5
+         • Mise à jour du système
+
+[ ] E5 — Section 3 : Base de données
+         • Schéma complet (toutes tables + relations)
+         • Description de chaque table et colonne importante
+         • Vue v_vulnerabilites_tableau
+         • Logique FK et cascades
+         • Migrations
+
+[ ] E6 — Section 4 : Référentiels métier
+         • Clients & Sites
+         • Assets (champs, criticité, statuts)
+         • Fabricants (nomenclature NVD)
+         • Modèles (nvd_product, cpe_part)
+         • OS & Versions (référentiel normalisé)
+         • Types d'équipements (toutes colonnes, impact corrélation)
+
+[ ] E7 — Section 5 : Moteur de corrélation CVE
+         • Vue d'ensemble 3 phases
+         • Phase 1 : détection brute (vendor match, produit, fuzzy)
+         • Phase 2 : pré-classification déterministe (scoring, air-gap, CWE)
+         • Phase 3 : analyse Mistral (prompt, verdicts, ajustement score)
+         • is_version_affected() : comparaison versions, notation NVD
+         • equipment_types : configuration par type
+         • vuln_types.yml : classification types d'attaque
+         • config.yml : tous les paramètres
+         • Gestion faux positifs et override opérateur
+         • Contrainte air-gap : impact scoring
+
+[ ] E8 — Section 6 : API FastAPI
+         • Vue d'ensemble des routes
+         • Clients, Sites, Assets, Vendors, Models, OS Versions,
+           Equipment Types, Corrélations, Scripts, Documents
+         • Pagination (X-Total-Count)
+         • Gestion des erreurs
+
+[ ] E9 — Section 7 : Interface utilisateur
+         • Page Vulnérabilités (filtres, tableau, actions, modal)
+         • Page Assets (création, édition, version OS libre)
+         • Page Types d'équipements
+         • Page OS & Versions
+         • Console scripts
+         • Barre de recherche globale
+
+[ ] E10 — Section 8 : Grafana (À VENIR)
+          • Connexion MariaDB — non implémenté
+          • Vue v_vulnerabilites_tableau — non implémenté
+          • Dashboards — non implémenté
+          → Marquer clairement comme "fonctionnalité prévue"
+
+[ ] E11 — Section 9 : Guides opérationnels
+          • Ajouter un client/site/asset
+          • Ajouter un fabricant et ses CVE (trouver identifiants NVD)
+          • Configurer un nouveau type d'équipement
+          • Interpréter une corrélation CVE
+          • Gérer les faux positifs
+          • Formats de versions par fabricant
+            (Synology, Microsoft, Axis, Hikvision, Fortinet…)
+          • Mettre à jour le référentiel CVE (sync NVD)
+
+[ ] E12 — Section 10 : Référence technique
+          • Structure des fichiers du projet
+          • Variables d'environnement
+          • config.yml — référence complète
+          • vuln_types.yml — format, ajout nouveaux types
+          • Schéma CPE 2.3
+          • Glossaire (CVE, CWE, CPE, NVD, air-gap, affirme/informatif…)
+
+[ ] E13 — Activer GitHub Pages dans les settings du repo
+          • Settings → Pages → Source → docs/ → branch main
+[ ] E14 — Mettre à jour README.md avec lien vers la doc
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  BLOC F — RÉFÉRENTIEL FORMATS DE VERSIONS
   (fusionné avec la page os-versions existante)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[ ] C1 — MariaDB : ALTER TABLE os_versions
-         ADD COLUMN format_version VARCHAR(255) DEFAULT NULL
-         ADD COLUMN ou_trouver VARCHAR(500) DEFAULT NULL
+[ ] F1 — MariaDB :
+         ALTER TABLE os_versions
+           ADD COLUMN format_version VARCHAR(255) DEFAULT NULL,
+           ADD COLUMN ou_trouver VARCHAR(500) DEFAULT NULL;
 
-[ ] C2 — routers/os_versions.py : ajouter format_version + ou_trouver
+[ ] F2 — routers/os_versions.py : ajouter format_version + ou_trouver
          dans GET et PUT
 
-[ ] C3 — ui/os-versions.html : colonnes éditables inline
+[ ] F3 — ui/os-versions.html : colonnes éditables inline
          format_version + ou_trouver
 
-[ ] C4 — assets.html : lien ❓ → /ui/os-versions target="_blank"
-
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOC D — MOTEUR DE CORRÉLATION (statuts Mistral)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-[ ] D1 — correlate_and_analyze.py : VERDICT_TO_STATUT
-         "informatif" → "nouveau"
-
-[ ] D2 — correlate_and_analyze.py : UPDATE Mistral
-         type_correlation = "informatif" quand verdict informatif
+[ ] F4 — assets.html : lien ❓ version OS → /ui/os-versions target="_blank"
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ORDRE D'EXÉCUTION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  → PRIORITAIRE : A13 (fix is_version_affected produit-aware)
-  Ensuite : A14 → C1 → C2 → C3 → C4 → D1 → D2
+  → EN COURS : D1 (thead sticky vulns)
+  Ensuite : E1 → E14 (docs GitHub Pages, section par section)
+  Puis : F1 → F4 (référentiel formats de versions)
 
 ═══════════════════════════════════════════════════════════════
