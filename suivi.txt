@@ -97,6 +97,28 @@ Architecture :
 [  ] F6 — tests et affinement
 
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  BLOC G — Mettre une seule page html pour la modifications des paramètres de corrélation ← A faire ensuite en priorité
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[  ] G1 — Gérer les paramètres de /scripts/config.yml directement depuis la page "parametres"
+
+[  ] G2 — Gérer les paramètres des types de vulns à prioriser/skiper /scripts/vulns.yml directement depuis la page "parametres"
+
+[  ] G3 — Gérer les "equipment_types" depuis la page "parametres" : 
+    Cela implique : 
+      Reprendre la logique de equipment-types.html et l'implémenter dans ma nouvelle page "parametres"
+      Supprimer la page equipment-types.html
+
+[  ] G4 — Mise à jour de mon script de corrélation si besoin et tests de fonctionnement
+
+[  ] G5 — Mise à jour de ma navbar sur toutes les pages html
+    Demander à Claude uniquement l'html que je remplacerai moi-même ( en donnant l'html actuel )
+      G5.1 : on ajoute la nouvelle page html qui vient d'être créée
+      G5.2 : On re-crée des catégories différentes dans la navbar au lieu de mettre un seul et même menu, demande son avis à Claude
+      Ne pas oublier /routers/scripts.py il contient la partie html
+
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ORDRE D'EXÉCUTION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -105,6 +127,6 @@ Architecture :
     F1 → F2 → F3 → F4 → F5 → F6
 
   Ensuite (doc) :
-    E9 → E10 → E11 → E12
+   Toute le bloc G, après le bloc G on mettre la doc à jour avec le bloc E : E9 → E10 → E11 → E12
 
 ═══════════════════════════════════════════════════════════════
