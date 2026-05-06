@@ -101,6 +101,15 @@ Architecture :
   BLOC G — Mettre une seule page html pour la modifications des paramètres de corrélation ← A faire ensuite en priorité
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+[  ] G0.1 — Reprendre la logique de /scripts/config.yml : 
+        Les parties suivantes rentrent en contradiction avec la logique de equipment-types ( router et html )
+        "# ── Mapping OS textuel → vendor NVD ──────────────────────────────────"
+          # ── Types d'équipements qui utilisent l'OS pour déterminer le vendor CVE ──
+          # (ignorent leur vendor matériel pour la corrélation)
+         # ── Types d'équipements qui utilisent leur vendor matériel ────────────
+         Je me demande ce qui va rentrer en conflit entre mon fichier et equipment-types, je veux uniformiser et tout mettre sur une seule et même page web et ces parties-là me paraissent en trop
+         La logique serait à déplacer vers la logique de equipment-types 
+
 [  ] G1 — Gérer les paramètres de /scripts/config.yml directement depuis la page "parametres"
 
 [  ] G2 — Gérer les paramètres des types de vulns à prioriser/skiper /scripts/vulns.yml directement depuis la page "parametres"
