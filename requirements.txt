@@ -32,6 +32,7 @@ tqdm
 
 # Manipulation de fichiers xlsx
 openpyxl>=3.1.0
+python-multipart
 
 # ── Dépendances transitives (installées automatiquement) ─────────────────────
 
