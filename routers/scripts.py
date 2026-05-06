@@ -360,7 +360,7 @@ CONSOLE_HTML = """
     </style>
 </head>
 <body>
-
+    <!-- ─── NAVBAR ─────────────────────────────────────────── -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
@@ -371,28 +371,35 @@ CONSOLE_HTML = """
                 <div class="d-flex ms-auto align-items-center gap-3">
                     <div class="position-relative am-search" data-am-search-root>
                         <input class="form-control form-control-sm" type="search"
-                               placeholder="Rechercher client, site, asset…"
-                               autocomplete="off" data-am-search-input>
+                            placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
                         <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
                     </div>
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
                         <li class="nav-item"><a class="nav-link" href="/ui/vulns">Vulnérabilités</a></li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                Référentiels
+                            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
+                                ☰ Menu
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark">
                                 <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
                                 <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
                                 <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
-                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
+                                <li><a class="dropdown-item" href="/ui/equipment-types">⚙️ Types d'équipements</a></li>
+                                <li><a class="dropdown-item" href="/ui/os-versions">🖥️ OS &amp; Versions</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/import">📥 Import Assets</a></li>
+                                <li><a class="dropdown-item" href="/scripts/console">🖥️ Console</a></li>
+                                <li><a class="dropdown-item" href="/docs">📖 API Docs</a></li>
                             </ul>
                         </li>
-                        <li class="nav-item"><a class="nav-link" href="/docs">API Docs</a></li>
-                        <li class="nav-item"><a class="nav-link active" href="/scripts/console">Console</a></li>
                     </ul>
                 </div>
             </div>

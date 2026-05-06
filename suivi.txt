@@ -1,154 +1,110 @@
 ═══════════════════════════════════════════════════════════════
   SUIVI DES ÉTAPES — Asset & Vulnerability Manager
-  Dernière mise à jour : 05/05/2026
+  Dernière mise à jour : 06/05/2026
 ═══════════════════════════════════════════════════════════════
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOC A — VERSION OS LIBRE + MOTEUR DE CORRÉLATION    ✅
+  BLOCS A B C D                                        ✅
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[✅] Tous les fix moteur + version OS libre + tests validés.
-
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOC B — FILTRES PAGE VULNÉRABILITÉS                 ✅
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[✅] Panneau expandable + typeaheads + backend List[str].
-
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOC C — BOUTONS ? D'AIDE CONTEXTUELLE               ✅
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[✅] Toutes les pages avec data-bs-auto-close="outside".
-
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOC D — THEAD STICKY SUR PAGE VULNS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[✅] D1 — vulns.html : thead sticky (même logique que equipment-types)
-         • overflow-hidden → overflow:visible sur le card parent
-         • thead : position:sticky; top:56px; z-index:10;
-         • CSS : thead th { background:#0d1117; box-shadow:0 1px 0 #30363d; }
+[✅] Moteur corrélation + filtres vulns + boutons ? + thead sticky.
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   BLOC E — DOCUMENTATION GITHUB PAGES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Répertoire : /docs — thème : Just the Docs (Jekyll)
-Activation : GitHub Settings → Pages → Source → docs/ folder
+[✅] E1 à E8 — Sections Installation, BDD, Corrélation, Référentiels,
+               UI, Guides opérationnels générées et déployées.
+               ⚠️ Correction à faire : docs/guides/equipment-type.md
+                  a le bon frontmatter mais le mauvais contenu.
+                  Remplacer depuis le zip docs_guides.zip.
 
-[ ] E1 — Créer docs/_config.yml (Just the Docs, thème dark, recherche)
-[ ] E2 — Créer docs/index.md (page d'accueil + présentation projet)
-
-[ ] E3 — Section 1 : Introduction & Vue d'ensemble
-         • Contexte, objectif, contrainte air-gap
-         • Architecture globale (schéma composants)
-         • Stack technique
-         • Flux de données bout en bout
-
-[ ] E4 — Section 2 : Installation & Déploiement
-         • Prérequis (Ubuntu Server, Python, MariaDB)
-         • Installation pas à pas
-         • Configuration (.env, config.yml)
-         • Déploiement systemd sur Raspberry Pi 5
-         • Mise à jour du système
-
-[ ] E5 — Section 3 : Base de données
-         • Schéma complet (toutes tables + relations)
-         • Description de chaque table et colonne importante
-         • Vue v_vulnerabilites_tableau
-         • Logique FK et cascades
-         • Migrations
-
-[ ] E6 — Section 4 : Référentiels métier
-         • Clients & Sites
-         • Assets (champs, criticité, statuts)
-         • Fabricants (nomenclature NVD)
-         • Modèles (nvd_product, cpe_part)
-         • OS & Versions (référentiel normalisé)
-         • Types d'équipements (toutes colonnes, impact corrélation)
-
-[ ] E7 — Section 5 : Moteur de corrélation CVE
-         • Vue d'ensemble 3 phases
-         • Phase 1 : détection brute (vendor match, produit, fuzzy)
-         • Phase 2 : pré-classification déterministe (scoring, air-gap, CWE)
-         • Phase 3 : analyse Mistral (prompt, verdicts, ajustement score)
-         • is_version_affected() : comparaison versions, notation NVD
-         • equipment_types : configuration par type
-         • vuln_types.yml : classification types d'attaque
-         • config.yml : tous les paramètres
-         • Gestion faux positifs et override opérateur
-         • Contrainte air-gap : impact scoring
-
-[ ] E8 — Section 6 : API FastAPI
-         • Vue d'ensemble des routes
-         • Clients, Sites, Assets, Vendors, Models, OS Versions,
-           Equipment Types, Corrélations, Scripts, Documents
-         • Pagination (X-Total-Count)
-         • Gestion des erreurs
-
-[ ] E9 — Section 7 : Interface utilisateur
-         • Page Vulnérabilités (filtres, tableau, actions, modal)
-         • Page Assets (création, édition, version OS libre)
-         • Page Types d'équipements
-         • Page OS & Versions
-         • Console scripts
-         • Barre de recherche globale
-
-[ ] E10 — Section 8 : Grafana (À VENIR)
-          • Connexion MariaDB — non implémenté
-          • Vue v_vulnerabilites_tableau — non implémenté
-          • Dashboards — non implémenté
-          → Marquer clairement comme "fonctionnalité prévue"
-
-[ ] E11 — Section 9 : Guides opérationnels
-          • Ajouter un client/site/asset
-          • Ajouter un fabricant et ses CVE (trouver identifiants NVD)
-          • Configurer un nouveau type d'équipement
-          • Interpréter une corrélation CVE
-          • Gérer les faux positifs
-          • Formats de versions par fabricant
-            (Synology, Microsoft, Axis, Hikvision, Fortinet…)
-          • Mettre à jour le référentiel CVE (sync NVD)
-
-[ ] E12 — Section 10 : Référence technique
-          • Structure des fichiers du projet
-          • Variables d'environnement
-          • config.yml — référence complète
-          • vuln_types.yml — format, ajout nouveaux types
-          • Schéma CPE 2.3
-          • Glossaire (CVE, CWE, CPE, NVD, air-gap, affirme/informatif…)
-
-[ ] E13 — Activer GitHub Pages dans les settings du repo
-          • Settings → Pages → Source → docs/ → branch main
-[ ] E14 — Mettre à jour README.md avec lien vers la doc
+[ ] E9  — Section : API FastAPI
+[ ] E10 — Section : Grafana (À VENIR — stub OK)
+[ ] E11 — Section : Référence technique
+[ ] E12 — README.md avec lien vers GitHub Pages
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOC F — RÉFÉRENTIEL FORMATS DE VERSIONS
-  (fusionné avec la page os-versions existante)
+  BLOC F — IMPORT EXCEL D'ASSETS                    ← EN COURS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[ ] F1 — MariaDB :
-         ALTER TABLE os_versions
-           ADD COLUMN format_version VARCHAR(255) DEFAULT NULL,
-           ADD COLUMN ou_trouver VARCHAR(500) DEFAULT NULL;
+Architecture :
+  GET  /api/import/template         → XLSX vierge + listes déroulantes
+  GET  /api/import/template-exemple → XLSX avec 5 lignes d'exemple
+  POST /api/import/preview          → validation sans insertion
+  POST /api/import/confirm          → insertion avec choix update/skip
 
-[ ] F2 — routers/os_versions.py : ajouter format_version + ou_trouver
-         dans GET et PUT
+[✅] F1 — requirements.txt
+         Ajouter : openpyxl
 
-[ ] F3 — ui/os-versions.html : colonnes éditables inline
-         format_version + ou_trouver
+[✅] F2 — routers/import_assets.py
+         • Chargement des référentiels depuis BDD :
+           - product_vendors (nom, id)
+           - product_models (nom, vendor_id, id)
+           - os_versions (os_nom distinct, version, id, type_produit)
+           - equipment_types (label, id)
+         • GET /api/import/template → génère XLSX vierge
+           Colonnes :
+             client_nom, site_nom, nom_interne*, type_equipement*,
+             fabricant*, modele, os_nom, os_version, version_os_libre,
+             firmware, adresse_ip, adresse_mac, hostname, numero_serie,
+             niveau_criticite*, statut_operationnel, date_installation,
+             date_fin_garantie, notes
+           Listes déroulantes (feuilles masquées _Ref*) :
+             - type_equipement ← equipment_types.label
+             - fabricant ← product_vendors.nom
+             - modele ← product_models.nom
+             - os_nom ← os_versions.os_nom distincts (type=os)
+             - os_version ← os_versions.version (type=os)
+             - firmware ← os_versions.label (type=firmware)
+             - niveau_criticite ← faible/moyen/eleve/critique
+             - statut_operationnel ← actif/inactif/maintenance/hors_service
+         • GET /api/import/template-exemple → même chose + 5 lignes exemple
+         • POST /api/import/preview → validation + rapport :
+           - Lignes valides / avertissements / erreurs bloquantes
+           - Nouveaux clients détectés
+           - Nouveaux sites détectés
+           - Doublons (nom_interne + site) détectés
+           - Erreurs bloquantes : fabricant absent, nom_interne vide
+           - Avertissements : version_os_libre (corrélation informatif)
+         • POST /api/import/confirm → insertion dans l'ordre :
+           1. Clients (créer si absent)
+           2. Sites (créer si absent, lié au client)
+           3. Assets (insert ou update/skip selon choix utilisateur)
+           Paramètre : on_duplicate = "update" | "skip"
 
-[ ] F4 — assets.html : lien ❓ version OS → /ui/os-versions target="_blank"
+[✅] F3 — main.py
+         Importer et enregistrer le router import_assets
+         Ajouter route GET /ui/import → FileResponse
+
+[✅] F4 — ui/import.html
+         Page dédiée avec :
+         • Boutons "Télécharger template vierge" et "Télécharger template exemple"
+         • Zone de dépôt fichier (drag & drop ou input file)
+         • Radio buttons : En cas de doublon → Mettre à jour / Ignorer
+         • Bouton "Valider le fichier" → appelle /preview
+         • Panneau de rapport :
+           - Stats (✅ valides, ⚠️ avertissements, ❌ erreurs)
+           - Liste des erreurs avec numéro de ligne
+           - Nouveaux clients/sites qui seront créés
+         • Bouton "Confirmer l'import" (actif seulement si 0 erreur bloquante)
+         • Logs d'exécution pendant l'import
+
+[✅] F5 — Ajouter openpyxl dans requirements.txt et tester la génération
+         du template sur le serveur de dev
+
+[  ] F6 — tests et affinement
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ORDRE D'EXÉCUTION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  → EN COURS : D1 (thead sticky vulns)
-  Ensuite : E1 → E14 (docs GitHub Pages, section par section)
-  Puis : F1 → F4 (référentiel formats de versions)
+  → EN COURS : BLOC F (import Excel)
+    F1 → F2 → F3 → F4 → F5 → F6
+
+  Ensuite (doc) :
+    E9 → E10 → E11 → E12
 
 ═══════════════════════════════════════════════════════════════

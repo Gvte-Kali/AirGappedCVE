@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Import Assets — Asset Manager</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/app-search.css">
+    <link rel="stylesheet" href="/static/app-premium.css">
+    <style>
+        .drop-zone {
+            border: 2px dashed #30363d;
+            border-radius: 12px;
+            padding: 48px 24px;
+            text-align: center;
+            transition: all .2s;
+            cursor: pointer;
+            background: rgba(88, 166, 255, 0.03);
+        }
+
+        .drop-zone.dragover {
+            border-color: #58a6ff;
+            background: rgba(88, 166, 255, 0.08);
+        }
+
+        .drop-zone.has-file {
+            border-color: #3fb950;
+            background: rgba(63, 185, 80, 0.05);
+        }
+
+        .log-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .log-inséré {
+            color: #3fb950;
+        }
+
+        .log-mis\ à\ jour {
+            color: #58a6ff;
+        }
+
+        .log-ignoré {
+            color: #8b949e;
+        }
+
+        .log-erreur {
+            color: #f85149;
+        }
+
+        .log-info {
+            color: #d29922;
+        }
+
+        .stat-badge {
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .error-list {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .warn-list {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="nav">
+                <div class="d-flex ms-auto align-items-center gap-3">
+                    <div class="position-relative am-search" data-am-search-root>
+                        <input class="form-control form-control-sm" type="search"
+                            placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
+                        <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
+                    </div>
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/vulns">Vulnérabilités</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
+                                ☰ Menu
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
+                                <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
+                                <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
+                                <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
+                                <li><a class="dropdown-item" href="/ui/equipment-types">⚙️ Types d'équipements</a></li>
+                                <li><a class="dropdown-item" href="/ui/os-versions">🖥️ OS &amp; Versions</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/import">📥 Import Assets</a></li>
+                                <li><a class="dropdown-item" href="/scripts/console">🖥️ Console</a></li>
+                                <li><a class="dropdown-item" href="/docs">📖 API Docs</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <h6 class="section-title mb-2">Inventaire Matériel</h6>
+                <h1 class="fw-bold m-0 stat-number">IMPORT ASSETS</h1>
+            </div>
+        </div>
+
+        <!-- Étape 1 — Templates -->
+        <div class="card p-4 mb-4">
+            <h6 class="section-title mb-3">① TÉLÉCHARGER LE TEMPLATE</h6>
+            <p class="text-muted small mb-3">
+                Téléchargez le template Excel, remplissez-le (les colonnes avec * sont obligatoires),
+                puis importez-le ci-dessous. Les listes déroulantes sont pré-remplies depuis vos référentiels.
+            </p>
+            <div class="d-flex gap-3">
+                <a href="/api/import/template" class="btn btn-outline-primary">
+                    📥 Template vierge
+                </a>
+                <a href="/api/import/template-exemple" class="btn btn-outline-secondary">
+                    📋 Template avec exemples
+                </a>
+            </div>
+        </div>
+
+        <!-- Étape 2 — Upload -->
+        <div class="card p-4 mb-4">
+            <h6 class="section-title mb-3">② IMPORTER LE FICHIER</h6>
+
+            <div class="drop-zone mb-4" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                <div id="dropText">
+                    <div style="font-size:2.5rem; margin-bottom:8px;">📂</div>
+                    <div class="fw-semibold mb-1">Glisser-déposer votre fichier ici</div>
+                    <div class="text-muted small">ou cliquer pour sélectionner — .xlsx uniquement</div>
+                </div>
+                <div id="fileChosen" class="d-none">
+                    <div style="font-size:2rem; margin-bottom:8px;">✅</div>
+                    <div class="fw-semibold" id="fileName"></div>
+                    <div class="text-muted small" id="fileSize"></div>
+                </div>
+            </div>
+            <input type="file" id="fileInput" accept=".xlsx" class="d-none">
+
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label stat-label">En cas de doublon (même asset + site)</label>
+                    <div class="d-flex gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="onDuplicate" id="radioSkip" value="skip"
+                                checked>
+                            <label class="form-check-label" for="radioSkip">
+                                Ignorer (conserver l'existant)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="onDuplicate" id="radioUpdate"
+                                value="update">
+                            <label class="form-check-label" for="radioUpdate">
+                                Mettre à jour
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 d-flex gap-2 justify-content-end">
+                    <button class="btn btn-outline-secondary" id="btnValider" disabled onclick="validerFichier()">
+                        🔍 Valider le fichier
+                    </button>
+                    <button class="btn btn-primary" id="btnImporter" disabled onclick="confirmerImport()">
+                        ⚡ Confirmer l'import
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Étape 3 — Rapport de validation -->
+        <div id="rapportCard" class="card p-4 mb-4 d-none">
+            <h6 class="section-title mb-4">③ RAPPORT DE VALIDATION</h6>
+
+            <!-- Stats -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card p-3 text-center">
+                        <div class="stat-label">Lignes valides</div>
+                        <div class="stat-badge text-success" id="statValides">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card p-3 text-center">
+                        <div class="stat-label">Avertissements</div>
+                        <div class="stat-badge text-warning" id="statWarnings">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card p-3 text-center">
+                        <div class="stat-label">Erreurs bloquantes</div>
+                        <div class="stat-badge text-danger" id="statErreurs">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card p-3 text-center">
+                        <div class="stat-label">Doublons détectés</div>
+                        <div class="stat-badge text-info" id="statDoublons">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nouveaux créés -->
+            <div id="nouveauxSection" class="mb-4 d-none">
+                <p class="fw-semibold mb-2 text-warning">🆕 Seront créés automatiquement :</p>
+                <div class="row g-2">
+                    <div class="col-md-6" id="nouveauxClients"></div>
+                    <div class="col-md-6" id="nouveauxSites"></div>
+                </div>
+            </div>
+
+            <!-- Erreurs -->
+            <div id="erreursSection" class="mb-4 d-none">
+                <p class="fw-semibold mb-2 text-danger">❌ Erreurs bloquantes (à corriger avant import) :</p>
+                <div class="error-list" id="erreursListe"></div>
+            </div>
+
+            <!-- Avertissements -->
+            <div id="warningsSection" class="mb-4 d-none">
+                <p class="fw-semibold mb-2 text-warning">⚠️ Avertissements :</p>
+                <div class="warn-list" id="warningsListe"></div>
+            </div>
+
+            <!-- Doublons -->
+            <div id="doublonsSection" class="mb-3 d-none">
+                <p class="fw-semibold mb-2 text-info">🔁 Doublons détectés :</p>
+                <div id="doublonsListe"></div>
+            </div>
+
+            <div id="rapportOk" class="alert alert-success d-none">
+                ✅ Fichier valide — vous pouvez confirmer l'import.
+            </div>
+            <div id="rapportKo" class="alert alert-danger d-none">
+                ❌ Corrigez les erreurs dans le fichier Excel et re-validez avant d'importer.
+            </div>
+        </div>
+
+        <!-- Étape 4 — Logs d'import -->
+        <div id="logsCard" class="card p-4 d-none">
+            <h6 class="section-title mb-3">④ RÉSULTAT DE L'IMPORT</h6>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card p-3 text-center">
+                        <div class="stat-label">Insérés</div>
+                        <div class="stat-badge text-success" id="logInseres">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card p-3 text-center">
+                        <div class="stat-label">Mis à jour</div>
+                        <div class="stat-badge text-primary" id="logMaj">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card p-3 text-center">
+                        <div class="stat-label">Ignorés</div>
+                        <div class="stat-badge text-secondary" id="logIgnores">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card p-3 text-center">
+                        <div class="stat-label">Erreurs</div>
+                        <div class="stat-badge text-danger" id="logErreurs">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="log-box" id="logBox"></div>
+
+            <div class="mt-3 d-flex gap-2">
+                <a href="/ui/assets" class="btn btn-primary">💻 Voir les assets</a>
+                <button class="btn btn-outline-secondary" onclick="resetForm()">↩ Nouvel import</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/bootstrap.bundle.min.js"></script>
+    <script src="/static/app-search.js"></script>
+    <script>
+        let selectedFile = null;
+        let validationOk = false;
+
+        // ── Drag & Drop ───────────────────────────────────────────────
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const f = e.dataTransfer.files[0];
+            if (f) setFile(f);
+        });
+        fileInput.addEventListener('change', e => {
+            if (e.target.files[0]) setFile(e.target.files[0]);
+        });
+
+        function setFile(f) {
+            if (!f.name.endsWith('.xlsx')) {
+                alert('Seuls les fichiers .xlsx sont acceptés.');
+                return;
+            }
+            selectedFile = f;
+            document.getElementById('dropText').classList.add('d-none');
+            document.getElementById('fileChosen').classList.remove('d-none');
+            document.getElementById('fileName').textContent = f.name;
+            document.getElementById('fileSize').textContent = (f.size / 1024).toFixed(1) + ' Ko';
+            dropZone.classList.add('has-file');
+            document.getElementById('btnValider').disabled = false;
+            document.getElementById('btnImporter').disabled = true;
+            document.getElementById('rapportCard').classList.add('d-none');
+            document.getElementById('logsCard').classList.add('d-none');
+            validationOk = false;
+        }
+
+        // ── Validation ────────────────────────────────────────────────
+        async function validerFichier() {
+            if (!selectedFile) return;
+            const btn = document.getElementById('btnValider');
+            btn.disabled = true;
+            btn.textContent = '⏳ Validation…';
+
+            const fd = new FormData();
+            fd.append('file', selectedFile);
+
+            try {
+                const r = await fetch('/api/import/preview', { method: 'POST', body: fd });
+                const data = await r.json();
+                afficherRapport(data);
+            } catch (e) {
+                alert('Erreur lors de la validation : ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔍 Valider le fichier';
+            }
+        }
+
+        function afficherRapport(data) {
+            document.getElementById('rapportCard').classList.remove('d-none');
+            document.getElementById('statValides').textContent = data.valides;
+            document.getElementById('statWarnings').textContent = data.avertissements;
+            document.getElementById('statErreurs').textContent = data.erreurs;
+            document.getElementById('statDoublons').textContent = data.doublons.length;
+
+            // Nouveaux clients/sites
+            const hasNew = data.nouveaux_clients.length || data.nouveaux_sites.length;
+            document.getElementById('nouveauxSection').classList.toggle('d-none', !hasNew);
+            if (hasNew) {
+                document.getElementById('nouveauxClients').innerHTML = data.nouveaux_clients.length
+                    ? `<div class="small text-warning fw-semibold mb-1">Clients :</div>` +
+                    data.nouveaux_clients.map(c => `<div class="small text-muted">• ${c}</div>`).join('')
+                    : '';
+                document.getElementById('nouveauxSites').innerHTML = data.nouveaux_sites.length
+                    ? `<div class="small text-warning fw-semibold mb-1">Sites :</div>` +
+                    data.nouveaux_sites.map(s => `<div class="small text-muted">• ${s}</div>`).join('')
+                    : '';
+            }
+
+            // Erreurs
+            document.getElementById('erreursSection').classList.toggle('d-none', !data.detail_erreurs.length);
+            document.getElementById('erreursListe').innerHTML = data.detail_erreurs.map(e =>
+                `<div class="small mb-1"><span class="text-danger fw-semibold">Ligne ${e.ligne} :</span> ${e.erreurs.join(' | ')}</div>`
+            ).join('');
+
+            // Avertissements
+            document.getElementById('warningsSection').classList.toggle('d-none', !data.detail_avertissements.length);
+            document.getElementById('warningsListe').innerHTML = data.detail_avertissements.map(w =>
+                `<div class="small mb-1"><span class="text-warning fw-semibold">Ligne ${w.ligne} :</span> ${w.avertissements.join(' | ')}</div>`
+            ).join('');
+
+            // Doublons
+            document.getElementById('doublonsSection').classList.toggle('d-none', !data.doublons.length);
+            document.getElementById('doublonsListe').innerHTML = data.doublons.map(d =>
+                `<div class="small text-info mb-1">Ligne ${d.ligne} : ${d.asset} (${d.site})</div>`
+            ).join('');
+
+            // Résultat global
+            validationOk = !data.bloquant;
+            document.getElementById('rapportOk').classList.toggle('d-none', !validationOk);
+            document.getElementById('rapportKo').classList.toggle('d-none', validationOk);
+            document.getElementById('btnImporter').disabled = !validationOk;
+        }
+
+        // ── Import ────────────────────────────────────────────────────
+        async function confirmerImport() {
+            if (!selectedFile || !validationOk) return;
+
+            const onDuplicate = document.querySelector('input[name="onDuplicate"]:checked').value;
+            const btn = document.getElementById('btnImporter');
+            btn.disabled = true;
+            btn.textContent = '⏳ Import en cours…';
+
+            const fd = new FormData();
+            fd.append('file', selectedFile);
+            fd.append('on_duplicate', onDuplicate);
+
+            try {
+                const r = await fetch('/api/import/confirm', { method: 'POST', body: fd });
+                const data = await r.json();
+                afficherLogs(data);
+            } catch (e) {
+                alert('Erreur lors de l\'import : ' + e.message);
+                btn.disabled = false;
+                btn.textContent = '⚡ Confirmer l\'import';
+            }
+        }
+
+        function afficherLogs(data) {
+            document.getElementById('logsCard').classList.remove('d-none');
+            document.getElementById('logInseres').textContent = data.stats.inseres;
+            document.getElementById('logMaj').textContent = data.stats.mis_a_jour;
+            document.getElementById('logIgnores').textContent = data.stats.ignores;
+            document.getElementById('logErreurs').textContent = data.stats.erreurs;
+
+            const ICONS = { 'inséré': '✅', 'mis à jour': '🔄', 'ignoré': '⏭️', 'erreur': '❌', 'info': '🔔' };
+            const logBox = document.getElementById('logBox');
+            logBox.innerHTML = data.logs.map(l => {
+                const cls = `log-${l.statut}`;
+                const icon = ICONS[l.statut] || '•';
+                return `<div class="${cls}">${icon} L.${l.ligne} — ${l.message}</div>`;
+            }).join('');
+            logBox.scrollTop = logBox.scrollHeight;
+
+            document.getElementById('btnImporter').textContent = '⚡ Confirmer l\'import';
+        }
+
+        function resetForm() {
+            selectedFile = null;
+            validationOk = false;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('dropText').classList.remove('d-none');
+            document.getElementById('fileChosen').classList.add('d-none');
+            dropZone.classList.remove('has-file');
+            document.getElementById('btnValider').disabled = true;
+            document.getElementById('btnImporter').disabled = true;
+            document.getElementById('rapportCard').classList.add('d-none');
+            document.getElementById('logsCard').classList.add('d-none');
+        }
+    </script>
+</body>
+
+</html>

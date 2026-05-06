@@ -30,6 +30,9 @@ typer
 # Progression en console
 tqdm
 
+# Manipulation de fichiers xlsx
+openpyxl>=3.1.0
+
 # ── Dépendances transitives (installées automatiquement) ─────────────────────
 
 annotated-doc==0.0.4
