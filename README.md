@@ -2,6 +2,8 @@
 
 Système de gestion d'assets informatiques et de vulnérabilités de sécurité, conçu spécifiquement pour un prestataire IT gérant des environnements **air-gappés** — c'est-à-dire des réseaux physiquement isolés d'Internet.
 
+# Docs
+https://gvte-kali.github.io/AirGappedCVE/
 ---
 
 ## Sommaire
