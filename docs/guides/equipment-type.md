@@ -1,10 +1,10 @@
 ---
-title: Ajouter un fabricant
+title: Configurer un type d'équipement
 parent: Guides opérationnels
-nav_order: 2
+nav_order: 3
 ---
 
-# Ajouter un fabricant
+# Configurer un type d'équipement
 {: .no_toc }
 
 <details open markdown="block">
@@ -16,135 +16,159 @@ nav_order: 2
 
 ---
 
-Ce guide explique comment ajouter un nouveau fabricant et ses données NVD associées pour permettre la corrélation CVE.
+Ce guide aide à choisir les bons paramètres lors de la création ou modification d'un type d'équipement dans `/ui/equipment-types`.
 
 ---
 
-## Pourquoi c'est critique
+## Les deux questions fondamentales
 
-Le `nvd_vendor` est la clé primaire de la corrélation CVE. Le moteur cherche les CVE avec `WHERE fabricant = nvd_vendor`. Un identifiant incorrect ou absent = **aucune CVE trouvée**.
+Avant de configurer un type, répondre à deux questions :
+
+**1. Quelle est la source du vendor NVD pour cet équipement ?**
+- L'OS définit le vendor → `os_fk` (PC, serveurs, laptops)
+- Le firmware définit le vendor → `fw_fk` (switches, routeurs)
+- Le fabricant matériel définit le vendor → `materiel` (NAS, caméras, lecteurs)
+
+**2. Quel champ de version utiliser pour comparer avec les CVE ?**
+- OS normalisé FK → `use_os_version = 1`
+- Version texte libre → `use_version_os = 1`
+- Firmware FK → `use_version_firmware = 1`
+- BIOS FK → `use_version_bios = 1`
 
 ---
 
-## Étape 1 — Trouver le `nvd_vendor` exact
+## Arbre de décision
 
-### Méthode recommandée — Via NVD
-
-1. Aller sur [nvd.nist.gov/vuln/search](https://nvd.nist.gov/vuln/search)
-2. Chercher une CVE connue du fabricant (ex: `Synology DSM vulnerability`)
-3. Ouvrir une CVE et scroller jusqu'à la section **CPE Configuration**
-4. Lire l'entrée CPE : `cpe:2.3:o:synology:diskstation_manager:*:*:*:*:*:*:*:*`
-   ```
-                          ↑
-                      nvd_vendor
-   ```
-5. Le `nvd_vendor` est : `synology`
-
-### Méthode alternative — Via la base locale
-
-Si des CVE sont déjà importées :
-
-```sql
-SELECT DISTINCT fabricant
-FROM cve
-WHERE fabricant LIKE '%synology%';
 ```
-
-### Règles de format
-
-- Tout en **minuscules**
-- Pas d'espaces (remplacés par des tirets ou underscores selon l'éditeur)
-- Exemples : `microsoft`, `synology`, `fortinet`, `zkteco`, `axis`
-
----
-
-## Étape 2 — Créer le fabricant
-
-1. Aller sur `/ui/vendors`
-2. Cliquer sur **＋ Nouveau fabricant**
-3. Renseigner :
-   - **Nom** : nom affiché (ex: `Synology`)
-   - **nvd_vendor** : identifiant NVD exact (ex: `synology`)
-4. Sauvegarder
-
----
-
-## Étape 3 — Vérifier les CVE disponibles
-
-Après création, vérifier que des CVE existent bien en base pour ce vendor :
-
-```sql
-SELECT COUNT(*) as nb_cve, fabricant
-FROM cve
-WHERE fabricant = 'synology'
-GROUP BY fabricant;
-```
-
-Si le résultat est 0 ou absent, les CVE n'ont pas encore été importées depuis le NVD pour ce fabricant. Une synchronisation NVD ciblée sera nécessaire (voir [Synchronisation NVD]({{ site.baseurl }}/guides/sync-nvd)).
-
----
-
-## Étape 4 — Créer le modèle (recommandé)
-
-Le modèle précise le `nvd_product` et permet un filtre produit exact lors de la corrélation.
-
-1. Aller sur `/ui/models`
-2. Cliquer sur **＋ Nouveau modèle**
-3. Renseigner :
-   - **Fabricant** : sélectionner le fabricant créé
-   - **Nom** : nom affiché (ex: `DiskStation Manager`)
-   - **nvd_product** : identifiant NVD exact (ex: `diskstation_manager`)
-   - **cpe_part** : `o` pour OS, `a` pour application, `h` pour hardware
-   - **Type produit** : `os`, `firmware`, `application` ou `hardware`
-4. Sauvegarder
-
-### Trouver le `nvd_product`
-
-Même méthode que pour le `nvd_vendor` — lire le CPE dans une CVE NVD :
-```
-cpe:2.3:o:synology:diskstation_manager:*
-                        ↑
-                   nvd_product
+L'équipement a un OS installé (Windows, Linux, DSM…) ?
+│
+├── OUI
+│     ├── L'OS est la source principale de CVE ?
+│     │     ├── OUI → vendor_source = "os_fk"
+│     │     │         use_os_version = 1
+│     │     │         use_version_os = 1 (sauf Windows Server)
+│     │     └── NON → vendor_source = "materiel"
+│     │               use_os_version = 1
+│     │
+│     └── Ex: serveur Windows → os_fk, os=1, version_os=0
+│           NAS Synology → materiel, os=1, version_os=1
+│
+└── NON (équipement réseau, caméra, lecteur…)
+      ├── A un firmware versionné ?
+      │     ├── OUI → vendor_source = "fw_fk" ou "materiel"
+      │     │         use_version_firmware = 1
+      │     └── NON → vendor_source = "materiel"
+      │               aucun champ version à activer
+      │
+      └── Ex: switch → materiel, firmware=1
+            caméra → materiel, firmware=1
+            lecteur biométrique → materiel, firmware=1
 ```
 
 ---
 
-## Étape 5 — Créer l'entrée OS & Versions (recommandé)
+## Configurations types par catégorie
 
-Pour une corrélation en mode `affirme`, ajouter l'OS dans le référentiel :
+### Serveur Windows / Linux
 
-1. Aller sur `/ui/os-versions`
-2. Cliquer sur **＋ Nouveau**
-3. Renseigner :
-   - **Nom OS** : `DSM (DiskStation Manager)`
-   - **Version** : `7.2.2` (version installée sur vos équipements)
-   - **nvd_vendor** : `synology`
-   - **nvd_product** : `diskstation_manager`
-   - **Type produit** : `os`
-4. Sauvegarder
+```
+OS (FK)      : ✅
+Version OS   : ❌  (builds Windows non comparables)
+Firmware     : ❌
+BIOS         : ❌
+Vendor source: os_fk
+```
+
+Pourquoi `Version OS = ❌` pour Windows ? Les CVE Windows utilisent des builds `10.0.14393.xxxx` que `normalize_version("2022")` ne peut pas comparer correctement. Le filtre produit (`windows_server_2022`) est suffisant.
+
+### NAS (Synology, QNAP…)
+
+```
+OS (FK)      : ✅
+Version OS   : ✅  (DSM 7.x.x-XXXXX comparables avec NVD)
+Firmware     : ❌
+BIOS         : ❌
+Vendor source: materiel
+```
+
+### PC / Laptop
+
+```
+OS (FK)      : ✅
+Version OS   : ✅
+Firmware     : ❌
+BIOS         : ❌
+Vendor source: os_fk
+```
+
+### Switch / Routeur / Pare-feu
+
+```
+OS (FK)      : ❌
+Version OS   : ❌
+Firmware     : ✅
+BIOS         : ❌
+Vendor source: fw_fk  (si firmware normalisé dans os_versions)
+              ou materiel (si vendor matériel = éditeur CVE)
+```
+
+### Caméra IP (Axis, Hikvision…)
+
+```
+OS (FK)      : ❌
+Version OS   : ❌
+Firmware     : ✅
+BIOS         : ❌
+Vendor source: materiel
+```
+
+### Lecteur biométrique / Lecteur de cartes
+
+```
+OS (FK)      : ❌
+Version OS   : ❌
+Firmware     : ✅
+BIOS         : ❌
+Vendor source: materiel
+```
+
+### Raspberry Pi
+
+```
+OS (FK)      : ✅
+Version OS   : ✅
+Firmware     : ❌
+BIOS         : ❌
+Vendor source: os_fk
+```
 
 ---
 
-## Étape 6 — Configurer le type d'équipement
+## Erreurs fréquentes
 
-Vérifier que le type d'équipement associé a la bonne configuration dans `/ui/equipment-types`.
+### Trop de faux positifs
 
-Exemple pour un NAS Synology :
-- **OS (FK)** : ✅ (utilise `os_version_id`)
-- **Version OS** : ✅ (utilise `version_os` texte pour comparaison)
-- **Source vendor** : `materiel` (vendor depuis le fabricant matériel)
+**Symptôme :** Des CVE remontent pour des produits qui ne concernent pas l'équipement.
 
----
+**Cause probable :** `vendor_source = detection_auto` trop permissif, ou `use_version_os = 1` sur un équipement dont les versions ne sont pas comparables (Windows Server).
 
-## Checklist récapitulative
+**Solution :** Passer à `vendor_source = os_fk` ou `materiel` selon le type, et désactiver `use_version_os` si les formats de version ne sont pas comparables.
 
-```
-[ ] nvd_vendor trouvé et vérifié sur nvd.nist.gov
-[ ] Fabricant créé dans /ui/vendors
-[ ] CVE vérifiées en base pour ce vendor
-[ ] Modèle créé avec nvd_product correct
-[ ] Entrée OS & Versions créée
-[ ] Type d'équipement configuré
-[ ] Asset créé avec fabricant + OS normalisé
-[ ] Corrélation lancée et vérifiée
-```
+### Aucune corrélation détectée
+
+**Symptôme :** 0 CVE trouvée pour un équipement alors que des CVE existent.
+
+**Cause probable :** `vendor_source` incorrect — le moteur cherche dans le mauvais vendor NVD.
+
+**Solution :**
+1. Vérifier le `nvd_vendor` du fabricant de l'asset
+2. Vérifier que des CVE existent en base pour ce vendor : `SELECT COUNT(*) FROM cve WHERE fabricant = 'nvd_vendor'`
+3. Vérifier que `vendor_source` correspond à la source correcte pour ce type
+
+### Corrélations en mode `informatif` au lieu d`affirme`
+
+**Symptôme :** Toutes les corrélations sont `informatif`.
+
+**Cause probable :** `use_os_version = 0` (OS FK non activé) ou `os_version_id` non renseigné sur les assets.
+
+**Solution :** Activer `use_os_version = 1` dans le type ET renseigner l'OS normalisé sur les assets.
