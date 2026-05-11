@@ -1,5 +1,5 @@
 from routers.scripts import router as scripts_router
-from routers import clients, sites, assets, vendors, models, documents, correlations, os_versions, equipment_types, import_assets
+from routers import clients, sites, assets, vendors, models, documents, correlations, os_versions, equipment_types, import_assets, parametres_correlation, rapport_pdf
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -28,6 +28,8 @@ app.include_router(vendors.router,      prefix="/api")
 app.include_router(models.router,       prefix="/api")
 app.include_router(os_versions.router,                          tags=["OS Versions"])
 app.include_router(equipment_types.router)
+app.include_router(parametres_correlation.router)
+app.include_router(rapport_pdf.router)
 
 # Router Scripts
 app.include_router(scripts_router)
@@ -89,6 +91,11 @@ def ui_vulns():
 @app.get("/ui/equipment-types")
 def ui_equipment_types():
     return FileResponse("ui/equipment-types.html")
+
+
+@app.get("/ui/parametres")
+def ui_parametres():
+    return FileResponse("ui/parametres.html")
 
 
 @app.get("/ui/import")

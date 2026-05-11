@@ -120,38 +120,113 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="nav">
-                <div class="d-flex ms-auto align-items-center gap-3">
+                <div class="d-flex ms-auto align-items-center gap-2">
+
+                    <!-- Recherche globale -->
                     <div class="position-relative am-search" data-am-search-root>
                         <input class="form-control form-control-sm" type="search"
                             placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
                         <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
                     </div>
-                    <ul class="navbar-nav ms-auto">
-                        <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/vulns">Vulnérabilités</a></li>
+
+                    <ul class="navbar-nav ms-2 align-items-center gap-1">
+
+                        <!-- Accueil -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Accueil</a>
+                        </li>
+
+                        <!-- Vulnérabilités -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ui/vulns">Vulnérabilités</a>
+                        </li>
+
+                        <!-- Inventaire -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
-                                ☰ Menu
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Inventaire
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark">
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">GESTION</h6>
+                                </li>
                                 <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
                                 <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
                                 <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">IMPORT</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/import">📥 Import Assets</a></li>
+                                <li><a class="dropdown-item" href="/ui/documents">📄 Documents</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Référentiels -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Référentiels
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">MATÉRIEL</h6>
+                                </li>
                                 <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
                                 <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
-                                <li><a class="dropdown-item" href="/ui/equipment-types">⚙️ Types d'équipements</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">LOGICIEL</h6>
+                                </li>
                                 <li><a class="dropdown-item" href="/ui/os-versions">🖥️ OS &amp; Versions</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                                <li><a class="dropdown-item" href="/ui/import">📥 Import Assets</a></li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">TYPES</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/equipment-types">⚙️ Types d'équipements</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Outils -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Outils
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CONFIGURATION</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/parametres">🔧 Paramètres corrélation</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">EXÉCUTION</h6>
+                                </li>
                                 <li><a class="dropdown-item" href="/scripts/console">🖥️ Console</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">DÉVELOPPEUR</h6>
+                                </li>
                                 <li><a class="dropdown-item" href="/docs">📖 API Docs</a></li>
                             </ul>
                         </li>
+
                     </ul>
                 </div>
             </div>
@@ -204,9 +279,7 @@
                 </div>
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-light" onclick="lancerCorrelation('correlate')">🔄 Corrélation</button>
-                <button class="btn btn-outline-light" onclick="lancerCorrelation('analyze')">🤖 Analyse Mistral</button>
-                <button class="btn btn-primary" onclick="lancerCorrelation('run-all')">⚡ Tout exécuter</button>
+                <button class="btn btn-outline-secondary" onclick="ouvrirModalPDF()">📄 Générer PDF</button>
             </div>
         </div>
 
@@ -242,25 +315,6 @@
             </div>
         </div>
 
-        <!-- Live Operations Card -->
-        <div class="card p-4 mb-5" id="progressCard" style="display: none;">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                    <h6 class="m-0 fw-bold" id="progressMessage text-uppercase small" style="letter-spacing: 0.1em;">
-                        Opération en cours</h6>
-                </div>
-                <button class="btn btn-sm btn-link text-muted" onclick="fermerProgress()">Masquer</button>
-            </div>
-            <div class="progress mb-4" style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px;">
-                <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar" role="progressbar"
-                    style="width: 0%"></div>
-            </div>
-            <div class="bg-black bg-opacity-25 p-3 rounded" id="logsContainer"
-                style="max-height: 250px; overflow-y: auto;">
-                <div id="logsContent"></div>
-            </div>
-        </div>
 
         <!-- Filtres Redesign -->
         <div class="card mb-5">
@@ -1096,120 +1150,127 @@
             }
         }
 
-        // ─── Gestion de la corrélation ─────────────────────────
-        let intervalProgress = null;
 
-        async function lancerCorrelation(mode) {
-            const modeLabels = {
-                'correlate': 'Corrélation CVE',
-                'analyze': 'Analyse Mistral',
-                'run-all': 'Pipeline complet'
+        function ouvrirModalPDF() {
+            document.getElementById('pdfFiltresResume').textContent =
+                document.getElementById('filtreResume').textContent || 'Aucun filtre actif';
+            document.getElementById('pdfResultat').classList.add('d-none');
+            document.getElementById('pdfErreur').classList.add('d-none');
+            document.getElementById('btnGenererPDF').disabled = false;
+            document.getElementById('btnGenererPDF').textContent = '📄 Générer le PDF';
+            new bootstrap.Modal(document.getElementById('modalPDF')).show();
+        }
+
+        async function genererPDF() {
+            const champs = [...document.querySelectorAll('.pdf-champ:checked')].map(c => c.value);
+            if (!champs.length) { alert('Sélectionnez au moins un champ.'); return; }
+
+            const btn = document.getElementById('btnGenererPDF');
+            btn.disabled = true;
+            btn.textContent = '⏳ Génération en cours…';
+            document.getElementById('pdfResultat').classList.add('d-none');
+            document.getElementById('pdfErreur').classList.add('d-none');
+
+            const payload = {
+                champs,
+                statut:   getFiltresStatut(),
+                priorite: getFiltresPriorite(),
             };
 
-            if (!confirm(`Lancer : ${modeLabels[mode]} ?\n\nCela peut prendre plusieurs minutes.`)) {
-                return;
-            }
+            const clientId    = document.getElementById('filtreClientId')?.value;
+            const siteId      = document.getElementById('filtreSiteId')?.value;
+            const typeId      = document.getElementById('filtreTypeId')?.value;
+            const fabricantId = document.getElementById('filtreFabricantId')?.value;
+            const modeleId    = document.getElementById('filtreModeleId')?.value;
+            const osNom       = document.getElementById('filtreOsSearch')?.value;
+            const versionOs   = document.getElementById('filtreVersionOs')?.value;
+            const firmware    = document.getElementById('filtreFirmwareSearch')?.value;
+            const asset       = document.getElementById('filtreAsset')?.value;
+            const cve         = document.getElementById('filtreCVE')?.value;
+
+            if (clientId)    payload.client_id          = parseInt(clientId);
+            if (siteId)      payload.site_id             = parseInt(siteId);
+            if (typeId)      payload.equipment_type_id   = parseInt(typeId);
+            if (fabricantId) payload.vendor_id           = parseInt(fabricantId);
+            if (modeleId)    payload.model_id            = parseInt(modeleId);
+            if (osNom)       payload.os_nom              = osNom;
+            if (versionOs)   payload.version_os          = versionOs;
+            if (firmware)    payload.firmware            = firmware;
+            if (asset)       payload.asset_nom           = asset;
+            if (cve)         payload.cve_id              = cve;
 
             try {
-                const response = await fetch(`/api/correlations/run-correlation?mode=${mode}`, {
-                    method: 'POST'
+                const r = await fetch('/api/rapport/generer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
                 });
-
-                if (response.status === 409) {
-                    alert('Une corrélation est déjà en cours. Veuillez patienter.');
-                    return;
+                if (!r.ok) {
+                    const err = await r.json();
+                    throw new Error(err.detail || `HTTP ${r.status}`);
                 }
-
-                if (!response.ok) {
-                    throw new Error('Erreur lors du lancement');
-                }
-
-                // Afficher la barre de progression
-                document.getElementById('progressCard').style.display = 'block';
-                document.getElementById('progressMessage').textContent = `${modeLabels[mode]} en cours...`;
-                document.getElementById('progressBar').style.width = '10%';
-                document.getElementById('progressBar').textContent = '10%';
-
-                // Nettoyer les logs
-                document.getElementById('logsContent').innerHTML = '';
-                document.getElementById('logsContainer').scrollTop = 0;
-
-                // Polling pour suivre la progression
-                intervalProgress = setInterval(verifierProgression, 2000);
-
+                const data = await r.json();
+                document.getElementById('pdfNomFichier').textContent  = data.filename;
+                document.getElementById('pdfNbVulns').textContent     = data.total;
+                document.getElementById('pdfLienTelechargement').href = data.url;
+                document.getElementById('pdfResultat').classList.remove('d-none');
             } catch (e) {
-                console.error('Erreur:', e);
-                alert('Erreur lors du lancement de la corrélation');
-            }
-        }
-
-        async function verifierProgression() {
-            try {
-                const response = await fetch('/api/correlations/run-status');
-                const status = await response.json();
-                console.log("Correlation Status:", status);
-
-                document.getElementById('progressMessage').textContent = status.message || 'En cours...';
-
-                if (status.running) {
-                    // Mise à jour des logs
-                    const logsContent = document.getElementById('logsContent');
-                    const logsContainer = document.getElementById('logsContainer');
-
-                    if (status.logs && status.logs.length > 0) {
-                        logsContent.innerHTML = status.logs.join('<br>');
-                        // Auto-scroll si on est proche du bas
-                        logsContainer.scrollTop = logsContainer.scrollHeight;
-                    }
-
-                    // Simulation de progression (on ne peut pas récupérer la vraie progression facilement)
-                    const currentWidth = parseFloat(document.getElementById('progressBar').style.width) || 10;
-                    const newWidth = Math.min(currentWidth + 5, 90);
-                    document.getElementById('progressBar').style.width = newWidth + '%';
-                    document.getElementById('progressBar').textContent = Math.round(newWidth) + '%';
-                } else {
-                    // Terminé
-                    clearInterval(intervalProgress);
-
-                    // Mise à jour finale des logs
-                    if (status.logs && status.logs.length > 0) {
-                        document.getElementById('logsContent').innerHTML = status.logs.join('<br>');
-                        document.getElementById('logsContainer').scrollTop = document.getElementById('logsContainer').scrollHeight;
-                    }
-
-                    document.getElementById('progressBar').style.width = '100%';
-                    document.getElementById('progressBar').textContent = '100%';
-                    document.getElementById('progressBar').classList.remove('progress-bar-animated');
-
-                    if (status.message.includes('succès')) {
-                        document.getElementById('progressBar').classList.remove('bg-danger');
-                        document.getElementById('progressBar').classList.add('bg-success');
-                    } else {
-                        document.getElementById('progressBar').classList.remove('bg-success');
-                        document.getElementById('progressBar').classList.add('bg-danger');
-                    }
-
-                    // Recharger les vulnérabilités
-                    setTimeout(() => {
-                        chargerVulnerabilites();
-                    }, 1000);
-                }
-            } catch (e) {
-                console.error('Erreur vérification:', e);
-            }
-        }
-
-        function fermerProgress() {
-            document.getElementById('progressCard').style.display = 'none';
-            document.getElementById('progressBar').classList.add('progress-bar-animated');
-            document.getElementById('progressBar').classList.remove('bg-danger');
-            document.getElementById('progressBar').classList.add('bg-success');
-            if (intervalProgress) {
-                clearInterval(intervalProgress);
+                document.getElementById('pdfErreur').textContent = 'Erreur : ' + e.message;
+                document.getElementById('pdfErreur').classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📄 Générer le PDF';
             }
         }
 
     </script>
+
+<div class="modal fade" id="modalPDF" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="background:#161b22; border-color:#30363d;">
+            <div class="modal-header" style="border-color:#30363d;">
+                <h5 class="modal-title fw-bold">📄 Générer un rapport PDF</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert" style="background:rgba(88,166,255,0.1); border:1px solid rgba(88,166,255,0.3); color:#c9d1d9; font-size:0.85rem;">
+                    <strong>Filtres actifs :</strong> <span id="pdfFiltresResume">—</span><br>
+                    <small class="text-muted">Le PDF sera généré avec les mêmes filtres que votre vue actuelle.</small>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label stat-label mb-3">Champs à inclure dans le PDF</label>
+                    <div class="row g-2">
+                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="localisation" checked> Localisation (Client / Site)</label></div>
+                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="asset_nom" checked> Nom de l'asset</label></div>
+                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="fabricant_modele" checked> Fabricant / Modèle</label></div>
+                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="cve_id" checked> Identifiant CVE</label></div>
+                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="description"> Description de la CVE</label></div>
+                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="score_cvss" checked> Score CVSS</label></div>
+                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="date_detection" checked> Date de détection</label></div>
+                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="statut" checked> Statut / Priorité</label></div>
+                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="risque_reel" checked> Risque réel</label></div>
+                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="analyse_ia" checked> Analyse IA (Mistral)</label></div>
+                    </div>
+                    <div class="d-flex gap-3 mt-2">
+                        <a href="#" onclick="document.querySelectorAll('.pdf-champ').forEach(c=>c.checked=true);return false;" class="small text-muted">Tout cocher</a>
+                        <a href="#" onclick="document.querySelectorAll('.pdf-champ').forEach(c=>c.checked=false);return false;" class="small text-muted">Tout décocher</a>
+                    </div>
+                </div>
+                <div id="pdfResultat" class="d-none">
+                    <div class="alert alert-success d-flex align-items-center justify-content-between">
+                        <div>✅ <strong id="pdfNomFichier"></strong> généré avec succès (<span id="pdfNbVulns"></span> vulnérabilités)</div>
+                        <a id="pdfLienTelechargement" href="#" target="_blank" class="btn btn-sm btn-success">⬇ Télécharger</a>
+                    </div>
+                </div>
+                <div id="pdfErreur" class="alert alert-danger d-none"></div>
+            </div>
+            <div class="modal-footer" style="border-color:#30363d;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="btnGenererPDF" onclick="genererPDF()">📄 Générer le PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 
 </html>

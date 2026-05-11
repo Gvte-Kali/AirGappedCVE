@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Paramètres Corrélation — Asset Manager</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/app-search.css">
+    <link rel="stylesheet" href="/static/app-premium.css">
+    <style>
+        .section-card {
+            margin-bottom: 2rem;
+        }
+
+        .param-label {
+            font-size: 0.8rem;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .param-desc {
+            font-size: 0.75rem;
+            color: #6e7681;
+            margin-top: 2px;
+        }
+
+        .save-btn {
+            min-width: 130px;
+        }
+
+        /* os_vendor_map table */
+        .map-table td {
+            padding: 4px 6px;
+            vertical-align: middle;
+        }
+
+        .map-table input {
+            background: transparent;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            color: #c9d1d9;
+            padding: 2px 8px;
+            font-size: 0.85rem;
+        }
+
+        .map-table input:focus {
+            border-color: #58a6ff;
+            outline: none;
+        }
+
+        /* vuln_types table */
+        .vt-table th {
+            font-size: 0.75rem;
+            color: #8b949e;
+            font-weight: 600;
+            text-transform: uppercase;
+            position: sticky;
+            top: 56px;
+            background: #0d1117;
+            z-index: 5;
+        }
+
+        .vt-table td {
+            vertical-align: middle;
+            font-size: 0.82rem;
+            padding: 6px 8px;
+        }
+
+        .vt-table input[type=text],
+        .vt-table select {
+            background: transparent;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            color: #c9d1d9;
+            padding: 2px 6px;
+            font-size: 0.82rem;
+            width: 100%;
+        }
+
+        .vt-table input[type=text]:focus,
+        .vt-table select:focus {
+            border-color: #58a6ff;
+            outline: none;
+        }
+
+        .vt-table textarea {
+            background: transparent;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            color: #c9d1d9;
+            padding: 2px 6px;
+            font-size: 0.78rem;
+            width: 100%;
+            resize: vertical;
+            min-height: 36px;
+        }
+
+        .vt-table textarea:focus {
+            border-color: #58a6ff;
+            outline: none;
+        }
+
+        .badge-p4 {
+            background: rgba(248, 81, 73, 0.2);
+            color: #f85149;
+        }
+
+        .badge-p3 {
+            background: rgba(240, 136, 62, 0.2);
+            color: #f0883e;
+        }
+
+        .badge-p2 {
+            background: rgba(210, 153, 34, 0.2);
+            color: #d29922;
+        }
+
+        .badge-p1 {
+            background: rgba(63, 185, 80, 0.2);
+            color: #3fb950;
+        }
+
+        .badge-p0 {
+            background: rgba(139, 148, 158, 0.2);
+            color: #8b949e;
+        }
+
+        .toast-saved {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            background: #238636;
+            color: #fff;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            opacity: 0;
+            transition: opacity .3s;
+            pointer-events: none;
+        }
+
+        .toast-saved.show {
+            opacity: 1;
+        }
+
+        #mapTable, #mapTable tbody, #mapTable tr, #mapTable td {
+            overflow: visible !important;
+        }
+
+        .accordion-button::after {
+            filter: invert(1);
+        }
+
+        .accordion-button:not(.collapsed) {
+            box-shadow: none;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .accordion-item {
+            background: #161b22;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="nav">
+                <div class="d-flex ms-auto align-items-center gap-2">
+
+                    <!-- Recherche globale -->
+                    <div class="position-relative am-search" data-am-search-root>
+                        <input class="form-control form-control-sm" type="search"
+                            placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
+                        <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
+                    </div>
+
+                    <ul class="navbar-nav ms-2 align-items-center gap-1">
+
+                        <!-- Accueil -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Accueil</a>
+                        </li>
+
+                        <!-- Vulnérabilités -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ui/vulns">Vulnérabilités</a>
+                        </li>
+
+                        <!-- Inventaire -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Inventaire
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">GESTION</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
+                                <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
+                                <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">IMPORT</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/import">📥 Import Assets</a></li>
+                                <li><a class="dropdown-item" href="/ui/documents">📄 Documents</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Référentiels -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Référentiels
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">MATÉRIEL</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
+                                <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">LOGICIEL</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/os-versions">🖥️ OS &amp; Versions</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">TYPES</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/equipment-types">⚙️ Types d'équipements</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Outils -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Outils
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CONFIGURATION</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/parametres">🔧 Paramètres corrélation</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">EXÉCUTION</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/scripts/console">🖥️ Console</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">DÉVELOPPEUR</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/docs">📖 API Docs</a></li>
+                            </ul>
+                        </li>
+
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4 py-5">
+        <!-- Titre -->
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <h6 class="section-title mb-2">Moteur de Corrélation CVE</h6>
+                <h1 class="fw-bold m-0 stat-number">PARAMÈTRES</h1>
+            </div>
+        </div>
+
+        <div id="loadingState" class="text-center py-5">
+            <div class="spinner-border text-primary"></div>
+            <div class="text-muted mt-2">Chargement…</div>
+        </div>
+
+        <div id="mainContent" class="d-none">
+
+            <div class="accordion" id="accordionParametres">
+
+                <!-- ── Item 1 — Corrélation CVE (ouvert par défaut) ─────── -->
+                <div class="accordion-item border-0 mb-3" style="background:#161b22; border-radius:8px;">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseCorrelation"
+                            style="background:#161b22; color:#c9d1d9; border-radius:8px;">
+                            🔍 Corrélation CVE
+                            <span class="ms-2 text-muted small fw-normal">Filtrage et matching des CVE</span>
+                        </button>
+                    </h2>
+                    <div id="collapseCorrelation" class="accordion-collapse collapse"
+                        data-bs-parent="#accordionParametres">
+                        <div class="accordion-body pt-0">
+                            <div class="row g-4">
+                                <!-- cvss_min -->
+                                <div class="col-md-3">
+                                    <div class="param-label">Score CVSS minimum</div>
+                                    <input type="number" id="cvss_min" class="form-control form-control-sm" step="0.1"
+                                        min="0" max="10">
+                                    <div class="param-desc">CVE sous ce seuil ignorées (défaut: 4.0)</div>
+                                </div>
+                                <!-- cvss_network_min -->
+                                <div class="col-md-3">
+                                    <div class="param-label">CVSS min réseau (AV:N)</div>
+                                    <input type="number" id="cvss_network_min" class="form-control form-control-sm"
+                                        step="0.1" min="0" max="10">
+                                    <div class="param-desc">CVE réseau sous ce seuil ignorées (défaut: 7.0)</div>
+                                </div>
+                                <!-- date_min -->
+                                <div class="col-md-3">
+                                    <div class="param-label">Date publication minimale</div>
+                                    <input type="date" id="date_min" class="form-control form-control-sm">
+                                    <div class="param-desc">CVE antérieures à cette date ignorées</div>
+                                </div>
+                                <!-- vendor_cve_limit -->
+                                <div class="col-md-3">
+                                    <div class="param-label">Limite CVE par vendor</div>
+                                    <input type="number" id="vendor_cve_limit" class="form-control form-control-sm"
+                                        min="0">
+                                    <div class="param-desc">Max CVE chargées par vendor. 0 = illimité</div>
+                                </div>
+                                <!-- dry_run -->
+                                <div class="col-md-3">
+                                    <div class="param-label">Mode dry-run</div>
+                                    <div class="form-check form-switch mt-1">
+                                        <input class="form-check-input" type="checkbox" id="dry_run">
+                                        <label class="form-check-label text-muted small" for="dry_run">Simuler sans
+                                            insérer en BDD</label>
+                                    </div>
+                                </div>
+                                <!-- verbose -->
+                                <div class="col-md-3">
+                                    <div class="param-label">Mode verbose</div>
+                                    <div class="form-check form-switch mt-1">
+                                        <input class="form-check-input" type="checkbox" id="verbose">
+                                        <label class="form-check-label text-muted small" for="verbose">Afficher les
+                                            détails par asset</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- os_vendor_map -->
+                            <hr class="my-4" style="border-color:#30363d;">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <div class="fw-semibold">Mapping OS textuel → Vendor NVD</div>
+                                    <div class="text-muted small">Utilisé quand l'asset n'a pas d'OS normalisé
+                                        (os_version_id NULL)</div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-success" onclick="addMapRow()">＋ Ajouter</button>
+                            </div>
+                            <div class="table-responsive" style="overflow:visible;">
+                                <table class="table table-sm map-table mb-0" id="mapTable" style="overflow:visible;">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:35%">Mot-clé (dans systeme_exploitation ou version_os)
+                                            </th>
+                                            <th style="width:35%">Vendor NVD cible</th>
+                                            <th style="width:30%">Exemple</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="mapBody"></tbody>
+                                </table>
+                            </div>
+
+                            <div class="mt-4 text-end">
+                                <button class="btn btn-primary save-btn" onclick="saveConfig()">💾
+                                    Sauvegarder</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Item 2 — Mistral (replié) ─────────────────────────── -->
+                <div class="accordion-item border-0 mb-3" style="background:#161b22; border-radius:8px;">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseMistral"
+                            style="background:#161b22; color:#c9d1d9; border-radius:8px;">
+                            🤖 Analyse Mistral AI
+                            <span class="ms-2 text-muted small fw-normal">Paramètres d'appel à l'API Mistral</span>
+                        </button>
+                    </h2>
+                    <div id="collapseMistral" class="accordion-collapse collapse" data-bs-parent="#accordionParametres">
+                        <div class="accordion-body pt-0">
+                            <div class="row g-4">
+                                <!-- model -->
+                                <div class="col-md-4">
+                                    <div class="param-label">Modèle Mistral</div>
+                                    <input type="text" id="mistral_model" class="form-control form-control-sm">
+                                    <div class="param-desc">ex: mistral-large-latest</div>
+                                </div>
+                                <!-- delay -->
+                                <div class="col-md-2">
+                                    <div class="param-label">Délai entre appels (s)</div>
+                                    <input type="number" id="mistral_delay" class="form-control form-control-sm"
+                                        step="0.5" min="0">
+                                    <div class="param-desc">Clé gratuite ≈ 6 req/min → 10s min</div>
+                                </div>
+                                <!-- max_retries -->
+                                <div class="col-md-2">
+                                    <div class="param-label">Max tentatives</div>
+                                    <input type="number" id="mistral_max_retries" class="form-control form-control-sm"
+                                        min="1" max="10">
+                                    <div class="param-desc">En cas de rate limit (429)</div>
+                                </div>
+                                <!-- batch_max -->
+                                <div class="col-md-2">
+                                    <div class="param-label">Max analyses / run</div>
+                                    <input type="number" id="mistral_batch_max" class="form-control form-control-sm"
+                                        min="0">
+                                    <div class="param-desc">0 = illimité</div>
+                                </div>
+                                <!-- max_tokens -->
+                                <div class="col-md-2">
+                                    <div class="param-label">Max tokens sortie</div>
+                                    <input type="number" id="mistral_max_tokens" class="form-control form-control-sm"
+                                        min="64">
+                                    <div class="param-desc">512 suffisant pour le JSON</div>
+                                </div>
+                                <!-- force -->
+                                <div class="col-md-3">
+                                    <div class="param-label">Mode force</div>
+                                    <div class="form-check form-switch mt-1">
+                                        <input class="form-check-input" type="checkbox" id="mistral_force">
+                                        <label class="form-check-label text-muted small" for="mistral_force">Ré-analyser
+                                            les corrélations déjà traitées</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 text-end">
+                                <button class="btn btn-primary save-btn" onclick="saveConfig()">💾
+                                    Sauvegarder</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Item 3 — Rapport (replié) ──────────────────────────── -->
+                <div class="accordion-item border-0 mb-3" style="background:#161b22; border-radius:8px;">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseRapport"
+                            style="background:#161b22; color:#c9d1d9; border-radius:8px;">
+                            📄 Rapports PDF
+                            <span class="ms-2 text-muted small fw-normal">Paramètres de génération</span>
+                        </button>
+                    </h2>
+                    <div id="collapseRapport" class="accordion-collapse collapse" data-bs-parent="#accordionParametres">
+                        <div class="accordion-body pt-0">
+                            <div class="row g-4">
+                                <div class="col-md-3">
+                                    <div class="param-label">Répertoire de sortie</div>
+                                    <input type="text" id="rapport_output_dir" class="form-control form-control-sm">
+                                    <div class="param-desc">Relatif à la racine du projet</div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="param-label">Score minimum</div>
+                                    <input type="number" id="rapport_score_min" class="form-control form-control-sm"
+                                        step="0.1" min="0" max="10">
+                                    <div class="param-desc">Corrélations sous ce score exclues</div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="param-label">Statuts inclus dans le rapport</div>
+                                    <div class="d-flex gap-3 flex-wrap mt-1">
+                                        <div class="form-check" id="statuts-checks"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 text-end">
+                                <button class="btn btn-primary save-btn" onclick="saveConfig()">💾
+                                    Sauvegarder</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Item 4 — Vuln Types (replié) ───────────────────────── -->
+                <div class="accordion-item border-0 mb-3" style="background:#161b22; border-radius:8px;">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseVulnTypes"
+                            style="background:#161b22; color:#c9d1d9; border-radius:8px;">
+                            🏷️ Types de vulnérabilités
+                            <span class="ms-2 text-muted small fw-normal">Classification CVE — scoring et envoi
+                                Mistral</span>
+                        </button>
+                    </h2>
+                    <div id="collapseVulnTypes" class="accordion-collapse collapse"
+                        data-bs-parent="#accordionParametres">
+                        <div class="accordion-body pt-0">
+                            <div class="table-responsive" style="overflow:visible;">
+                                <table class="table table-hover align-middle vt-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:120px">Code</th>
+                                            <th style="width:160px">Label</th>
+                                            <th style="width:70px">Priorité</th>
+                                            <th style="width:100px">Mistral</th>
+                                            <th style="width:200px">CWE IDs</th>
+                                            <th style="width:220px">Keywords</th>
+                                            <th>Raison</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="vtBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3 text-muted small">
+                                <span class="badge badge-p4 me-1">Priorité 4</span> Critique — patch urgent &nbsp;
+                                <span class="badge badge-p3 me-1">3</span> Haute &nbsp;
+                                <span class="badge badge-p2 me-1">2</span> Moyenne &nbsp;
+                                <span class="badge badge-p1 me-1">1</span> Basse &nbsp;
+                                <span class="badge badge-p0 me-1">0</span> Ignorer
+                            </div>
+                            <div class="mt-4 text-end">
+                                <button class="btn btn-primary save-btn" onclick="saveVulnTypes()">💾
+                                    Sauvegarder</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /accordionParametres -->
+
+        </div><!-- /mainContent -->
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-saved" id="toastSaved">✅ Sauvegardé</div>
+
+    <script src="/static/bootstrap.bundle.min.js"></script>
+    <script src="/static/app-search.js"></script>
+    <script>
+        const API_CONFIG = '/api/parametres-correlation/config';
+        const API_VT = '/api/parametres-correlation/vuln-types';
+
+        let cfgData = {};
+        let vtData = {};
+
+        const STATUTS_OPTIONS = ['nouveau', 'en_analyse', 'confirme', 'mitige', 'informatif', 'faux_positif', 'patche'];
+        const PRIORITE_LABELS = { 4: 'Critique', 3: 'Haute', 2: 'Moyenne', 1: 'Basse', 0: 'Ignorer' };
+
+        // ── Init ──────────────────────────────────────────────────────────
+        async function init() {
+            const [r1, r2] = await Promise.all([
+                fetch(API_CONFIG), fetch(API_VT)
+            ]);
+            cfgData = await r1.json();
+            vtData = await r2.json();
+            renderConfig(cfgData);
+            renderVulnTypes(vtData);
+            document.getElementById('loadingState').classList.add('d-none');
+            document.getElementById('mainContent').classList.remove('d-none');
+        }
+
+        // ── Config → UI ───────────────────────────────────────────────────
+        function renderConfig(cfg) {
+            const corr = cfg.correlation || {};
+            const mist = cfg.mistral || {};
+            const rapp = cfg.rapport || {};
+
+            document.getElementById('cvss_min').value = corr.cvss_min ?? 4.0;
+            document.getElementById('cvss_network_min').value = corr.cvss_network_min ?? 7.0;
+            document.getElementById('date_min').value = corr.date_min ?? '2015-01-01';
+            document.getElementById('vendor_cve_limit').value = corr.vendor_cve_limit ?? 0;
+            document.getElementById('dry_run').checked = !!corr.dry_run;
+            document.getElementById('verbose').checked = !!corr.verbose;
+
+            document.getElementById('mistral_model').value = mist.model ?? 'mistral-large-latest';
+            document.getElementById('mistral_delay').value = mist.delay_seconds ?? 15.0;
+            document.getElementById('mistral_max_retries').value = mist.max_retries ?? 3;
+            document.getElementById('mistral_batch_max').value = mist.batch_max ?? 0;
+            document.getElementById('mistral_max_tokens').value = mist.max_tokens ?? 512;
+            document.getElementById('mistral_force').checked = !!mist.force;
+
+            document.getElementById('rapport_output_dir').value = rapp.output_dir ?? 'documents';
+            document.getElementById('rapport_score_min').value = rapp.score_min ?? 0.0;
+
+            // Statuts checkboxes
+            const statuts_inclus = rapp.statuts_inclus || [];
+            const container = document.getElementById('statuts-checks');
+            container.innerHTML = '';
+            STATUTS_OPTIONS.forEach(s => {
+                container.insertAdjacentHTML('beforeend', `
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="statut_${s}"
+                        ${statuts_inclus.includes(s) ? 'checked' : ''}>
+                    <label class="form-check-label small" for="statut_${s}">${s}</label>
+                </div>
+            `);
+            });
+
+            // os_vendor_map
+            const map = corr.os_vendor_map || {};
+            const EXAMPLES = {
+                windows: 'Microsoft Windows Server 2022',
+                dsm: 'DiskStation Manager 7.2.2',
+                fortios: 'FortiOS 7.4.3',
+                linux: 'Debian GNU/Linux 12',
+                ubuntu: 'Ubuntu Server 22.04',
+            };
+            const tbody = document.getElementById('mapBody');
+            tbody.innerHTML = '';
+            Object.entries(map).forEach(([k, v]) => {
+                addMapRow(k, v, EXAMPLES[k.toLowerCase()] || '');
+            });
+        }
+
+        // ── os_vendor_map rows ────────────────────────────────────────────
+        function addMapRow(keyword = '', vendor = '', example = '') {
+            const id = 'vd_' + Math.random().toString(36).slice(2, 9);
+            document.getElementById('mapBody').insertAdjacentHTML('beforeend', `
+                <tr>
+                    <td><input type="text" class="map-kw" value="${keyword}" placeholder="ex: windows"></td>
+                    <td style="position:relative;overflow:visible;">
+                        <input type="text" class="map-vd" id="${id}" value="${vendor}"
+                            placeholder="ex: microsoft" autocomplete="off" style="width:100%;">
+                        <div id="dd_${id}" style="display:none;position:absolute;top:calc(100% + 2px);left:0;
+                            width:100%;min-width:220px;background:#161b22;border:1px solid #30363d;
+                            border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,0.6);
+                            z-index:99999;max-height:200px;overflow-y:auto;"></div>
+                    </td>
+                    <td><input type="text" class="map-ex" value="${example}" placeholder="optionnel"></td>
+                    <td><button class="btn btn-sm btn-outline-danger"
+                        onclick="this.closest('tr').remove()">🗑</button></td>
+                </tr>
+            `);
+
+            const input = document.getElementById(id);
+            const dd    = document.getElementById('dd_' + id);
+
+            input.addEventListener('input', async () => {
+                const q = input.value.trim();
+                if (q.length < 2) { dd.style.display = 'none'; return; }
+                const r = await fetch(`/api/vendors?search=${encodeURIComponent(q)}&limit=10`);
+                const data = await r.json();
+                const items = data.vendors || [];
+                if (!items.length) { dd.style.display = 'none'; return; }
+                dd.innerHTML = items.map(v => `
+                    <div style="padding:8px 12px;cursor:pointer;font-size:0.82rem;border-bottom:1px solid #21262d;"
+                        onmouseover="this.style.background='rgba(88,166,255,0.1)'"
+                        onmouseout="this.style.background='transparent'"
+                        onclick="document.getElementById('${id}').value='${v.nvd_vendor}';
+                                 document.getElementById('dd_${id}').style.display='none';">
+                        <span style="color:#58a6ff;">${v.nvd_vendor}</span>
+                        <span style="color:#8b949e;margin-left:8px;font-size:0.75rem;">${v.nom}</span>
+                    </div>`).join('');
+                dd.style.display = 'block';
+            });
+
+            document.addEventListener('click', e => {
+                if (!input.contains(e.target) && !dd.contains(e.target))
+                    dd.style.display = 'none';
+            });
+        }
+
+        function getMapData() {
+            const result = {};
+            document.querySelectorAll('#mapBody tr').forEach(tr => {
+                const k = tr.querySelector('.map-kw').value.trim();
+                const v = tr.querySelector('.map-vd').value.trim();
+                if (k && v) result[k] = v;
+            });
+            return result;
+        }
+
+        // ── UI → Config ───────────────────────────────────────────────────
+        function collectConfig() {
+            const statuts_inclus = STATUTS_OPTIONS.filter(s =>
+                document.getElementById(`statut_${s}`)?.checked
+            );
+            return {
+                correlation: {
+                    cvss_min: parseFloat(document.getElementById('cvss_min').value),
+                    cvss_network_min: parseFloat(document.getElementById('cvss_network_min').value),
+                    date_min: document.getElementById('date_min').value,
+                    vendor_cve_limit: parseInt(document.getElementById('vendor_cve_limit').value),
+                    dry_run: document.getElementById('dry_run').checked,
+                    verbose: document.getElementById('verbose').checked,
+                    os_vendor_map: getMapData(),
+                },
+                mistral: {
+                    model: document.getElementById('mistral_model').value.trim(),
+                    delay_seconds: parseFloat(document.getElementById('mistral_delay').value),
+                    max_retries: parseInt(document.getElementById('mistral_max_retries').value),
+                    batch_max: parseInt(document.getElementById('mistral_batch_max').value),
+                    max_tokens: parseInt(document.getElementById('mistral_max_tokens').value),
+                    force: document.getElementById('mistral_force').checked,
+                },
+                rapport: {
+                    output_dir: document.getElementById('rapport_output_dir').value.trim(),
+                    score_min: parseFloat(document.getElementById('rapport_score_min').value),
+                    statuts_inclus,
+                },
+            };
+        }
+
+        async function saveConfig() {
+            const payload = collectConfig();
+            const r = await fetch(API_CONFIG, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            if (r.ok) showToast();
+            else alert('Erreur lors de la sauvegarde : ' + await r.text());
+        }
+
+        // ── vuln_types → UI ───────────────────────────────────────────────
+        function renderVulnTypes(data) {
+            const types = data.types || {};
+            const tbody = document.getElementById('vtBody');
+            tbody.innerHTML = '';
+            Object.entries(types).forEach(([code, t]) => {
+                const pc = `badge-p${t.priorite}`;
+                tbody.insertAdjacentHTML('beforeend', `
+                <tr data-code="${code}">
+                    <td><code class="text-info">${code}</code></td>
+                    <td><input type="text" class="vt-label" value="${t.label || ''}"></td>
+                    <td>
+                        <select class="vt-prio">
+                            ${[4, 3, 2, 1, 0].map(p => `<option value="${p}" ${t.priorite == p ? 'selected' : ''}>${p} — ${PRIORITE_LABELS[p]}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input vt-mistral" type="checkbox" ${t.passer_mistral ? 'checked' : ''}>
+                            <label class="form-check-label small text-muted">${t.passer_mistral ? 'Oui' : 'Non'}</label>
+                        </div>
+                    </td>
+                    <td><textarea class="vt-cwe" rows="2">${(t.cwe_ids || []).join(', ')}</textarea></td>
+                    <td><textarea class="vt-kw" rows="2">${(t.keywords || []).join(', ')}</textarea></td>
+                    <td><input type="text" class="vt-raison" value="${t.raison || ''}"></td>
+                </tr>
+            `);
+                // update label on switch toggle
+                tbody.querySelector(`tr[data-code="${code}"] .vt-mistral`).addEventListener('change', function () {
+                    this.nextElementSibling.textContent = this.checked ? 'Oui' : 'Non';
+                });
+            });
+        }
+
+        function collectVulnTypes() {
+            const types = {};
+            document.querySelectorAll('#vtBody tr[data-code]').forEach(tr => {
+                const code = tr.dataset.code;
+                const cwes = tr.querySelector('.vt-cwe').value
+                    .split(',').map(s => s.trim()).filter(Boolean);
+                const kws = tr.querySelector('.vt-kw').value
+                    .split(',').map(s => s.trim()).filter(Boolean);
+                types[code] = {
+                    label: tr.querySelector('.vt-label').value.trim(),
+                    priorite: parseInt(tr.querySelector('.vt-prio').value),
+                    passer_mistral: tr.querySelector('.vt-mistral').checked,
+                    raison: tr.querySelector('.vt-raison').value.trim(),
+                    cwe_ids: cwes,
+                    keywords: kws,
+                };
+            });
+            return { types };
+        }
+
+        async function saveVulnTypes() {
+            const payload = collectVulnTypes();
+            const r = await fetch(API_VT, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            if (r.ok) showToast();
+            else alert('Erreur lors de la sauvegarde : ' + await r.text());
+        }
+
+        // ── Toast ─────────────────────────────────────────────────────────
+        function showToast() {
+            const t = document.getElementById('toastSaved');
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

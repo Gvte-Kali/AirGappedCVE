@@ -9,15 +9,6 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 from database import get_connection
-from reportlab.lib.enums import TA_LEFT, TA_CENTER
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, HRFlowable
-)
-from reportlab.lib import colors
-from reportlab.lib.units import cm
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.pagesizes import A4
 from mistralai.client.sdk import Mistral
 import pymysql
 import typer
@@ -1454,64 +1445,6 @@ def analyze(
     print(f"  ⚠️  Erreurs              : {counters['errors']}")
     print(f"{'='*70}\n")
 
-
-# ═══════════════════════════════════════════════════════════════════════
-# RAPPORTS PDF (inchangé — utilise les nouvelles colonnes au passage)
-# ═══════════════════════════════════════════════════════════════════════
-
-PRIORITY_COLORS = {
-    "critique": colors.HexColor("#C0392B"),
-    "haute":    colors.HexColor("#E67E22"),
-    "moyenne":  colors.HexColor("#F1C40F"),
-    "basse":    colors.HexColor("#27AE60"),
-}
-
-PRIORITY_ORDER = {"critique": 0, "haute": 1, "moyenne": 2, "basse": 3, None: 4}
-
-
-def build_pdf_styles():
-    styles = getSampleStyleSheet()
-    custom = {
-        "title": ParagraphStyle("title", parent=styles["Title"],
-                                fontSize=22, spaceAfter=6, textColor=colors.HexColor("#1A252F")),
-        "subtitle": ParagraphStyle("subtitle", parent=styles["Normal"],
-                                   fontSize=11, textColor=colors.HexColor("#5D6D7E"), spaceAfter=20),
-        "h1": ParagraphStyle("h1", parent=styles["Heading1"],
-                             fontSize=16, textColor=colors.HexColor("#1A252F"),
-                             spaceBefore=20, spaceAfter=8, borderPad=4),
-        "h2": ParagraphStyle("h2", parent=styles["Heading2"],
-                             fontSize=13, textColor=colors.HexColor("#2C3E50"),
-                             spaceBefore=14, spaceAfter=6),
-        "h3": ParagraphStyle("h3", parent=styles["Heading3"],
-                             fontSize=11, textColor=colors.HexColor("#34495E"),
-                             spaceBefore=10, spaceAfter=4),
-        "body": ParagraphStyle("body", parent=styles["Normal"],
-                               fontSize=9, leading=13, spaceAfter=4),
-        "small": ParagraphStyle("small", parent=styles["Normal"],
-                                fontSize=8, leading=11, textColor=colors.HexColor("#5D6D7E")),
-    }
-    return {**{k: styles[k] for k in styles.byName}, **custom}
-
-
-@app.command()
-def report(
-    output_dir: str = typer.Option(
-        str(BASE_DIR / cfg_rapport("output_dir", "documents")), "--output-dir", "-d"),
-    statuts: str = typer.Option(
-        ",".join(cfg_rapport("statuts_inclus", [
-                 "confirme", "informatif", "mitige"])),
-        "--statuts"),
-    min_score: float = typer.Option(
-        cfg_rapport("score_min", 0.0), "--min-score"),
-    client_id: Optional[int] = typer.Option(None, "--client-id"),
-    asset_id: Optional[int] = typer.Option(None, "--asset-id"),
-):
-    """Génère 2 PDFs : synthèse + rapport complet."""
-    # Note : génération PDF reprise telle quelle de la version précédente.
-    # À adapter avec les nouvelles colonnes (score_pre_triage, passe_correlation)
-    # si tu veux les exposer dans le rapport.
-    print("⚠️  Commande report : à brancher manuellement sur la nouvelle structure.")
-    print("   Utilise la vue v_vulnerabilites_tableau dans Grafana en attendant.\n")
 
 
 # ═══════════════════════════════════════════════════════════════════════

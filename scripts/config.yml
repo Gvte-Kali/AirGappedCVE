@@ -1,29 +1,16 @@
-# ═══════════════════════════════════════════════════════════════════════
-# Asset & Vulnerability Manager — Configuration pipeline
-# Fichier : scripts/config.yml
-# ═══════════════════════════════════════════════════════════════════════
-
 correlation:
-  # ── Filtres CVSS ─────────────────────────────────────────────────────
-  cvss_min: 4.0
-  cvss_network_min: 7.0
-
-  # ── Filtre temporel ───────────────────────────────────────────────────
-  date_min: "2015-01-01"
-
-  # ── Limite cache par vendor ────────────────────────────────────────────
-  # Max CVE chargées par vendor, triées par score DESC (0 = illimité)
+  cvss_min: 4
+  cvss_network_min: 7
+  date_min: '2015-01-01'
   vendor_cve_limit: 0
-
-  # ── Mapping OS textuel → vendor NVD ──────────────────────────────────
-  # Utilisé pour PC/Laptop/Serveur/Raspberry Pi qui ignorent leur vendor matériel
+  dry_run: false
+  verbose: false
   os_vendor_map:
     windows: microsoft
     linux: linux
-    DietPi : linux
+    DietPi: linux
     ubuntu: canonical
     debian: debian
-    centos: centos
     redhat: redhat
     dsm: synology
     fortios: fortinet
@@ -34,57 +21,17 @@ correlation:
     android: google
     macos: apple
     freebsd: freebsd
-
-  # ── Types d'équipements qui utilisent l'OS pour déterminer le vendor CVE ──
-  # (ignorent leur vendor matériel pour la corrélation)
-  os_based_types:
-    - pc
-    - laptop
-    - serveur
-    - raspberry_pi
-
-  # ── Types d'équipements qui utilisent leur vendor matériel ────────────
-  vendor_based_types:
-    - nas
-    - switch
-    - routeur
-    - pare_feu
-    - camera_axis
-    - camera_hikvision
-    - lecteur_biometrique
-    - lecteur_cartes
-    - ugl
-    - utl
-    - imprimante
-    - autre
-
-  # ── Mode dry-run ( n'insère rien en bdd ) ─────────────────────────────────────────────────────
-  dry_run: false
-
-  # ── Verbosité ────────────────────────────────────────────────────────
-  verbose: false
-
 mistral:
-  # Modèle Mistral à utiliser
-  model: "mistral-large-latest"
-  # Délai en secondes entre chaque appel API (clé gratuite ≈ 6 req/min max)
-  delay_seconds: 15.0
-  # Nombre max de tentatives en cas de rate limit (backoff 20s/40s/60s)
+  model: mistral-large-latest
+  delay_seconds: 15
   max_retries: 3
-  # Nombre max de corrélations à analyser par run (0 = illimité)
   batch_max: 0
-  # Nombre max de tokens en sortie par appel
   max_tokens: 512
-  # Ré-analyser les corrélations déjà analysées
-  force: true
-
+  force: false
 rapport:
-  # Répertoire de sortie des PDFs (relatif à la racine du projet)
-  output_dir: "documents"
-  # Statuts inclus dans le rapport
+  output_dir: documents
+  score_min: 0
   statuts_inclus:
-    - "confirme"
-    - "informatif"
-    - "mitige"
-  # Score contextuel minimum pour apparaître dans le rapport
-  score_min: 0.0
+  - confirme
+  - mitige
+  - informatif
