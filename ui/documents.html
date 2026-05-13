@@ -1,64 +1,86 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-bs-theme="dark">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documents - Asset Manager</title>
+    <title>Documents — Asset Manager</title>
     <link rel="stylesheet" href="/static/bootstrap.min.css">
     <link rel="stylesheet" href="/static/app-search.css">
     <link rel="stylesheet" href="/static/app-premium.css">
     <style>
-        .document-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 1.5rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .doc-size {
+            color: #8b949e;
+            font-size: 0.8rem;
         }
 
-        .document-card:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        .doc-date {
+            color: #8b949e;
+            font-size: 0.8rem;
         }
 
-        .document-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--am-accent-gradient);
-            border-radius: 10px;
-            display: flex;
+        .doc-type-rapport {
+            background: rgba(88, 166, 255, 0.15);
+            color: #58a6ff;
+        }
+
+        .doc-type-synthese {
+            background: rgba(63, 185, 80, 0.15);
+            color: #3fb950;
+        }
+
+        .doc-type-autre {
+            background: rgba(139, 148, 158, 0.15);
+            color: #8b949e;
+        }
+
+        .rename-input {
+            background: transparent;
+            border: 1px solid #58a6ff;
+            border-radius: 4px;
+            color: #c9d1d9;
+            padding: 2px 8px;
+            font-size: 0.85rem;
+            width: 100%;
+            min-width: 200px;
+        }
+
+        .rename-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+        }
+
+        .btn-action {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 1.25rem;
+            font-size: 0.9rem;
         }
 
-        .document-icon svg {
-            width: 24px;
-            height: 24px;
-            stroke: white;
+        thead.sticky-header th {
+            background-color: #0d1117;
+            box-shadow: 0 1px 0 #30363d;
         }
 
-        .document-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 0.5rem;
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8b949e;
         }
 
-        .stat-card-mini {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 1.25rem;
+        .empty-state .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.4;
         }
     </style>
 </head>
 
 <body>
+
+    <!-- NAVBAR -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
@@ -67,31 +89,17 @@
             </button>
             <div class="collapse navbar-collapse" id="nav">
                 <div class="d-flex ms-auto align-items-center gap-2">
-
-                    <!-- Recherche globale -->
                     <div class="position-relative am-search" data-am-search-root>
                         <input class="form-control form-control-sm" type="search"
                             placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
                         <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
                     </div>
-
                     <ul class="navbar-nav ms-2 align-items-center gap-1">
-
-                        <!-- Accueil -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="/">Accueil</a>
-                        </li>
-
-                        <!-- Vulnérabilités -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="/ui/vulns">Vulnérabilités</a>
-                        </li>
-
-                        <!-- Inventaire -->
+                        <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/vulns">Vulnérabilités</a></li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                Inventaire
-                            </a>
+                            <a class="nav-link dropdown-toggle" href="#" role="button"
+                                data-bs-toggle="dropdown">Inventaire</a>
                             <ul class="dropdown-menu dropdown-menu-dark">
                                 <li>
                                     <h6 class="dropdown-header"
@@ -108,15 +116,12 @@
                                         style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">IMPORT</h6>
                                 </li>
                                 <li><a class="dropdown-item" href="/ui/import">📥 Import Assets</a></li>
-                                <li><a class="dropdown-item" href="/ui/documents">📄 Documents</a></li>
+                                <li><a class="dropdown-item active" href="/ui/documents">📄 Documents</a></li>
                             </ul>
                         </li>
-
-                        <!-- Référentiels -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                Référentiels
-                            </a>
+                            <a class="nav-link dropdown-toggle" href="#" role="button"
+                                data-bs-toggle="dropdown">Référentiels</a>
                             <ul class="dropdown-menu dropdown-menu-dark">
                                 <li>
                                     <h6 class="dropdown-header"
@@ -142,12 +147,9 @@
                                 <li><a class="dropdown-item" href="/ui/equipment-types">⚙️ Types d'équipements</a></li>
                             </ul>
                         </li>
-
-                        <!-- Outils -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                Outils
-                            </a>
+                            <a class="nav-link dropdown-toggle" href="#" role="button"
+                                data-bs-toggle="dropdown">Outils</a>
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
                                 <li>
                                     <h6 class="dropdown-header"
@@ -172,175 +174,265 @@
                                 <li><a class="dropdown-item" href="/docs">📖 API Docs</a></li>
                             </ul>
                         </li>
-
                     </ul>
                 </div>
             </div>
         </div>
     </nav>
 
+    <!-- CONTENU -->
     <div class="container py-5">
-        <div class="mb-5">
-            <h6 class="section-title mb-2">Rapports & Archives</h6>
-            <h1 class="fw-bold m-0 stat-number">DOCUMENTS</h1>
-        </div>
-
-        <div class="row g-4 mb-5" id="statsBar" style="display: none;">
-            <div class="col-md-4">
-                <div class="stat-card-mini">
-                    <span class="stat-label d-block mb-1 text-muted small">TOTAL DOCUMENTS</span>
-                    <span class="stat-value h2 fw-bold" id="totalDocs">0</span>
-                </div>
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <h6 class="section-title mb-2">Rapports & Exports</h6>
+                <h1 class="fw-bold m-0 stat-number">DOCUMENTS</h1>
             </div>
-            <div class="col-md-4">
-                <div class="stat-card-mini">
-                    <span class="stat-label d-block mb-1 text-muted small">DERNIÈRE MISE À JOUR</span>
-                    <span class="stat-value h4 fw-bold" id="lastUpdate">-</span>
-                </div>
+            <div class="d-flex gap-2 align-items-center">
+                <span class="text-muted small" id="docCount"></span>
+                <a href="/ui/vulns" class="btn btn-primary">📄 Générer un rapport</a>
             </div>
         </div>
 
-        <div id="documentsContent">
-            <div class="loading">
-                <div class="spinner"></div>
-                <p>Chargement des documents...</p>
+        <!-- Tableau -->
+        <div class="card">
+            <div class="table-responsive" style="overflow:visible;">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="sticky-header" style="position:sticky;top:56px;z-index:10;">
+                        <tr>
+                            <th class="ps-4" style="width:45%">Nom du fichier</th>
+                            <th style="width:10%">Type</th>
+                            <th style="width:10%">Taille</th>
+                            <th style="width:15%">Généré le</th>
+                            <th class="pe-4 text-end" style="width:20%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="docTableBody">
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <div class="spinner-border spinner-border-sm text-primary"></div>
+                                <span class="text-muted ms-2">Chargement…</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <script>
-        const API_BASE = '';
-
-        async function loadDocuments() {
-            try {
-                const response = await fetch(`${API_BASE}/api/documents`);
-
-                if (!response.ok) {
-                    throw new Error(`Erreur HTTP: ${response.status}`);
-                }
-
-                const data = await response.json();
-                displayDocuments(data.documents);
-                updateStats(data.documents);
-
-            } catch (error) {
-                console.error('Erreur lors du chargement des documents:', error);
-                document.getElementById('documentsContent').innerHTML = `
-                    <div class="error-message">
-                        ❌ Erreur lors du chargement des documents: ${error.message}
+    <!-- MODAL CONFIRMATION SUPPRESSION -->
+    <div class="modal fade" id="modalSupprimer" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content" style="background:#161b22;border-color:#30363d;">
+                <div class="modal-header" style="border-color:#30363d;">
+                    <h6 class="modal-title fw-bold text-danger">🗑️ Supprimer le document</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-2">Vous allez supprimer :</p>
+                    <p class="fw-semibold" id="supprimerNomFichier" style="color:#c9d1d9;word-break:break-all;"></p>
+                    <div class="alert mt-3"
+                        style="background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);color:#f85149;font-size:0.82rem;">
+                        ⚠️ Cette action est <strong>irréversible</strong>. Le fichier sera définitivement supprimé.
                     </div>
-                `;
-            }
-        }
-
-        function displayDocuments(documents) {
-            const container = document.getElementById('documentsContent');
-
-            if (!documents || documents.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <h3>Aucun document disponible</h3>
-                        <p>Les rapports générés apparaîtront ici</p>
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" id="confirmSupprCheck">
+                        <label class="form-check-label small" for="confirmSupprCheck" style="color:#c9d1d9;">
+                            Je confirme vouloir supprimer ce fichier définitivement
+                        </label>
                     </div>
-                `;
-                return;
-            }
-
-            const grid = document.createElement('div');
-            grid.className = 'documents-grid';
-
-            documents.forEach(doc => {
-                const card = createDocumentCard(doc);
-                grid.appendChild(card);
-            });
-
-            container.innerHTML = '';
-            container.appendChild(grid);
-        }
-
-        function createDocumentCard(doc) {
-            const card = document.createElement('div');
-            card.className = 'document-card';
-
-            const typeIcon = doc.type === 'synthese' ? '📊' : '📋';
-            const typeLabel = doc.type === 'synthese' ? 'Synthèse' : 'Rapport Complet';
-
-            card.innerHTML = `
-                <div class="document-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
                 </div>
-                <div class="document-title">${typeIcon} ${doc.name}</div>
-                <div class="document-meta">
-                    <span>📅 ${formatDate(doc.created)}</span>
-                    <span>📦 ${formatSize(doc.size)}</span>
+                <div class="modal-footer" style="border-color:#30363d;">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-danger btn-sm" id="btnConfirmSuppr" disabled
+                        onclick="confirmerSuppression()">🗑️ Supprimer définitivement</button>
                 </div>
-                <div class="document-meta">
-                    <span style="color: #667eea; font-weight: 500;">${typeLabel}</span>
-                </div>
-                <div class="document-actions">
-                    <a href="${API_BASE}/api/documents/${encodeURIComponent(doc.name)}"
-                       class="btn btn-primary"
-                       download>
-                        ⬇️ Télécharger
-                    </a>
-                    <a href="${API_BASE}/api/documents/${encodeURIComponent(doc.name)}?preview=true"
-                       class="btn btn-secondary"
-                       target="_blank">
-                        👁️ Aperçu
-                    </a>
-                </div>
-            `;
+            </div>
+        </div>
+    </div>
 
-            return card;
-        }
-
-        function updateStats(documents) {
-            if (!documents || documents.length === 0) {
-                return;
-            }
-
-            document.getElementById('statsBar').style.display = 'flex';
-            document.getElementById('totalDocs').textContent = documents.length;
-
-            // Trouve la date la plus récente
-            const latestDate = documents.reduce((latest, doc) => {
-                const docDate = new Date(doc.created);
-                return docDate > latest ? docDate : latest;
-            }, new Date(0));
-
-            document.getElementById('lastUpdate').textContent = formatDate(latestDate);
-        }
-
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return new Intl.DateTimeFormat('fr-FR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            }).format(date);
-        }
-
-        function formatSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-        }
-
-        // Charger les documents au chargement de la page
-        loadDocuments();
-
-        // Rafraîchir toutes les 30 secondes
-        setInterval(loadDocuments, 30000);
-    </script>
     <script src="/static/bootstrap.bundle.min.js"></script>
     <script src="/static/app-search.js"></script>
+    <script>
+        const API = '/api/documents';
+        let docs = [];
+        let fichierASupprimer = null;
+
+        // ── Chargement ────────────────────────────────────────────────
+        async function charger() {
+            try {
+                const r = await fetch(API);
+                const data = await r.json();
+                docs = data.documents || [];
+                afficher();
+            } catch (e) {
+                document.getElementById('docTableBody').innerHTML =
+                    `<tr><td colspan="5" class="text-center text-danger py-4">Erreur de chargement</td></tr>`;
+            }
+        }
+
+        function afficher() {
+            const tbody = document.getElementById('docTableBody');
+            document.getElementById('docCount').textContent =
+                docs.length ? `${docs.length} fichier${docs.length > 1 ? 's' : ''}` : '';
+
+            if (!docs.length) {
+                tbody.innerHTML = `
+                    <tr><td colspan="5">
+                        <div class="empty-state">
+                            <div class="empty-icon">📄</div>
+                            <div class="fw-semibold mb-1" style="color:#c9d1d9;">Aucun document</div>
+                            <div class="small">Générez un rapport depuis la page
+                                <a href="/ui/vulns" style="color:#58a6ff;">Vulnérabilités</a>
+                            </div>
+                        </div>
+                    </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = docs.map((d, idx) => `
+                <tr id="row-${idx}">
+                    <td class="ps-4">
+                        <div id="view-${idx}" class="d-flex align-items-center gap-2">
+                            <span style="color:#c9d1d9;font-size:0.88rem;word-break:break-all;">${d.name}</span>
+                            <button class="btn btn-sm btn-link p-0" style="color:#8b949e;font-size:0.75rem;"
+                                onclick="activerRenommage(${idx})" title="Renommer">✏️</button>
+                        </div>
+                        <div id="edit-${idx}" class="d-none d-flex align-items-center gap-2">
+                            <input type="text" class="rename-input" id="input-${idx}"
+                                value="${d.name}"
+                                onkeydown="if(event.key==='Enter') sauvegarderNom(${idx});
+                                           if(event.key==='Escape') annulerRenommage(${idx});">
+                            <button class="btn btn-sm btn-success" onclick="sauvegarderNom(${idx})">✓</button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="annulerRenommage(${idx})">✖</button>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge ${badgeType(d.type)} px-2 py-1" style="font-size:0.72rem;border-radius:4px;">
+                            ${labelType(d.type)}
+                        </span>
+                    </td>
+                    <td class="doc-size">${formatTaille(d.size)}</td>
+                    <td class="doc-date">${formatDate(d.created)}</td>
+                    <td class="pe-4 text-end">
+                        <div class="d-flex gap-1 justify-content-end">
+                            <a href="${API}/${d.name}?preview=true" target="_blank"
+                                class="btn btn-sm btn-outline-info btn-action" title="Prévisualiser">👁️</a>
+                            <a href="${API}/${d.name}" download
+                                class="btn btn-sm btn-outline-secondary btn-action" title="Télécharger">⬇️</a>
+                            <button class="btn btn-sm btn-outline-danger btn-action"
+                                onclick="demanderSuppression(${idx})" title="Supprimer">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ── Renommage ─────────────────────────────────────────────────
+        function activerRenommage(idx) {
+            document.getElementById(`view-${idx}`).classList.add('d-none');
+            document.getElementById(`edit-${idx}`).classList.remove('d-none');
+            const input = document.getElementById(`input-${idx}`);
+            input.focus();
+            // Sélectionner le nom sans l'extension
+            const dot = input.value.lastIndexOf('.');
+            input.setSelectionRange(0, dot > 0 ? dot : input.value.length);
+        }
+
+        function annulerRenommage(idx) {
+            document.getElementById(`view-${idx}`).classList.remove('d-none');
+            document.getElementById(`edit-${idx}`).classList.add('d-none');
+            document.getElementById(`input-${idx}`).value = docs[idx].name;
+        }
+
+        async function sauvegarderNom(idx) {
+            const input = document.getElementById(`input-${idx}`);
+            let newName = input.value.trim();
+
+            if (!newName) { alert('Le nom ne peut pas être vide.'); return; }
+            if (!newName.endsWith('.pdf')) newName += '.pdf';
+            if (newName === docs[idx].name) { annulerRenommage(idx); return; }
+
+            try {
+                const r = await fetch(`${API}/${encodeURIComponent(docs[idx].name)}/rename`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ new_name: newName }),
+                });
+                if (!r.ok) {
+                    const err = await r.json();
+                    throw new Error(err.detail || `HTTP ${r.status}`);
+                }
+                await charger();
+            } catch (e) {
+                alert('Erreur : ' + e.message);
+            }
+        }
+
+        // ── Suppression ───────────────────────────────────────────────
+        function demanderSuppression(idx) {
+            fichierASupprimer = docs[idx].name;
+            document.getElementById('supprimerNomFichier').textContent = fichierASupprimer;
+            document.getElementById('confirmSupprCheck').checked = false;
+            document.getElementById('btnConfirmSuppr').disabled = true;
+            new bootstrap.Modal(document.getElementById('modalSupprimer')).show();
+        }
+
+        document.getElementById('confirmSupprCheck').addEventListener('change', function () {
+            document.getElementById('btnConfirmSuppr').disabled = !this.checked;
+        });
+
+        async function confirmerSuppression() {
+            if (!fichierASupprimer) return;
+            try {
+                const r = await fetch(`${API}/${encodeURIComponent(fichierASupprimer)}`, {
+                    method: 'DELETE'
+                });
+                if (!r.ok) {
+                    const err = await r.json();
+                    throw new Error(err.detail || `HTTP ${r.status}`);
+                }
+                bootstrap.Modal.getInstance(document.getElementById('modalSupprimer')).hide();
+                fichierASupprimer = null;
+                await charger();
+            } catch (e) {
+                alert('Erreur : ' + e.message);
+            }
+        }
+
+        // ── Utilitaires ───────────────────────────────────────────────
+        function badgeType(type) {
+            if (type === 'synthese') return 'doc-type-synthese';
+            if (type === 'rapport') return 'doc-type-rapport';
+            return 'doc-type-autre';
+        }
+
+        function labelType(type) {
+            if (type === 'synthese') return 'Synthèse';
+            if (type === 'rapport') return 'Rapport';
+            return 'Document';
+        }
+
+        function formatTaille(bytes) {
+            if (!bytes) return '—';
+            if (bytes < 1024) return `${bytes} o`;
+            if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+            return `${(bytes / 1024 / 1024).toFixed(1)} Mo`;
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '—';
+            try {
+                const d = new Date(iso);
+                return d.toLocaleDateString('fr-FR', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                }) + ' ' + d.toLocaleTimeString('fr-FR', {
+                    hour: '2-digit', minute: '2-digit'
+                });
+            } catch { return iso; }
+        }
+
+        charger();
+    </script>
 </body>
 
 </html>

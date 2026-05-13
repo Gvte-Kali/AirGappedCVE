@@ -2,6 +2,8 @@
 API Router pour la gestion des documents PDF
 """
 import os
+import re
+from pydantic import BaseModel
 from pathlib import Path
 from datetime import datetime
 from fastapi import APIRouter, HTTPException
@@ -151,3 +153,41 @@ async def delete_document(filename: str) -> Dict[str, str]:
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
+
+class RenameRequest(BaseModel):
+    new_name: str
+
+
+@router.patch("/{filename}/rename")
+async def rename_document(filename: str, body: RenameRequest):
+    new_name = body.new_name.strip()
+
+    if not new_name.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Le fichier doit avoir l'extension .pdf")
+
+    if re.search(r'[/\\<>:"|?*]', new_name):
+        raise HTTPException(status_code=400, detail="Nom de fichier invalide (caractères interdits : / \\ < > : \" | ? *)")
+
+    if len(new_name) > 255:
+        raise HTTPException(status_code=400, detail="Nom de fichier trop long (max 255 caractères)")
+
+    old_path = DOCUMENTS_DIR / filename
+    new_path = DOCUMENTS_DIR / new_name
+
+    if not old_path.exists() or not old_path.is_file():
+        raise HTTPException(status_code=404, detail="Document introuvable")
+
+    if new_path.exists() and new_path != old_path:
+        raise HTTPException(status_code=409, detail=f"Un fichier nommé '{new_name}' existe déjà")
+
+    try:
+        old_path.resolve().relative_to(DOCUMENTS_DIR.resolve())
+        new_path.resolve().relative_to(DOCUMENTS_DIR.resolve())
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Accès interdit")
+
+    try:
+        old_path.rename(new_path)
+        return {"message": f"Fichier renommé en '{new_name}'", "new_name": new_name}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors du renommage : {str(e)}")

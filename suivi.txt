@@ -45,7 +45,7 @@ NOTE : Doc en attente — priorité au développement applicatif.
   BLOC H — GESTION DOCUMENTS & PDF
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-[ ] H1 — ui/documents.html : refonte complète
+[✅] H1 — ui/documents.html : refonte complète
          • Tableau : colonnes Nom, Type, Taille, Date, Actions
          • Corriger textes foncés sur fond foncé (lisibilité)
          • Renommage inline dans la colonne Nom
@@ -56,18 +56,18 @@ NOTE : Doc en attente — priorité au développement applicatif.
            → DELETE /api/documents/{filename}
          • Bouton télécharger / prévisualiser par ligne
 
-[ ] H2 — routers/documents.py : endpoint renommage
+[✅] H2 — routers/documents.py : endpoint renommage
          PATCH /api/documents/{filename}/rename
          Body : { "new_name": "nouveau_nom.pdf" }
          Validation : .pdf obligatoire, pas de path traversal
 
-[ ] H3 — ui/vulns.html : champ nom de fichier dans le modal PDF
+[✅] H3 — ui/vulns.html : champ nom de fichier dans le modal PDF
          • Valeur par défaut : rapport_vuln_YYYY_MM_DD_HH_MM.pdf
            (underscores entre toutes les parties de la date)
          • Champ éditable avant génération
          • Extension .pdf forcée, pas d'espaces
 
-[ ] H4 — routers/rapport_pdf.py : prendre en compte le nom personnalisé
+[✅] H4 — routers/rapport_pdf.py : prendre en compte le nom personnalisé
          Champ optionnel "filename" dans RapportRequest
          Sanitisation + fallback rapport_vuln_YYYY_MM_DD_HH_MM.pdf
 
@@ -119,6 +119,10 @@ Ordre d'exécution : H2 → H4 → H1 → H3
          Pages concernées : toutes les pages dans ui/ + /routers/scripts.py
          Fournir le HTML de la navbar à Claude pour génération,
          puis remplacer manuellement page par page.
+
+[ ] I5 — Ajouter le prompt dans ma page de paramètres de corrélation.
+          Cela implique de modifier mon script afin qu'il aille chercher le prompt quelque aprt ( config.yml c'est pas trop mal comme solution )
+          Faut qu'on puisse modifier le prompt directement dans la page paramètres, qui mettre à jour le prompt dans cofig.yml, qui sera chargé par le script de corrélation
 
 Ordre d'exécution : I1 → I2 → I3 (si I2 OK) → I4
 

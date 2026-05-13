@@ -51,6 +51,8 @@ class RapportRequest(BaseModel):
     priorite: Optional[List[str]] = None
     # Champs à inclure dans le PDF
     champs: Optional[List[str]] = None
+    # Nom personnalisé du fichier de sortie
+    filename: Optional[str] = None
 
 
 CHAMPS_DISPONIBLES = [
@@ -202,15 +204,15 @@ def _build_pdf(rows, champs: List[str], filename: str, req: RapportRequest):
 
     # Construire les colonnes selon les champs sélectionnés
     LARGEURS_REL = {
-        "localisation":     8,
-        "asset_nom":        8,
-        "fabricant_modele": 8,
-        "cve_id":           7,
+        "localisation":     7,
+        "asset_nom":        10,
+        "fabricant_modele": 10,
+        "cve_id":           10,
         "description":      14,
         "score_cvss":       5,
         "date_detection":   6,
         "statut":           6,
-        "risque_reel":      12,
+        "risque_reel":      10,
         "analyse_ia":       14,
     }
 
@@ -278,15 +280,21 @@ def _build_pdf(rows, champs: List[str], filename: str, req: RapportRequest):
             mod = row.get('modele_nom','') or row.get('version_os','') or ''
             return Paragraph(f"{fab}\n<font size='6'>{mod}</font>", style_normal)
         elif key == "cve_id":
-            return Paragraph(f"<font color='#1e40af'>{row.get('cve_id','')}</font>", style_normal)
+            cve = row.get('cve_id') or ''
+            style_cve = ParagraphStyle("cve", parent=style_normal,
+                textColor=colors.HexColor("#1e40af"),
+                fontSize=6.5, leading=8,
+                splitLongWords=True,
+                wordWrap='LTR')
+            return Paragraph(cve, style_cve)
         elif key == "description":
             desc = (row.get('description') or '')[:200]
             return Paragraph(desc, style_small)
         elif key == "score_cvss":
             score = row.get('cvss_v3_score','')
-            sev   = row.get('cvss_v3_severity','') or ''
+            sev   = (row.get('cvss_v3_severity','') or '').replace('CRITICAL','CRIT.').replace('MEDIUM','MED.')
             color = "#C0392B" if float(score or 0) >= 9 else "#E67E22" if float(score or 0) >= 7 else "#555"
-            return Paragraph(f"<font color='{color}'><b>{score}</b></font>\n<font size='6'>{sev}</font>", style_normal)
+            return Paragraph(f"<font color='{color}'><b>{score}</b></font><br/><font size='6'>{sev}</font>", style_normal)
         elif key == "date_detection":
             return Paragraph(fmt_date(row.get('date_detection')), style_small)
         elif key == "statut":
@@ -370,8 +378,21 @@ def generer_rapport(req: RapportRequest):
     if not rows:
         raise HTTPException(status_code=404, detail="Aucune vulnérabilité trouvée avec ces filtres.")
 
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"rapport_vuln_{ts}.pdf"
+    def _sanitize_filename(name: str) -> str:
+        import re
+        name = name.strip()
+        if not name.endswith('.pdf'):
+            name += '.pdf'
+        name = re.sub(r'[/\\<>:"|?*\s]', '_', name)
+        if len(name) > 200:
+            name = name[:196] + '.pdf'
+        return name
+
+    ts = datetime.now().strftime("%Y_%m_%d_%H_%M")
+    if req.filename and req.filename.strip():
+        filename = _sanitize_filename(req.filename)
+    else:
+        filename = f"rapport_vuln_{ts}.pdf"
 
     _build_pdf(rows, champs, filename, req)
 

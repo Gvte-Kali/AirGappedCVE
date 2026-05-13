@@ -1158,6 +1158,12 @@
             document.getElementById('pdfErreur').classList.add('d-none');
             document.getElementById('btnGenererPDF').disabled = false;
             document.getElementById('btnGenererPDF').textContent = '📄 Générer le PDF';
+
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const nomDefaut = `rapport_vuln_${now.getFullYear()}_${pad(now.getMonth()+1)}_${pad(now.getDate())}_${pad(now.getHours())}_${pad(now.getMinutes())}`;
+            document.getElementById('pdfNomChoisi').value = nomDefaut;
+
             new bootstrap.Modal(document.getElementById('modalPDF')).show();
         }
 
@@ -1171,10 +1177,13 @@
             document.getElementById('pdfResultat').classList.add('d-none');
             document.getElementById('pdfErreur').classList.add('d-none');
 
+            const nomChoisi = document.getElementById('pdfNomChoisi').value.trim();
+
             const payload = {
                 champs,
                 statut:   getFiltresStatut(),
                 priorite: getFiltresPriorite(),
+                filename: nomChoisi || null,
             };
 
             const clientId    = document.getElementById('filtreClientId')?.value;
@@ -1254,6 +1263,18 @@
                     <div class="d-flex gap-3 mt-2">
                         <a href="#" onclick="document.querySelectorAll('.pdf-champ').forEach(c=>c.checked=true);return false;" class="small text-muted">Tout cocher</a>
                         <a href="#" onclick="document.querySelectorAll('.pdf-champ').forEach(c=>c.checked=false);return false;" class="small text-muted">Tout décocher</a>
+                    </div>
+                </div>
+                <!-- Nom du fichier -->
+                <div class="mb-3">
+                    <label class="form-label stat-label">Nom du fichier PDF</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="pdfNomChoisi"
+                            placeholder="rapport_vuln_YYYY_MM_DD_HH_MM">
+                        <span class="input-group-text" style="background:#0d1117;border-color:#30363d;color:#8b949e;">.pdf</span>
+                    </div>
+                    <div class="form-text" style="color:#8b949e;">
+                        Laissez vide pour un nom automatique. Les espaces seront remplacés par des underscores.
                     </div>
                 </div>
                 <div id="pdfResultat" class="d-none">

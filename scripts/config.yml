@@ -1,7 +1,7 @@
 correlation:
-  cvss_min: 4
-  cvss_network_min: 7
-  date_min: '2015-01-01'
+  cvss_min: 0
+  cvss_network_min: 0
+  date_min: '2000-01-01'
   vendor_cve_limit: 0
   dry_run: false
   verbose: false
