@@ -363,7 +363,7 @@ CONSOLE_HTML = """
     <!-- ─── NAVBAR ─────────────────────────────────────────── -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
+            <a class="navbar-brand fw-bold" href="/">🛡️ Air-Gapped CVEs</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
                 <span class="navbar-toggler-icon"></span>
             </button>

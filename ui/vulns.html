@@ -115,7 +115,7 @@
     <!-- ─── NAVBAR ─────────────────────────────────────────── -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="/">🛡️ Asset Manager</a>
+            <a class="navbar-brand fw-bold" href="/">🛡️ Air-Gapped CVEs</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -1161,7 +1161,7 @@
 
             const now = new Date();
             const pad = n => String(n).padStart(2, '0');
-            const nomDefaut = `rapport_vuln_${now.getFullYear()}_${pad(now.getMonth()+1)}_${pad(now.getDate())}_${pad(now.getHours())}_${pad(now.getMinutes())}`;
+            const nomDefaut = `rapport_vuln_${now.getFullYear()}_${pad(now.getMonth() + 1)}_${pad(now.getDate())}_${pad(now.getHours())}_${pad(now.getMinutes())}`;
             document.getElementById('pdfNomChoisi').value = nomDefaut;
 
             new bootstrap.Modal(document.getElementById('modalPDF')).show();
@@ -1181,32 +1181,32 @@
 
             const payload = {
                 champs,
-                statut:   getFiltresStatut(),
+                statut: getFiltresStatut(),
                 priorite: getFiltresPriorite(),
                 filename: nomChoisi || null,
             };
 
-            const clientId    = document.getElementById('filtreClientId')?.value;
-            const siteId      = document.getElementById('filtreSiteId')?.value;
-            const typeId      = document.getElementById('filtreTypeId')?.value;
+            const clientId = document.getElementById('filtreClientId')?.value;
+            const siteId = document.getElementById('filtreSiteId')?.value;
+            const typeId = document.getElementById('filtreTypeId')?.value;
             const fabricantId = document.getElementById('filtreFabricantId')?.value;
-            const modeleId    = document.getElementById('filtreModeleId')?.value;
-            const osNom       = document.getElementById('filtreOsSearch')?.value;
-            const versionOs   = document.getElementById('filtreVersionOs')?.value;
-            const firmware    = document.getElementById('filtreFirmwareSearch')?.value;
-            const asset       = document.getElementById('filtreAsset')?.value;
-            const cve         = document.getElementById('filtreCVE')?.value;
+            const modeleId = document.getElementById('filtreModeleId')?.value;
+            const osNom = document.getElementById('filtreOsSearch')?.value;
+            const versionOs = document.getElementById('filtreVersionOs')?.value;
+            const firmware = document.getElementById('filtreFirmwareSearch')?.value;
+            const asset = document.getElementById('filtreAsset')?.value;
+            const cve = document.getElementById('filtreCVE')?.value;
 
-            if (clientId)    payload.client_id          = parseInt(clientId);
-            if (siteId)      payload.site_id             = parseInt(siteId);
-            if (typeId)      payload.equipment_type_id   = parseInt(typeId);
-            if (fabricantId) payload.vendor_id           = parseInt(fabricantId);
-            if (modeleId)    payload.model_id            = parseInt(modeleId);
-            if (osNom)       payload.os_nom              = osNom;
-            if (versionOs)   payload.version_os          = versionOs;
-            if (firmware)    payload.firmware            = firmware;
-            if (asset)       payload.asset_nom           = asset;
-            if (cve)         payload.cve_id              = cve;
+            if (clientId) payload.client_id = parseInt(clientId);
+            if (siteId) payload.site_id = parseInt(siteId);
+            if (typeId) payload.equipment_type_id = parseInt(typeId);
+            if (fabricantId) payload.vendor_id = parseInt(fabricantId);
+            if (modeleId) payload.model_id = parseInt(modeleId);
+            if (osNom) payload.os_nom = osNom;
+            if (versionOs) payload.version_os = versionOs;
+            if (firmware) payload.firmware = firmware;
+            if (asset) payload.asset_nom = asset;
+            if (cve) payload.cve_id = cve;
 
             try {
                 const r = await fetch('/api/rapport/generer', {
@@ -1219,8 +1219,8 @@
                     throw new Error(err.detail || `HTTP ${r.status}`);
                 }
                 const data = await r.json();
-                document.getElementById('pdfNomFichier').textContent  = data.filename;
-                document.getElementById('pdfNbVulns').textContent     = data.total;
+                document.getElementById('pdfNomFichier').textContent = data.filename;
+                document.getElementById('pdfNbVulns').textContent = data.total;
                 document.getElementById('pdfLienTelechargement').href = data.url;
                 document.getElementById('pdfResultat').classList.remove('d-none');
             } catch (e) {
@@ -1234,64 +1234,94 @@
 
     </script>
 
-<div class="modal fade" id="modalPDF" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content" style="background:#161b22; border-color:#30363d;">
-            <div class="modal-header" style="border-color:#30363d;">
-                <h5 class="modal-title fw-bold">📄 Générer un rapport PDF</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert" style="background:rgba(88,166,255,0.1); border:1px solid rgba(88,166,255,0.3); color:#c9d1d9; font-size:0.85rem;">
-                    <strong>Filtres actifs :</strong> <span id="pdfFiltresResume">—</span><br>
-                    <small class="text-muted">Le PDF sera généré avec les mêmes filtres que votre vue actuelle.</small>
+    <div class="modal fade" id="modalPDF" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background:#161b22; border-color:#30363d;">
+                <div class="modal-header" style="border-color:#30363d;">
+                    <h5 class="modal-title fw-bold">📄 Générer un rapport PDF</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="mb-4">
-                    <label class="form-label stat-label mb-3">Champs à inclure dans le PDF</label>
-                    <div class="row g-2">
-                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="localisation" checked> Localisation (Client / Site)</label></div>
-                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="asset_nom" checked> Nom de l'asset</label></div>
-                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="fabricant_modele" checked> Fabricant / Modèle</label></div>
-                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="cve_id" checked> Identifiant CVE</label></div>
-                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="description"> Description de la CVE</label></div>
-                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="score_cvss" checked> Score CVSS</label></div>
-                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="date_detection" checked> Date de détection</label></div>
-                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="statut" checked> Statut / Priorité</label></div>
-                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="risque_reel" checked> Risque réel</label></div>
-                        <div class="col-md-4"><label class="d-flex align-items-center gap-2 small" style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="analyse_ia" checked> Analyse IA (Mistral)</label></div>
+                <div class="modal-body">
+                    <div class="alert"
+                        style="background:rgba(88,166,255,0.1); border:1px solid rgba(88,166,255,0.3); color:#c9d1d9; font-size:0.85rem;">
+                        <strong>Filtres actifs :</strong> <span id="pdfFiltresResume">—</span><br>
+                        <small class="text-muted">Le PDF sera généré avec les mêmes filtres que votre vue
+                            actuelle.</small>
                     </div>
-                    <div class="d-flex gap-3 mt-2">
-                        <a href="#" onclick="document.querySelectorAll('.pdf-champ').forEach(c=>c.checked=true);return false;" class="small text-muted">Tout cocher</a>
-                        <a href="#" onclick="document.querySelectorAll('.pdf-champ').forEach(c=>c.checked=false);return false;" class="small text-muted">Tout décocher</a>
+                    <div class="mb-4">
+                        <label class="form-label stat-label mb-3">Champs à inclure dans le PDF</label>
+                        <div class="row g-2">
+                            <div class="col-md-4"><label class="d-flex align-items-center gap-2 small"
+                                    style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="localisation"
+                                        checked> Localisation (Client / Site)</label></div>
+                            <div class="col-md-4"><label class="d-flex align-items-center gap-2 small"
+                                    style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="asset_nom"
+                                        checked> Nom de l'asset</label></div>
+                            <div class="col-md-4"><label class="d-flex align-items-center gap-2 small"
+                                    style="cursor:pointer"><input type="checkbox" class="pdf-champ"
+                                        value="fabricant_modele" checked> Fabricant / Modèle</label></div>
+                            <div class="col-md-4"><label class="d-flex align-items-center gap-2 small"
+                                    style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="cve_id"
+                                        checked> Identifiant CVE</label></div>
+                            <div class="col-md-4"><label class="d-flex align-items-center gap-2 small"
+                                    style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="description">
+                                    Description de la CVE</label></div>
+                            <div class="col-md-4"><label class="d-flex align-items-center gap-2 small"
+                                    style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="score_cvss"
+                                        checked> Score CVSS</label></div>
+                            <div class="col-md-4"><label class="d-flex align-items-center gap-2 small"
+                                    style="cursor:pointer"><input type="checkbox" class="pdf-champ"
+                                        value="date_detection" checked> Date de détection</label></div>
+                            <div class="col-md-4"><label class="d-flex align-items-center gap-2 small"
+                                    style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="statut"
+                                        checked> Statut / Priorité</label></div>
+                            <div class="col-md-4"><label class="d-flex align-items-center gap-2 small"
+                                    style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="risque_reel"
+                                        checked> Risque réel</label></div>
+                            <div class="col-md-4"><label class="d-flex align-items-center gap-2 small"
+                                    style="cursor:pointer"><input type="checkbox" class="pdf-champ" value="analyse_ia"
+                                        checked> Analyse IA (Mistral)</label></div>
+                        </div>
+                        <div class="d-flex gap-3 mt-2">
+                            <a href="#"
+                                onclick="document.querySelectorAll('.pdf-champ').forEach(c=>c.checked=true);return false;"
+                                class="small text-muted">Tout cocher</a>
+                            <a href="#"
+                                onclick="document.querySelectorAll('.pdf-champ').forEach(c=>c.checked=false);return false;"
+                                class="small text-muted">Tout décocher</a>
+                        </div>
                     </div>
+                    <!-- Nom du fichier -->
+                    <div class="mb-3">
+                        <label class="form-label stat-label">Nom du fichier PDF</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="pdfNomChoisi"
+                                placeholder="rapport_vuln_YYYY_MM_DD_HH_MM">
+                            <span class="input-group-text"
+                                style="background:#0d1117;border-color:#30363d;color:#8b949e;">.pdf</span>
+                        </div>
+                        <div class="form-text" style="color:#8b949e;">
+                            Laissez vide pour un nom automatique. Les espaces seront remplacés par des underscores.
+                        </div>
+                    </div>
+                    <div id="pdfResultat" class="d-none">
+                        <div class="alert alert-success d-flex align-items-center justify-content-between">
+                            <div>✅ <strong id="pdfNomFichier"></strong> généré avec succès (<span
+                                    id="pdfNbVulns"></span> vulnérabilités)</div>
+                            <a id="pdfLienTelechargement" href="#" target="_blank" class="btn btn-sm btn-success">⬇
+                                Télécharger</a>
+                        </div>
+                    </div>
+                    <div id="pdfErreur" class="alert alert-danger d-none"></div>
                 </div>
-                <!-- Nom du fichier -->
-                <div class="mb-3">
-                    <label class="form-label stat-label">Nom du fichier PDF</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="pdfNomChoisi"
-                            placeholder="rapport_vuln_YYYY_MM_DD_HH_MM">
-                        <span class="input-group-text" style="background:#0d1117;border-color:#30363d;color:#8b949e;">.pdf</span>
-                    </div>
-                    <div class="form-text" style="color:#8b949e;">
-                        Laissez vide pour un nom automatique. Les espaces seront remplacés par des underscores.
-                    </div>
+                <div class="modal-footer" style="border-color:#30363d;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="btnGenererPDF" onclick="genererPDF()">📄 Générer
+                        le PDF</button>
                 </div>
-                <div id="pdfResultat" class="d-none">
-                    <div class="alert alert-success d-flex align-items-center justify-content-between">
-                        <div>✅ <strong id="pdfNomFichier"></strong> généré avec succès (<span id="pdfNbVulns"></span> vulnérabilités)</div>
-                        <a id="pdfLienTelechargement" href="#" target="_blank" class="btn btn-sm btn-success">⬇ Télécharger</a>
-                    </div>
-                </div>
-                <div id="pdfErreur" class="alert alert-danger d-none"></div>
-            </div>
-            <div class="modal-footer" style="border-color:#30363d;">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="button" class="btn btn-primary" id="btnGenererPDF" onclick="genererPDF()">📄 Générer le PDF</button>
             </div>
         </div>
     </div>
-</div>
 </body>
 
 </html>
