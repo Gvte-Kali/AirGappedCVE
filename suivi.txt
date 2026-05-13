@@ -1,5 +1,5 @@
 ═══════════════════════════════════════════════════════════════
-  SUIVI DES ÉTAPES — Asset & Vulnerability Manager
+  SUIVI DES ÉTAPES — Air-Gapped-CVEs
   Dernière mise à jour : 11/05/2026
 ═══════════════════════════════════════════════════════════════
 
@@ -77,6 +77,29 @@ Ordre d'exécution : H2 → H4 → H1 → H3
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   BLOC I — INTÉGRATION EQUIPMENT_TYPES DANS PARAMÈTRES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] I001 — ui/assets.html : Détection d'un bug à fix : 
+         Ajouter un asset à la catégorie d'équipement "Lecteur Biométrique" renvoie lors de la sauvegarde de l'asset renseigné : 
+         "ERREUR SQL create_asset: (1048, "Column 'type_equipement' cannot be null")"
+         Je pense que le souci vient du fait que l'api va chercher le type hardcodé quelque part au lieu d'aller chercher l'api /api/equipment-types/
+         Cela pose un problème plus profond : quand on rempli un asset via le menu d'édition, la liste des types d'équipements chargés est laquelle ? L'ancienne version hardcodée ou la nouvelle version en bdd ? 
+
+        
+[ ] I002 — ui/assets.html : Détection d'un bug à fix : 
+         Lors de la mise à jour de l'OS_Version sur un asset avec OS normalisé mais la Version_OS pas normalisée, voici ce que j'obtiens : 
+         L'édition se fait correctement
+         Lors de la réouverture de ma page web, le nouveau contenu s'affiche
+         Lors de la réouverture du menu de modification de l'asset, les champs "Système d'exploitation" et "Version OS" ne sont pas remplis.
+
+[ ] I003 — Réfaction logique Raspberry Pi : 
+         Pour les Raspberry pi, on utilise DietPi. Actuellement la corrélation indique qu'il n'y a pas d'os normalisé donc on skip les raspberry.
+         Cependant, on a uniquement Debian dans les OS disponibles dans la liste de ce qui pourrait être pertinent.
+         DietPi n'existe pas dans les OS. 
+         L'usage de DietPi fait qu'il y a très peu de composants, donc très peu de vunérabilités debian sont réellement concernées pour mon cas d'usage.
+         Je souhaite que les vulnérabilités trouvées dans le kernel linux soient remontées, sans que les cve liées à debian ne le soient. 
+         Sachant que dans mon fichier /scritps/config.yml, j'ai ceci en os_vendor_map : DietPi: linux
+         Qu'est-ce que la corrélation va prioriser ? Mon fichier de config ou ma configuration dans equipment-type ?
+         Et qu'est-ce qui est le plus pertinent pour ma configuration ?
 
 [ ] I1 — ui/parametres.html : ajouter section Equipment Types
          Reprendre toute la logique de equipment-types.html :
