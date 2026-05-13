@@ -18,7 +18,7 @@ nav_order: 4
 
 ## Principe
 
-En production sur le Raspberry Pi 5, FastAPI tourne comme un service systemd. Cela garantit :
+En production sur votre machine, FastAPI tourne comme un service systemd. Cela garantit :
 - Le démarrage automatique au boot
 - Le redémarrage automatique en cas de crash
 - La gestion des logs via `journalctl`
@@ -62,7 +62,8 @@ WantedBy=multi-user.target
 ```
 
 {: .note }
-Remplacer `votre_utilisateur` par le nom de votre utilisateur système sur le Pi. Le `WorkingDirectory` doit pointer vers le répertoire du projet.
+- Remplacer `votre_utilisateur` par le nom de votre utilisateur système. 
+- Le `WorkingDirectory` doit pointer vers le répertoire du projet.
 
 ---
 

@@ -39,14 +39,9 @@ DB_PASSWORD=votre_mot_de_passe_mariadb
 # ── Mistral AI ───────────────────────────────────────────────
 MISTRAL_API_KEY=votre_cle_api_mistral
 
-# Optionnel : surcharger le modèle défini dans config.yml
+# Optionnel : surcharger le modèle défini dans config.yml ( non recommandé )
 # MISTRAL_MODEL=mistral-large-latest
 
-# Optionnel : surcharger le délai entre appels API (secondes)
-# MISTRAL_DELAY=15.0
-
-# Optionnel : limiter le nombre d'analyses par run
-# MISTRAL_BATCH_MAX=0
 ```
 
 {: .warning }
@@ -57,6 +52,7 @@ Ne jamais committer le fichier `.env`. Vérifier que `.gitignore` contient bien 
 ## Fichier `scripts/config.yml`
 
 Le fichier `config.yml` contrôle le comportement du moteur de corrélation. Contrairement au `.env`, il est versionné et peut être modifié selon les besoins.
+Ce fichier est maintenant accessible via la page de parametrage de la corrélation dans l'interface Web, inutile de le modifier directement.
 
 ```yaml
 correlation:

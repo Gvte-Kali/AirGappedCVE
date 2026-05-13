@@ -18,7 +18,7 @@ nav_order: 1
 
 ## Système d'exploitation
 
-Le système a été testé sur **Ubuntu Server** (Raspberry Pi 5). Il est compatible avec toute distribution Debian/Ubuntu récente.
+Le système a été testé sur **Ubuntu Server**. Il est compatible avec toute distribution Debian/Ubuntu récente ( non testé autre que Ubuntu Server ).
 
 ```bash
 # Mettre à jour le système avant toute installation

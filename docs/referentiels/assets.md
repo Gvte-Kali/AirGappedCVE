@@ -18,7 +18,8 @@ nav_order: 2
 
 ## Définition
 
-Un asset est un équipement informatique inventorié pour le compte d'un client. Il peut s'agir d'un serveur, d'un PC, d'un NAS, d'un switch, d'une caméra IP, d'un lecteur biométrique, etc.
+Un asset est un équipement informatique inventorié pour le compte d'un client : 
+Il peut s'agir d'un serveur, d'un PC, d'un NAS, d'un switch, d'une caméra IP, d'un lecteur biométrique, etc...
 
 Le moteur de corrélation CVE analyse les assets **actifs** disposant d'un **fabricant renseigné**.
 
@@ -47,7 +48,8 @@ Le moteur de corrélation CVE analyse les assets **actifs** disposant d'un **fab
 | Modèle | FK → `product_models` — optionnel, affine la corrélation |
 
 {: .warning }
-Un asset **sans fabricant** ne sera pas analysé par le moteur de corrélation. C'est le champ le plus critique à renseigner.
+Un asset **sans fabricant** ne sera pas analysé par le moteur de corrélation. 
+C'est le champ le plus critique à renseigner.
 
 ### OS et versions
 

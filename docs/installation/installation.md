@@ -128,7 +128,7 @@ bash .devcontainer/reload.sh
 tail -f logs/FastAPI.log
 ```
 
-En production sur le Raspberry Pi, le service est géré par systemd (voir [Déploiement systemd]({{ site.baseurl }}/installation/deploiement)).
+En production sur votre machine, le service est géré par systemd (voir [Déploiement systemd]({{ site.baseurl }}/installation/deploiement)).
 
 ---
 

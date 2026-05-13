@@ -25,7 +25,9 @@ Clients
               └── Corrélations CVE
 ```
 
-Un client peut avoir plusieurs sites. Chaque site peut avoir plusieurs assets. Les corrélations CVE sont rattachées aux assets, donc indirectement aux sites et aux clients.
+- Un client peut avoir plusieurs sites. 
+- Chaque site peut avoir plusieurs assets. 
+- Les corrélations CVE sont rattachées aux assets, donc indirectement aux sites et aux clients.
 
 La suppression est **en cascade** : supprimer un client supprime ses sites, leurs assets et toutes les corrélations associées.
 
@@ -33,7 +35,8 @@ La suppression est **en cascade** : supprimer un client supprime ses sites, leur
 
 ## Clients
 
-Les clients sont les organisations dont le prestataire gère les équipements. Chaque client correspond à une entité distincte (entreprise, administration, collectivité…).
+Les clients sont les organisations dont le prestataire gère les équipements. 
+Chaque client correspond à une entité distincte (entreprise, administration, collectivité…).
 
 ### Champs
 
@@ -55,7 +58,8 @@ Le filtre Client dans la page Vulnérabilités permet de restreindre l'affichage
 
 ## Sites
 
-Les sites sont les localisations physiques des équipements. Un site correspond à un bâtiment, une salle serveur ou une installation géographique.
+Les sites sont les localisations physiques des équipements. 
+Un site correspond à un bâtiment, une salle serveur ou une installation géographique.
 
 ### Champs
 
@@ -75,7 +79,8 @@ Les sites sont les localisations physiques des équipements. Un site correspond 
 
 ### Importance du contact local
 
-Le contact local est la personne joignable sur place lors d'une intervention. Dans le contexte air-gap (systèmes en prison notamment), ce contact est particulièrement important pour coordonner les accès physiques nécessaires aux patches.
+Le contact local est la personne joignable sur place lors d'une intervention. 
+Dans le contexte air-gap, ce contact est particulièrement important pour coordonner les accès physiques nécessaires aux patchs.
 
 ---
 
@@ -105,5 +110,3 @@ Administration Pénitentiaire
         ├── Serveur-AD (serveur)
         └── Switch-Core (switch)
 ```
-
-La page Vulnérabilités peut être filtrée par client (`Administration Pénitentiaire`) ou par site (`MA-Metz`) pour obtenir une vue ciblée.

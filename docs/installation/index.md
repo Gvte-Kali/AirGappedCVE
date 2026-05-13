@@ -6,7 +6,7 @@ has_children: true
 
 # Installation & Déploiement
 
-Cette section couvre l'installation complète de l'Asset & Vulnerability Manager sur un serveur Ubuntu Server (testé sur Raspberry Pi 5).
+Cette section couvre l'installation complète de Air-Gapped CVEs sur un serveur Ubuntu Server.
 
 ## Vue d'ensemble
 

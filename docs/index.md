@@ -4,7 +4,7 @@ layout: home
 nav_order: 1
 ---
 
-# Asset & Vulnerability Manager
+# Air-Gapped CVEs
 {: .fs-9 }
 
 Système de gestion d'assets informatiques et de vulnérabilités CVE,
@@ -15,7 +15,7 @@ conçu pour les prestataires informatiques gérant des équipements en environne
 
 ## Présentation
 
-L'**Asset & Vulnerability Manager** est une application web permettant à un prestataire informatique de :
+L'**Air-Gapped CVEs** est une application web permettant à un prestataire informatique de :
 
 - **Inventorier** les équipements de ses clients (serveurs, NAS, PC, caméras, lecteurs biométriques…)
 - **Corréler automatiquement** les CVE du NVD avec les assets présents en base
@@ -40,18 +40,18 @@ Une CVE exploitable uniquement via Internet (vecteur `AV:N`) est **systématique
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                  Raspberry Pi 5                      │
-│                  Ubuntu Server                       │
+│                  Raspberry Pi 5                     │
+│                  Ubuntu Server                      │
 │                                                     │
-│  ┌──────────┐    ┌──────────┐    ┌──────────────┐  │
-│  │ MariaDB  │◄───│ FastAPI  │◄───│   Frontend   │  │
-│  │          │    │          │    │   (HTML/JS)  │  │
-│  └──────────┘    └──────────┘    └──────────────┘  │
+│  ┌──────────┐    ┌──────────┐    ┌──────────────┐   │
+│  │ MariaDB  │◄───│ FastAPI  │◄───│   Frontend   │   │
+│  │          │    │          │    │   (HTML/JS)  │   │
+│  └──────────┘    └──────────┘    └──────────────┘   │
 │       ▲               │                             │
-│       │          ┌────▼─────┐    ┌──────────────┐  │
-│       └──────────│ Scripts  │    │   Grafana    │  │
-│                  │ Python   │    │  (à venir)   │  │
-│                  │ + Mistral│    └──────────────┘  │
+│       │          ┌────▼─────┐    ┌──────────────┐   │
+│       └──────────│ Scripts  │    │   Grafana    │   │
+│                  │ Python   │    │  (à venir)   │   │
+│                  │ + Mistral│    └──────────────┘   │
 │                  └──────────┘                       │
 └─────────────────────────────────────────────────────┘
 ```

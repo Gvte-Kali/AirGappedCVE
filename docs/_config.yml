@@ -1,9 +1,9 @@
 remote_theme: just-the-docs/just-the-docs
 
-title: Asset & Vulnerability Manager
+title: Air-Gapped CVEs
 description: >
   Documentation technique — Système de gestion d'assets informatiques
-  et de vulnérabilités CVE pour environnements air-gappés.
+  et de vulnérabilités CVE pour environnements "air-gapped" ( isolés physiquement d'internet ).
 
 url: ""
 
@@ -31,7 +31,7 @@ heading_anchors: true
 back_to_top: true
 back_to_top_text: "Haut de page"
 
-footer_content: "Asset &amp; Vulnerability Manager — Documentation technique"
+footer_content: "Air-Gapped CVEs — Documentation technique"
 
 gh_edit_link: false
 
