@@ -24,3 +24,4 @@ documents/*
 .DS_Store
 .vscode/settings.json
 schema_export.sql
+routers/__pycache__/*
