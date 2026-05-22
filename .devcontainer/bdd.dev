@@ -2,7 +2,7 @@
 mariadb -h 127.0.0.1 -u avea -pdevpassword --skip-ssl asset_vuln_manager
 
 # Export schéma BDD
-mariadb-dump -h 127.0.0.1 --skip-ssl -u avea -pdevpassword --no-data asset_vuln_manager > schema_export.sql
+mariadb-dump -h 127.0.0.1 --skip-ssl -u avea -pdevpassword --no-data asset_vuln_manager > sql/schema.sql
 
 # Vider la BDD 
 TRUNCATE TABLE correlations;

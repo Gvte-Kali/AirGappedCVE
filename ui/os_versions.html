@@ -165,7 +165,11 @@
                     </div>
                 </div>
             </div>
-            <span id="resultatCount" class="text-secondary fs-6"></span>
+            <div class="d-flex align-items-center gap-3">
+                <span id="resultatCount" class="text-secondary fs-6"></span>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalAjout">＋ Nouvelle
+                    entrée</button>
+            </div>
         </div>
 
         <!-- ─── FILTRES ────────────────────────────────────── -->
@@ -368,7 +372,119 @@
             document.getElementById('filtreVendor').addEventListener('change', () => { page = 1; charger(); });
 
             charger();
+            initVendorTypeahead();
+            initProductTypeahead();
         })();
+
+        function initVendorTypeahead() {
+            const input = document.getElementById('newVendor');
+            const dd = document.getElementById('ddNewVendor');
+
+            async function doSearch() {
+                const q = input.value.trim().toLowerCase();
+                const r = await fetch('/api/os-versions/vendors');
+                const all = await r.json();
+                const items = q ? all.filter(v => v.includes(q)).slice(0, 100) : all.slice(0, 100);
+                if (!items.length) { dd.style.display = 'none'; return; }
+                dd.innerHTML = items.map(v => `
+            <div style="padding:8px 12px;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #21262d;"
+                onmouseover="this.style.background='rgba(88,166,255,0.1)'"
+                onmouseout="this.style.background='transparent'"
+                onclick="document.getElementById('newVendor').value='${v}';
+                         document.getElementById('ddNewVendor').style.display='none';
+                         initProductTypeaheadTrigger();">
+                <span style="color:#58a6ff;">${v}</span>
+            </div>`).join('');
+                dd.style.display = 'block';
+            }
+
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', doSearch);
+            document.addEventListener('click', e => {
+                if (!input.contains(e.target) && !dd.contains(e.target))
+                    dd.style.display = 'none';
+            });
+        }
+
+        function initProductTypeahead() {
+            const input = document.getElementById('newProduct');
+            const dd = document.getElementById('ddNewProduct');
+
+            async function doSearch() {
+                const q = input.value.trim();
+                const vendor = document.getElementById('newVendor').value.trim();
+                const params = new URLSearchParams({ limit: 100 });
+                if (q) params.append('search', q);
+                if (vendor) params.append('vendor', vendor);
+
+                const r = await fetch(`/api/os-versions?${params}`);
+                const rows = await r.json();
+                const products = [...new Set(rows.map(row => row.nvd_product))].slice(0, 100);
+
+                if (!products.length) { dd.style.display = 'none'; return; }
+                dd.innerHTML = products.map(p => `
+            <div style="padding:8px 12px;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #21262d;"
+                onmouseover="this.style.background='rgba(88,166,255,0.1)'"
+                onmouseout="this.style.background='transparent'"
+                onclick="document.getElementById('newProduct').value='${p}';
+                         document.getElementById('ddNewProduct').style.display='none';">
+                <code style="color:#58a6ff;font-size:0.82rem;">${p}</code>
+            </div>`).join('');
+                dd.style.display = 'block';
+            }
+
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', doSearch);
+            document.addEventListener('click', e => {
+                if (!input.contains(e.target) && !dd.contains(e.target))
+                    dd.style.display = 'none';
+            });
+        }
+
+        function initProductTypeaheadTrigger() {
+            document.getElementById('newProduct').dispatchEvent(new Event('input'));
+        }
+
+        async function creerEntree() {
+            const os_nom = document.getElementById('newOsNom').value.trim();
+            const vendor = document.getElementById('newVendor').value.trim().toLowerCase();
+            const product = document.getElementById('newProduct').value.trim().toLowerCase();
+            const version = document.getElementById('newVersion').value.trim() || null;
+            const type = document.getElementById('newType').value;
+            const errDiv = document.getElementById('ajoutErreur');
+
+            errDiv.classList.add('d-none');
+
+            if (!os_nom || !vendor || !product) {
+                errDiv.textContent = 'Nom OS, Vendor NVD et Produit NVD sont obligatoires.';
+                errDiv.classList.remove('d-none');
+                return;
+            }
+
+            try {
+                const r = await fetch(API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ os_nom, version, nvd_vendor: vendor, nvd_product: product, type_produit: type })
+                });
+                if (!r.ok) {
+                    const err = await r.json();
+                    throw new Error(err.detail || `HTTP ${r.status}`);
+                }
+                bootstrap.Modal.getInstance(document.getElementById('modalAjout')).hide();
+                document.getElementById('newOsNom').value = '';
+                document.getElementById('newVersion').value = '';
+                document.getElementById('newVendor').value = '';
+                document.getElementById('newProduct').value = '';
+                page = 1;
+                charger();
+            } catch (e) {
+                errDiv.textContent = e.message.includes('Duplicate entry')
+                    ? `Cette combinaison vendor/produit existe déjà dans le référentiel.`
+                    : 'Erreur : ' + e.message;
+                errDiv.classList.remove('d-none');
+            }
+        }
     </script>
 
     <style>
@@ -377,6 +493,67 @@
         }
     </style>
 
+    <div class="modal fade" id="modalAjout" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background:#161b22;border-color:#30363d;">
+                <div class="modal-header" style="border-color:#30363d;">
+                    <h5 class="modal-title">🖥️ Nouvelle entrée OS / Version</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Nom OS <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="newOsNom" placeholder="ex: DietPi">
+                            <div class="form-text text-muted">Nom affiché dans l'interface asset</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Version</label>
+                            <input type="text" class="form-control" id="newVersion" placeholder="ex: 6.1">
+                            <div class="form-text text-muted">Laisser vide si non applicable</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Vendor NVD <span class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control" id="newVendor" placeholder="ex: linux"
+                                    autocomplete="off">
+                                <div id="ddNewVendor" style="display:none;position:absolute;top:100%;left:0;width:100%;
+                                background:#161b22;border:1px solid #30363d;border-radius:6px;
+                                box-shadow:0 8px 24px rgba(0,0,0,0.6);z-index:99999;max-height:180px;overflow-y:auto;">
+                                </div>
+                            </div>
+                            <div class="form-text text-muted">En minuscules, tel qu'il apparaît dans la base NVD</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Produit NVD <span class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control" id="newProduct" placeholder="ex: linux_kernel"
+                                    autocomplete="off">
+                                <div id="ddNewProduct" style="display:none;position:absolute;top:100%;left:0;width:100%;
+                                background:#161b22;border:1px solid #30363d;border-radius:6px;
+                                box-shadow:0 8px 24px rgba(0,0,0,0.6);z-index:99999;max-height:180px;overflow-y:auto;">
+                                </div>
+                            </div>
+                            <div class="form-text text-muted">En minuscules avec underscores</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="newType">
+                                <option value="os">OS</option>
+                                <option value="firmware">Firmware</option>
+                                <option value="bios">BIOS</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="ajoutErreur" class="alert alert-danger mt-3 d-none"></div>
+                </div>
+                <div class="modal-footer" style="border-color:#30363d;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" onclick="creerEntree()">💾 Créer</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

@@ -238,6 +238,12 @@ def create_asset(asset: AssetCreate):
             if not cursor.fetchone():
                 raise HTTPException(status_code=404, detail="Site non trouvé")
 
+            if asset.equipment_type_id and not asset.type_equipement:
+                cursor.execute("SELECT code FROM equipment_types WHERE id = %s", (asset.equipment_type_id,))
+                et_row = cursor.fetchone()
+                if et_row:
+                    asset.type_equipement = et_row["code"]
+
             cursor.execute("""
                 INSERT INTO assets (
                     site_id, nom_interne, type_equipement, equipment_type_id,
@@ -289,6 +295,12 @@ def update_asset(asset_id: int, asset: AssetUpdate):
             existing = cursor.fetchone()
             if not existing:
                 raise HTTPException(status_code=404, detail="Asset non trouvé")
+
+            if asset.equipment_type_id and not asset.type_equipement:
+                cursor.execute("SELECT code FROM equipment_types WHERE id = %s", (asset.equipment_type_id,))
+                et_row = cursor.fetchone()
+                if et_row:
+                    asset.type_equipement = et_row["code"]
 
             cursor.execute("""
                 UPDATE assets SET

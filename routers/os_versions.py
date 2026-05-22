@@ -1,8 +1,17 @@
-from fastapi import APIRouter, Query, Response
+from fastapi import APIRouter, Query, Response, HTTPException
 from typing import Optional
+from pydantic import BaseModel
 from database import get_connection
 
 router = APIRouter()
+
+
+class OsVersionCreate(BaseModel):
+    os_nom: str
+    version: Optional[str] = None
+    nvd_vendor: str
+    nvd_product: str
+    type_produit: str = "os"
 
 
 @router.get("/api/os-versions")
@@ -47,6 +56,23 @@ def list_os_versions(
                 v = row["version"] or ""
                 row["label"] = f"{row['os_nom']} {v}".strip()
             return rows
+    finally:
+        conn.close()
+
+
+@router.post("/api/os-versions", status_code=201)
+def create_os_version(entry: OsVersionCreate):
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO os_versions (os_nom, version, nvd_vendor, nvd_product, type_produit)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (entry.os_nom, entry.version, entry.nvd_vendor, entry.nvd_product, entry.type_produit))
+            conn.commit()
+            return {"id": cur.lastrowid, "message": "Entrée créée"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()
 

@@ -1130,8 +1130,7 @@
                         const q = input.value.trim();
                         const nom = osNom.value;
                         if (!nom) { hideSuggestionBox(box); return; }
-                        const params = new URLSearchParams({ limit: 50 });
-                        if (q) params.append('search', q);
+                        const params = new URLSearchParams({ limit: 50, search: nom });
                         const r = await fetch(`${API_OS_VERSIONS}?${params}`);
                         const data = await r.json();
                         const filtered = data.filter(d => d.os_nom === nom);
@@ -1152,6 +1151,7 @@
 
             input.addEventListener('focus', doSearch);
             input.addEventListener('input', () => {
+                input.dataset.autoFilled = 'false';
                 hidden.value = '';
                 toggleVersionOsLibre();
                 doSearch();
@@ -1329,6 +1329,7 @@
                 document.getElementById('assetOsVersionSearch').value = a.os_version_ver
                     ? `${a.os_version_ver} (${a.os_nvd_product || ''})`
                     : `— (${a.os_nvd_product || ''})`;
+                document.getElementById('assetOsVersionSearch').dataset.autoFilled = 'true';
                 document.getElementById('assetOsVersionSearch').disabled = false;
                 document.getElementById('assetOsVersionSearch').placeholder = 'Rechercher une version…';
                 toggleVersionOsLibre();
@@ -1337,13 +1338,13 @@
                 document.getElementById('assetOsNom').value = a.systeme_exploitation || '';
                 document.getElementById('assetOsVersionSearch').disabled = false;
                 document.getElementById('assetOsVersionSearch').placeholder = 'Rechercher une version normalisée…';
-                toggleVersionOsLibre();
                 const nomOs = a.systeme_exploitation || '';
                 const versionRaw = a.version_os || '';
                 const versionLibre = (nomOs && versionRaw.startsWith(nomOs))
                     ? versionRaw.slice(nomOs.length).trim()
                     : versionRaw;
                 document.getElementById('assetVersionOsLibre').value = versionLibre;
+                toggleVersionOsLibre();
             }
             // Firmware typeahead
             document.getElementById('assetFwVersionId').value = a.fw_version_id ? String(a.fw_version_id) : '';

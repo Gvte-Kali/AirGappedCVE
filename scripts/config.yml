@@ -4,7 +4,7 @@ correlation:
   date_min: '2000-01-01'
   vendor_cve_limit: 0
   dry_run: false
-  verbose: false
+  verbose: true
   os_vendor_map:
     windows: microsoft
     linux: linux
