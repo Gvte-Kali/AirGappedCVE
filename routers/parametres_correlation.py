@@ -38,7 +38,7 @@ def get_config():
 @router.put("/config")
 def put_config(body: dict):
     # Validation minimale des clés attendues
-    required = {"correlation", "mistral", "rapport"}
+    required = {"correlation", "mistral"}
     missing = required - body.keys()
     if missing:
         raise HTTPException(status_code=422, detail=f"Sections manquantes : {missing}")

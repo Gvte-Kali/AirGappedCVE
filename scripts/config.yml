@@ -28,10 +28,3 @@ mistral:
   batch_max: 0
   max_tokens: 512
   force: false
-rapport:
-  output_dir: documents
-  score_min: 0
-  statuts_inclus:
-  - confirme
-  - mitige
-  - informatif
