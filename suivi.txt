@@ -116,7 +116,7 @@ Ordre d'exécution : H2 → H4 → H1 → H3
            PUT    /api/equipment-types/{id}
            DELETE /api/equipment-types/{id}
 
-[ ] I2 — Test verbose du script de corrélation
+[✅] I2 — Test verbose du script de corrélation
          Méthode : lancer avec --verbose et vérifier dans les logs
          que chaque asset affiche :
            [CONFIG] X types d'équipements chargés depuis equipment_types
@@ -129,38 +129,157 @@ Ordre d'exécution : H2 → H4 → H1 → H3
            □ Corrélations cohérentes avec la config de la page paramètres
            □ Modifier un type depuis /ui/parametres → relancer → vérifier
 
-[ ] I3 — Si I2 validé : supprimer equipment-types.html
+[✅] I3 — Si I2 validé : supprimer equipment-types.html
          • Supprimer ui/equipment-types.html
          • Retirer la route /ui/equipment-types dans main.py
          • Retirer l'import du router equipment_types si dédié
            (le router API /api/equipment-types reste — utilisé par
             la page paramètres et l'import Excel)
 
-[ ] I4 — Mettre à jour la navbar sur TOUTES les pages html
+[✅] I4 — Mettre à jour la navbar sur TOUTES les pages html
          Retirer le lien "⚙️ Types d'équipements" du dropdown Référentiels
          (il est désormais dans Outils → Paramètres corrélation)
          Pages concernées : toutes les pages dans ui/ + /routers/scripts.py
          Fournir le HTML de la navbar à Claude pour génération,
          puis remplacer manuellement page par page.
 
-[ ] I5 — Ajouter le prompt dans ma page de paramètres de corrélation.
-          Cela implique de modifier mon script afin qu'il aille chercher le prompt quelque aprt ( config.yml c'est pas trop mal comme solution )
-          Faut qu'on puisse modifier le prompt directement dans la page paramètres, qui mettre à jour le prompt dans cofig.yml, qui sera chargé par le script de corrélation
+[ ] I5.1 — config.yml : ajouter la section prompts
+           Ajouter sous la section mistral :
+           prompts:
+             system: "<contenu actuel de MISTRAL_SYSTEM_PROMPT>"
+
+[ ] I5.2 — correlate_and_analyze.py : lire le prompt depuis config.yml
+           Remplacer la constante MISTRAL_SYSTEM_PROMPT par :
+           MISTRAL_SYSTEM_PROMPT = cfg_mistral("system_prompt", "<prompt par défaut>")
+           Attention : cfg_mistral() lit CFG["mistral"] — il faut soit une nouvelle
+           fonction cfg_prompts() qui lit CFG["prompts"]["system"], soit déplacer
+           system_prompt dans la section mistral du config.yml
+
+[ ] I5.3 — parametres.html : ajouter un textarea dans l'accordéon Mistral
+           Juste avant le bouton Sauvegarder de la section Mistral, ajouter :
+           • Un textarea id="mistral_system_prompt" avec le contenu du prompt
+           • Label : "Prompt système Mistral"
+           • Hauteur : ~8 lignes
+           • Note explicative : "Variables disponibles dans le prompt utilisateur :
+             {nom_interne}, {cve_id}, {cvss_v3_score}, etc."
+
+[ ] I5.4 — JS parametres.html : renderConfig() et collectConfig()
+           • renderConfig() : remplir le textarea depuis cfg.prompts.system
+           • collectConfig() : inclure prompts.system dans le payload PUT
 
 Ordre d'exécution : I1 → I2 → I3 (si I2 OK) → I4
 
+Corrélation à revoir avant le bloc G : 
+"Asset
+Serveur-Windows
+Type: serveur
+OS: Windows Server 2022
+Firmware: N/A
+Criticité: eleve
+
+Localisation
+Client: Administration Pénitentiaire
+Site: MA-METZ
+
+CVE CVE-2022-30131
+Windows Container Isolation FS Filter Driver Elevation of Privilege Vulnerability
+
+CVSS v3: 7.8 (HIGH)
+Vecteur: CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H
+Fabricant: microsoft
+Produit: windows_server_2016
+Score contextuel: 8
+Air-gap: ✓ Non exploitable
+Type: Affirmé
+Analyse Mistral
+[Verdict Mistral: faux_positif] [Ajustement: -2.0]
+
+La CVE cible Windows Server 2016, or l'asset utilise Windows Server 2022, non concerné par cette vulnérabilité.
+
+Recommandation: Aucune action requise, vérifier cependant les mises à jour de sécurité pour Windows Server 2022."
+
+Dans ce bloc, on voit que l'asset utilise Windows Server 2022 mais j'ai pourtant renseigné Windows Server 2016 dans assets.
+Faut qu'on voit en bdd ce qui est indiqué et ce qui est indiqué sur ma page assets. Par contre Mistral n'utilise pas la bonne version dans sa logique il me semble.
+[STRATÉGIE PAR ASSET]
+  Serveur-Windows           (serveur        ) → FK os_version → microsoft
+[Asset 1/6] Serveur-Windows (microsoft) — 8196 CVE en cache
+    [vendor_match] FK os_version → microsoft
+    [vendor_match] Filtre exact OS produit=windows_server_2016 → 44/8196 CVE retenues
+    [vendor_match] 44 candidates → 12 retenues (12 exact FK) (32 rejet version)
+  ✅ +12 nouvelles | ~0 mises à jour | =0 skippées | ⏱ 0.1s
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  ORDRE D'EXÉCUTION GLOBAL
+  BLOC G — CLI MAINTENANCE                        ← À FAIRE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  → PRIORITAIRE : BLOC H (documents + PDF)
-    H2 → H4 → H1 → H3
+[ ] G1 — Créer scripts/asset-manager (script bash exécutable)
+         chmod +x scripts/asset-manager
+         Charge les variables depuis .env automatiquement
+         Usage : ./scripts/asset-manager <commande>
+         (ou via alias : asset-manager <commande>)
 
-  Ensuite : BLOC I (equipment_types dans paramètres)
-    I1 → I2 → I3 → I4
+         ── FastAPI ──────────────────────────────────────────
+           start       → démarre le service systemd FastAPI
+           stop        → arrête le service
+           restart     → redémarre le service
+           status      → statut systemd + PID + port
 
-  Ensuite (doc, quand développement stabilisé) :
-    E9 → E10 → E11 → E12
+         ── Logs ─────────────────────────────────────────────
+           logs        → tail -f FastAPI.log (50 dernières lignes)
+           logs-err    → tail -f filtré ERROR/EXCEPTION uniquement
+           logs-corr   → tail -f filtré lignes de corrélation
 
-═══════════════════════════════════════════════════════════════
+         ── BDD ───────────────────────────────────────────────
+           db          → echo la commande mysql complète
+           db-connect  → connexion directe à mariadb
+           db-backup   → dump complet → /tmp/am_backup_YYYYMMDD.sql
+           db-schema   → dump structure → schema.sql
+           db-size     → taille de chaque table en Mo
+           db-vacuum   → OPTIMIZE TABLE sur corrélations + cve
+           db-check    → CHECK TABLE corruption
+
+         ── Corrélations ─────────────────────────────────────
+           correlate         → lance le pipeline complet
+                               (correlate + analyze + run-all)
+           corr-clear        → supprime toutes les corrélations
+                               (avec confirmation Y/N)
+           corr-clear-asset  → supprime corrélations d'un asset
+                               (demande l'id interactivement)
+           corr-stats        → COUNT par statut depuis la BDD
+           corr-rejects      → 20 derniers rejets de corrélation
+           corr-clear-rejects→ vide la table correlation_rejects
+           corr-top          → top 10 assets par nb corrélations
+
+         ── Documents ────────────────────────────────────────
+           docs-list   → liste les PDFs avec taille et date
+           docs-clear  → supprime tous les PDFs (avec confirmation)
+           docs-size   → taille totale du dossier documents
+
+         ── CVE ──────────────────────────────────────────────
+           cve-stats   → COUNT CVE par vendor dans la BDD
+           cve-last    → 10 dernières CVE importées
+
+         ── Audit ────────────────────────────────────────────
+           audit-assets  → assets sans vendor NVD (jamais corrélés)
+           audit-os      → assets sans OS normalisé
+           audit-orphans → corrélations sans asset ou CVE valide
+
+         ── Système ──────────────────────────────────────────
+           sys-info      → RAM, CPU, température, uptime
+           sys-ports     → vérifie ports 3000/8000
+           sys-services  → statut FastAPI + MariaDB + Grafana
+           check-env     → vérifie variables .env présentes
+           check-db      → connexion BDD + COUNT tables principales
+           check-disk    → espace disque documents + logs
+           update-deps   → pip install -r requirements.txt
+           version       → Python + FastAPI + MariaDB versions
+
+[ ] G2 — Détection automatique dev vs prod
+         Si /opt/asset-manager existe → prod
+         Sinon → dev (/workspace)
+         Variables adaptées automatiquement :
+           PROJECT_DIR, LOG_FILE, VENV_PYTHON, SERVICE_NAME
+
+[ ] G3 — Alias shell (optionnel, instructions affichées par le script)
+         Prod : alias asset-manager="/opt/asset-manager/scripts/asset-manager"
+         Dev  : alias asset-manager="/workspace/scripts/asset-manager"
