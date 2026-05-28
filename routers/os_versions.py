@@ -60,6 +60,49 @@ def list_os_versions(
         conn.close()
 
 
+class OsVersionUpdate(BaseModel):
+    os_nom: Optional[str] = None
+    version: Optional[str] = None
+    nvd_vendor: Optional[str] = None
+    nvd_product: Optional[str] = None
+    type_produit: Optional[str] = None
+
+
+@router.put("/api/os-versions/{id}")
+def update_os_version(id: int, entry: OsVersionUpdate):
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM os_versions WHERE id = %s", (id,))
+            existing = cur.fetchone()
+            if not existing:
+                raise HTTPException(status_code=404, detail="Entrée non trouvée")
+            cur.execute("""
+                UPDATE os_versions SET
+                    os_nom      = %s,
+                    version     = %s,
+                    nvd_vendor  = %s,
+                    nvd_product = %s,
+                    type_produit= %s
+                WHERE id = %s
+            """, (
+                entry.os_nom       or existing["os_nom"],
+                entry.version      if entry.version is not None else existing["version"],
+                entry.nvd_vendor   or existing["nvd_vendor"],
+                entry.nvd_product  or existing["nvd_product"],
+                entry.type_produit or existing["type_produit"],
+                id
+            ))
+            conn.commit()
+            return {"message": "Entrée mise à jour"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
 @router.post("/api/os-versions", status_code=201)
 def create_os_version(entry: OsVersionCreate):
     conn = get_connection()

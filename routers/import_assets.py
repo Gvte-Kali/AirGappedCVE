@@ -576,10 +576,8 @@ async def confirm_import(
                     eq_type_obj = next((t for t in ref["equipment_types"] if t["id"] == eq_type_id), None)
                     if eq_type_obj:
                         code = eq_type_obj.get("code", "autre")
-                        VALID_ENUMS = ["serveur","pc","laptop","switch","nas","raspberry_pi",
-                                       "lecteur_biometrique","camera_axis","camera_hikvision",
-                                       "ugl","utl","lecteur_cartes","routeur","pare_feu","imprimante","autre"]
-                        type_legacy = code if code in VALID_ENUMS else "autre"
+                        valid_codes = {t["code"] for t in ref["equipment_types"]}
+                        type_legacy = code if code in valid_codes else "autre"
 
                 cur.execute("""
                     INSERT INTO assets (
