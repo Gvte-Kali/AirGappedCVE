@@ -143,19 +143,19 @@ Ordre d'exécution : H2 → H4 → H1 → H3
          Fournir le HTML de la navbar à Claude pour génération,
          puis remplacer manuellement page par page.
 
-[ ] I5.1 — config.yml : ajouter la section prompts
+[✅] I5.1 — config.yml : ajouter la section prompts
            Ajouter sous la section mistral :
            prompts:
              system: "<contenu actuel de MISTRAL_SYSTEM_PROMPT>"
 
-[ ] I5.2 — correlate_and_analyze.py : lire le prompt depuis config.yml
+[✅] I5.2 — correlate_and_analyze.py : lire le prompt depuis config.yml
            Remplacer la constante MISTRAL_SYSTEM_PROMPT par :
            MISTRAL_SYSTEM_PROMPT = cfg_mistral("system_prompt", "<prompt par défaut>")
            Attention : cfg_mistral() lit CFG["mistral"] — il faut soit une nouvelle
            fonction cfg_prompts() qui lit CFG["prompts"]["system"], soit déplacer
            system_prompt dans la section mistral du config.yml
 
-[ ] I5.3 — parametres.html : ajouter un textarea dans l'accordéon Mistral
+[✅] I5.3 — parametres.html : ajouter un textarea dans l'accordéon Mistral
            Juste avant le bouton Sauvegarder de la section Mistral, ajouter :
            • Un textarea id="mistral_system_prompt" avec le contenu du prompt
            • Label : "Prompt système Mistral"
@@ -163,50 +163,10 @@ Ordre d'exécution : H2 → H4 → H1 → H3
            • Note explicative : "Variables disponibles dans le prompt utilisateur :
              {nom_interne}, {cve_id}, {cvss_v3_score}, etc."
 
-[ ] I5.4 — JS parametres.html : renderConfig() et collectConfig()
+[✅] I5.4 — JS parametres.html : renderConfig() et collectConfig()
            • renderConfig() : remplir le textarea depuis cfg.prompts.system
            • collectConfig() : inclure prompts.system dans le payload PUT
 
-Ordre d'exécution : I1 → I2 → I3 (si I2 OK) → I4
-
-Corrélation à revoir avant le bloc G : 
-"Asset
-Serveur-Windows
-Type: serveur
-OS: Windows Server 2022
-Firmware: N/A
-Criticité: eleve
-
-Localisation
-Client: Administration Pénitentiaire
-Site: MA-METZ
-
-CVE CVE-2022-30131
-Windows Container Isolation FS Filter Driver Elevation of Privilege Vulnerability
-
-CVSS v3: 7.8 (HIGH)
-Vecteur: CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H
-Fabricant: microsoft
-Produit: windows_server_2016
-Score contextuel: 8
-Air-gap: ✓ Non exploitable
-Type: Affirmé
-Analyse Mistral
-[Verdict Mistral: faux_positif] [Ajustement: -2.0]
-
-La CVE cible Windows Server 2016, or l'asset utilise Windows Server 2022, non concerné par cette vulnérabilité.
-
-Recommandation: Aucune action requise, vérifier cependant les mises à jour de sécurité pour Windows Server 2022."
-
-Dans ce bloc, on voit que l'asset utilise Windows Server 2022 mais j'ai pourtant renseigné Windows Server 2016 dans assets.
-Faut qu'on voit en bdd ce qui est indiqué et ce qui est indiqué sur ma page assets. Par contre Mistral n'utilise pas la bonne version dans sa logique il me semble.
-[STRATÉGIE PAR ASSET]
-  Serveur-Windows           (serveur        ) → FK os_version → microsoft
-[Asset 1/6] Serveur-Windows (microsoft) — 8196 CVE en cache
-    [vendor_match] FK os_version → microsoft
-    [vendor_match] Filtre exact OS produit=windows_server_2016 → 44/8196 CVE retenues
-    [vendor_match] 44 candidates → 12 retenues (12 exact FK) (32 rejet version)
-  ✅ +12 nouvelles | ~0 mises à jour | =0 skippées | ⏱ 0.1s
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   BLOC G — CLI MAINTENANCE                        ← À FAIRE

@@ -1129,7 +1129,7 @@ def correlate(
 # PHASE 3 — ANALYSE MISTRAL
 # ═══════════════════════════════════════════════════════════════════════
 
-MISTRAL_SYSTEM_PROMPT = """
+MISTRAL_SYSTEM_PROMPT = cfg_mistral("system_prompt", """
 Tu es un expert PATCH MANAGEMENT pour environnements air-gapped (isolés d'Internet).
 Ces systèmes sont dans des prisons, donc les accès physiques sont très contrôlés, prends le en compte dans ton analyse.
 
@@ -1142,7 +1142,7 @@ Verdicts possibles :
 - "faux_positif" : ne concerne pas vraiment cet asset
 
 Tu réponds UNIQUEMENT en JSON valide, sans markdown, sans préambule.
-"""
+""")
 
 MISTRAL_USER_PROMPT = """
 ÉQUIPEMENT :

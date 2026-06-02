@@ -466,6 +466,14 @@
                                             les corrélations déjà traitées</label></div>
                                 </div>
                             </div>
+                            <div class="row g-4 mt-2">
+                                <div class="col-md-12">
+                                    <div class="param-label">Prompt système Mistral</div>
+                                    <textarea id="mistral_system_prompt" class="form-control form-control-sm" rows="8"
+                                        style="background:transparent;border:1px solid #30363d;border-radius:4px;color:#c9d1d9;resize:vertical;"></textarea>
+                                    <div class="param-desc">Variables disponibles dans le prompt utilisateur : {nom_interne}, {cve_id}, {cvss_v3_score}, {cvss_v3_severity}, {cvss_v3_vector}, {produit}, {description}, {versions_affectees}, {type_equipement}, {systeme_exploitation}, {version_os}, {version_firmware}, {version_bios}, {niveau_criticite}, etc.</div>
+                                </div>
+                            </div>
                             <div class="mt-4 text-end"><button class="btn btn-primary save-btn"
                                     onclick="saveConfig()">💾 Sauvegarder</button></div>
                         </div>
@@ -648,6 +656,7 @@
             document.getElementById('mistral_batch_max').value = m.batch_max ?? 0;
             document.getElementById('mistral_max_tokens').value = m.max_tokens ?? 512;
             document.getElementById('mistral_force').checked = !!m.force;
+            document.getElementById('mistral_system_prompt').value = m.system_prompt ?? '';
             const map = c.os_vendor_map || {}, EX = { windows: 'Microsoft Windows Server 2022', dsm: 'DiskStation Manager 7.2.2', fortios: 'FortiOS 7.4.3', linux: 'Debian GNU/Linux 12', ubuntu: 'Ubuntu Server 22.04' };
             document.getElementById('mapBody').innerHTML = '';
             Object.entries(map).forEach(([k, v]) => addMapRow(k, v, EX[k.toLowerCase()] || ''));
@@ -679,7 +688,7 @@
         function getMapData() { const r = {}; document.querySelectorAll('#mapBody tr').forEach(tr => { const k = tr.querySelector('.map-kw').value.trim(), v = tr.querySelector('.map-vd').value.trim(); if (k && v) r[k] = v; }); return r; }
 
         function collectConfig() {
-            return { correlation: { cvss_min: parseFloat(document.getElementById('cvss_min').value), cvss_network_min: parseFloat(document.getElementById('cvss_network_min').value), date_min: document.getElementById('date_min').value, vendor_cve_limit: parseInt(document.getElementById('vendor_cve_limit').value), dry_run: document.getElementById('dry_run').checked, verbose: document.getElementById('verbose').checked, os_vendor_map: getMapData() }, mistral: { model: document.getElementById('mistral_model').value.trim(), delay_seconds: parseFloat(document.getElementById('mistral_delay').value), max_retries: parseInt(document.getElementById('mistral_max_retries').value), batch_max: parseInt(document.getElementById('mistral_batch_max').value), max_tokens: parseInt(document.getElementById('mistral_max_tokens').value), force: document.getElementById('mistral_force').checked } };
+            return { correlation: { cvss_min: parseFloat(document.getElementById('cvss_min').value), cvss_network_min: parseFloat(document.getElementById('cvss_network_min').value), date_min: document.getElementById('date_min').value, vendor_cve_limit: parseInt(document.getElementById('vendor_cve_limit').value), dry_run: document.getElementById('dry_run').checked, verbose: document.getElementById('verbose').checked, os_vendor_map: getMapData() }, mistral: { model: document.getElementById('mistral_model').value.trim(), delay_seconds: parseFloat(document.getElementById('mistral_delay').value), max_retries: parseInt(document.getElementById('mistral_max_retries').value), batch_max: parseInt(document.getElementById('mistral_batch_max').value), max_tokens: parseInt(document.getElementById('mistral_max_tokens').value), force: document.getElementById('mistral_force').checked, system_prompt: document.getElementById('mistral_system_prompt').value } };
         }
 
         async function saveConfig() { const r = await fetch(API_CONFIG, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(collectConfig()) }); r.ok ? showToast() : alert('Erreur : ' + await r.text()); }

@@ -1,16 +1,3 @@
-==========
-En cours |
-==========
-1. /scripts/correlate_and_analyze.py : 
-    - Affiner la détection des cve afin de ne pas trop en envoyer à Mistral ( temps très long à cause des 15secs de délai )
-    - IMPORTANT : Ajouter une logique d'accès physique : 
-        - En gros le but est d'indiquer si l'asset est physiquement accessible ou non, ce qui permet de faire du pré-triage plus efficace.
-        - On évite les privilege escalation sur le serveur par exemple
-
-2. Réfaction page vulnérabilités
-3. Dégager Grafana qui ne nous servira plus
-
-
 ===================================================
 Idées pour la fin du projet avant la mise en prod |
 ===================================================
@@ -22,17 +9,3 @@ Idées pour la fin du projet avant la mise en prod |
     - Importer les Fabricants et Modèles dans la bdd avec /scripts/import_vendors_models.py
     - Importer les cve qui correspondent aux fabricants/modèles avec /scripts/cve_sync.py
     - Importer les os et versions os avec /scripts/extract_os_versions.py
-
-Créer une documentation fiable sur ce modèle : 
-docs/
-├── index.md              # Accueil / présentation du projet
-├── installation.md       # Prérequis, installation, config BDD
-├── configuration.md      # config.yml, correlations_map.yml expliqués
-├── scripts/
-│   ├── nvd_sync.md       # Comment alimenter la BDD CVE
-│   ├── correlate.md      # Pipeline de corrélation
-│   ├── analyze.md        # Analyse Mistral
-│   └── build_map.md      # build_correlations_map.py
-├── architecture.md       # Schéma BDD, flux de données
-└── api.md                # Endpoints FastAPI
-Fichiers .md dans /docs  →  MkDocs génère le site  →  GitHub Pages l'héberge
