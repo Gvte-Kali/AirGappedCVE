@@ -3,34 +3,27 @@
 # =============================================================================
 # asset-manager — CLI de maintenance pour AirGappedCVE
 # Auteur : Gvte-Kali / Vibe Code
-# Version : 1.0.0
+# Version : 1.1.0
 # Description : Outil tout-en-un pour gérer le service, la BDD, les logs,
 #               les corrélations, les documents, et les audits.
 # =============================================================================
 
-# --- VARIABLES GLOBALES (dynamiques dev/prod) ------------------------------------
+# --- CHEMIN RELATIF (fonctionne en dev et prod) ---
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+PROJECT_DIR=$(dirname "$SCRIPT_DIR")
 
-# Détection automatique de l'environnement
-if [ -d "/opt/asset-manager" ]; then
-    # Environnement de production
-    PROJECT_DIR="/opt/asset-manager"
-    LOG_FILE="/opt/asset-manager/logs/FastAPI.log"
-    VENV_PYTHON="/opt/asset-manager/venv/bin/python"
+# Chemins relatifs au projet
+LOG_FILE="$PROJECT_DIR/logs/FastAPI.log"
+VENV_PYTHON="$PROJECT_DIR/venv/bin/python"
+SERVICE_NAME="asset-manager"
+DOCS_DIR="$PROJECT_DIR/documents"
+BACKUP_DIR="$PROJECT_DIR/backups"
+
+# Détection de l'environnement pour le nom du service
+if [[ "$PROJECT_DIR" == "/opt/asset-manager" ]]; then
     SERVICE_NAME="asset-manager"
-    DB_USER="${DB_USER:-avea}"
-    DB_NAME="${DB_NAME:-asset_vuln_manager}"
-    DOCS_DIR="/opt/asset-manager/documents"
-    BACKUP_DIR="/tmp"
 else
-    # Environnement de développement (Codespaces, local)
-    PROJECT_DIR="/workspace/Gvte-Kali__AirGappedCVE"
-    LOG_FILE="/workspace/Gvte-Kali__AirGappedCVE/logs/FastAPI.log"
-    VENV_PYTHON="/workspace/Gvte-Kali__AirGappedCVE/venv/bin/python"
-    SERVICE_NAME="asset-manager-dev"  # À adapter si nécessaire
-    DB_USER="${DB_USER:-root}"       # En dev, on utilise souvent root
-    DB_NAME="${DB_NAME:-asset_vuln_manager}"
-    DOCS_DIR="/workspace/Gvte-Kali__AirGappedCVE/documents"
-    BACKUP_DIR="/tmp"
+    SERVICE_NAME="asset-manager-dev"
 fi
 
 # Charger les variables depuis .env si le fichier existe
@@ -40,107 +33,183 @@ if [ -f "$ENV_FILE" ]; then
 fi
 
 # Variables par défaut (peuvent être écrasées par .env)
-DB_HOST="${DB_HOST:-127.0.0.1}"
-DB_PORT="${DB_PORT:-3306}"
+DB_HOST="${DB_HOST:-}"
+DB_PORT="${DB_PORT:-}"
+DB_USER="${DB_USER:-}"
+DB_NAME="${DB_NAME:-}"
 DB_PASSWORD="${DB_PASSWORD:-}"
 MISTRAL_API_KEY="${MISTRAL_API_KEY:-}"
 NVD_API_KEY="${NVD_API_KEY:-}"
 
-# --- FONCTIONS UTILITAIRES ------------------------------------------------------
+# --- CATÉGORIES ET COMMANDES ---
+declare -A CATEGORIES=(
+    ["fastapi"]="Gestion du service FastAPI (start/stop/restart/status)"
+    ["logs"]="Affichage et filtrage des logs (logs, logs-err, logs-corr)"
+    ["db"]="Gestion de la base de données (connect, backup, schema, size, vacuum, check)"
+    ["corr"]="Gestion des corrélations (correlate, stats, clear, rejects, top)"
+    ["docs"]="Gestion des documents PDF (list, clear, size)"
+    ["cve"]="Statistiques et dernières CVE (stats, last)"
+    ["audit"]="Audit des données (assets, os, orphans)"
+    ["sys"]="Informations système (info, ports, services, env, disk, deps, version)"
+)
 
-# Afficher l'aide
+declare -A COMMANDS=(
+    # FastAPI
+    ["fastapi:start"]="cmd_fastapi_start"
+    ["fastapi:stop"]="cmd_fastapi_stop"
+    ["fastapi:restart"]="cmd_fastapi_restart"
+    ["fastapi:status"]="cmd_fastapi_status"
+
+    # Logs
+    ["logs:logs"]="cmd_logs"
+    ["logs:logs-err"]="cmd_logs_err"
+    ["logs:logs-corr"]="cmd_logs_corr"
+
+    # Base de données
+    ["db:db"]="cmd_db"
+    ["db:db-connect"]="cmd_db_connect"
+    ["db:db-backup"]="cmd_db_backup"
+    ["db:db-schema"]="cmd_db_schema"
+    ["db:db-size"]="cmd_db_size"
+    ["db:db-vacuum"]="cmd_db_vacuum"
+    ["db:db-check"]="cmd_db_check"
+
+    # Corrélations
+    ["corr:correlate"]="cmd_correlate"
+    ["corr:corr-clear"]="cmd_corr_clear"
+    ["corr:corr-clear-asset"]="cmd_corr_clear_asset"
+    ["corr:corr-stats"]="cmd_corr_stats"
+    ["corr:corr-rejects"]="cmd_corr_rejects"
+    ["corr:corr-clear-rejects"]="cmd_corr_clear_rejects"
+    ["corr:corr-top"]="cmd_corr_top"
+
+    # Documents
+    ["docs:docs-list"]="cmd_docs_list"
+    ["docs:docs-clear"]="cmd_docs_clear"
+    ["docs:docs-size"]="cmd_docs_size"
+
+    # CVE
+    ["cve:cve-stats"]="cmd_cve_stats"
+    ["cve:cve-last"]="cmd_cve_last"
+
+    # Audit
+    ["audit:audit-assets"]="cmd_audit_assets"
+    ["audit:audit-os"]="cmd_audit_os"
+    ["audit:audit-orphans"]="cmd_audit_orphans"
+
+    # Système
+    ["sys:sys-info"]="cmd_sys_info"
+    ["sys:sys-ports"]="cmd_sys_ports"
+    ["sys:sys-services"]="cmd_sys_services"
+    ["sys:check-env"]="cmd_check_env"
+    ["sys:check-db"]="cmd_check_db"
+    ["sys:check-disk"]="cmd_check_disk"
+    ["sys:update-deps"]="cmd_update_deps"
+    ["sys:version"]="cmd_version"
+)
+
+# --- FONCTIONS UTILITAIRES ---
+
+# Afficher l'aide globale
 show_help() {
+    clear
     cat <<EOF
 ╔════════════════════════════════════════════════════════════════════════════╗
-║                    ASSET-MANAGER CLI v1.0.0                                ║
+║                    ASSET-MANAGER CLI v1.1.0                                ║
 ║  Outil de maintenance pour AirGappedCVE (Gvte-Kali)                        ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
 📌 ENVIRONNEMENT DÉTECTÉ :
    Project Dir : $PROJECT_DIR
-   Mode        : $(if [ -d "/opt/asset-manager" ]; then echo "PROD"; else echo "DEV"; fi)
+   Mode        : $(if [[ "$PROJECT_DIR" == "/opt/asset-manager" ]]; then echo "PROD"; else echo "DEV"; fi)
+
+📌 CATÉGORIES DISPONIBLES :
+EOF
+
+    for category in "${!CATEGORIES[@]}"; do
+        printf "   %-12s %s\n" "$category" "${CATEGORIES[$category]}"
+    done
+
+    cat <<EOF
 
 📌 USAGE :
-   ./asset-manager <commande> [options]
-
-📌 COMMANDES DISPONIBLES :
-
-┌─ FASTAPI ─────────────────────────────────────────────────────────────┐
-│ start       Démarre le service systemd FastAPI                        │
-│ stop        Arrête le service FastAPI                                 │
-│ restart     Redémarre le service FastAPI                              │
-│ status      Affiche le statut systemd + PID + port                    │
-└───────────────────────────────────────────────────────────────────────┘
-
-┌─ LOGS ────────────────────────────────────────────────────────────────┐
-│ logs        Affiche les 50 dernières lignes de FastAPI.log            │
-│ logs-err    Filtre les lignes contenant ERROR/EXCEPTION               │
-│ logs-corr   Filtre les lignes de corrélation                          │
-└───────────────────────────────────────────────────────────────────────┘
-
-┌─ BASE DE DONNÉES ─────────────────────────────────────────────────────────┐
-│ db          Affiche la commande MySQL complète pour se connecter          │
-│ db-connect  Se connecte directement à MariaDB                             │
-│ db-backup   Effectue un dump complet → $BACKUP_DIR/am_backup_YYYYMMDD.sql │
-│ db-schema   Effectue un dump du schéma → schema.sql                       │
-│ db-size     Affiche la taille de chaque table en Mo                       │
-│ db-vacuum   Optimise les tables corrélations + cve                        │
-│ db-check    Vérifie l'intégrité des tables (CHECK TABLE)                  │
-└───────────────────────────────────────────────────────────────────────────┘
-
-┌─ CORRÉLATIONS ────────────────────────────────────────────────────────────┐
-│ correlate         Lance le pipeline complet (corrélation + analyse)       │
-│ corr-clear        Supprime TOUTES les corrélations (avec confirmation)    │
-│ corr-clear-asset  Supprime les corrélations d'un asset (id interactif)    │
-│ corr-stats        Affiche le COUNT des corrélations par statut            │
-│ corr-rejects      Affiche les 20 derniers rejets de corrélation           │
-│ corr-clear-rejects Supprime tous les rejets de corrélation                │
-│ corr-top          Affiche le top 10 des assets par nombre de corrélations │
-└───────────────────────────────────────────────────────────────────────────┘
-
-┌─ DOCUMENTS ───────────────────────────────────────────────────────────┐
-│ docs-list   Liste les PDFs avec taille et date                        │
-│ docs-clear  Supprime TOUS les PDFs (avec confirmation)                │
-│ docs-size   Affiche la taille totale du dossier documents             │
-└───────────────────────────────────────────────────────────────────────┘
-
-┌─ CVE ─────────────────────────────────────────────────────────────────┐
-│ cve-stats   Affiche le COUNT des CVE par vendor                       │
-│ cve-last    Affiche les 10 dernières CVE importées                    │
-└───────────────────────────────────────────────────────────────────────┘
-
-┌─ AUDIT ───────────────────────────────────────────────────────────────┐
-│ audit-assets   Affiche les assets sans vendor NVD (jamais corrélés)   │
-│ audit-os       Affiche les assets sans OS normalisé                   │
-│ audit-orphans  Affiche les corrélations sans asset ou CVE valide      │
-└───────────────────────────────────────────────────────────────────────┘
-
-┌─ SYSTÈME ─────────────────────────────────────────────────────────────┐
-│ sys-info      Affiche RAM, CPU, température, uptime                   │
-│ sys-ports     Vérifie les ports 3000 (Grafana) et 8000 (FastAPI)      │
-│ sys-services  Affiche le statut de FastAPI, MariaDB, Grafana          │
-│ check-env     Vérifie que les variables .env sont présentes           │
-│ check-db      Vérifie la connexion à la BDD + COUNT des tables        │
-│ check-disk    Affiche l'espace disque (documents + logs)              │
-│ update-deps   Met à jour les dépendances Python (pip install -r reqs) │
-│ version       Affiche les versions de Python, FastAPI, MariaDB        │
-└───────────────────────────────────────────────────────────────────────┘
-
-📌 OPTIONS :
-   --help, -h    Affiche cette aide
-   --verbose, -v Mode verbeux (pour certaines commandes)
+   $0 <catégorie> [commande|help]
 
 📌 EXEMPLES :
-   ./asset-manager start
-   ./asset-manager logs-err
-   ./asset-manager db-backup
-   ./asset-manager sys-info
+   $0 help                 # Affiche cette aide
+   $0 logs help            # Affiche l'aide pour la catégorie "logs"
+   $0 logs logs-err        # Filtre les erreurs dans les logs
+   $0 db db-backup         # Effectue une sauvegarde de la BDD
 
 📌 ALIAS RECOMMANDÉ :
    Ajoutez ceci à votre ~/.bashrc ou ~/.zshrc :
-   alias asset-manager="$PROJECT_DIR/scripts/asset-manager"
+   alias asset-manager="$SCRIPT_DIR/asset-manager.sh"
 
 EOF
+}
+
+# Afficher l'aide pour une catégorie
+show_category_help() {
+    clear
+    local category="$1"
+    if [[ -z "${CATEGORIES[$category]+x}" ]]; then
+        echo "❌ Catégorie inconnue : '$category'"
+        echo "Utilisez '$0 help' pour voir les catégories disponibles."
+        exit 1
+    fi
+
+    echo "AIDE POUR LA CATÉGORIE \"$category\" :"
+    echo "   ${CATEGORIES[$category]}"
+    echo ""
+    echo "COMMANDES DISPONIBLES :"
+
+    for cmd in "${!COMMANDS[@]}"; do
+        if [[ "$cmd" == "$category:"* ]]; then
+            local subcmd="${cmd#$category:}"
+            local func_name="${COMMANDS[$cmd]}"
+            local desc=""
+            case "$func_name" in
+                "cmd_fastapi_start") desc="Démarre le service FastAPI" ;;
+                "cmd_fastapi_stop") desc="Arrête le service FastAPI" ;;
+                "cmd_fastapi_restart") desc="Redémarre le service FastAPI" ;;
+                "cmd_fastapi_status") desc="Affiche le statut du service FastAPI" ;;
+                "cmd_logs") desc="Affiche les 50 dernières lignes de FastAPI.log" ;;
+                "cmd_logs_err") desc="Filtre les lignes contenant ERROR/EXCEPTION/Traceback" ;;
+                "cmd_logs_corr") desc="Filtre les lignes de corrélation" ;;
+                "cmd_db") desc="Affiche la commande MySQL pour se connecter" ;;
+                "cmd_db_connect") desc="Se connecte directement à MariaDB" ;;
+                "cmd_db_backup") desc="Effectue un dump complet de la BDD" ;;
+                "cmd_db_schema") desc="Génère le schéma SQL de la BDD" ;;
+                "cmd_db_size") desc="Affiche la taille des tables en Mo" ;;
+                "cmd_db_vacuum") desc="Optimise les tables corrélations et cve" ;;
+                "cmd_db_check") desc="Vérifie l'intégrité des tables" ;;
+                "cmd_correlate") desc="Lance le pipeline de corrélation + analyse" ;;
+                "cmd_corr_clear") desc="Supprime TOUTES les corrélations (avec confirmation)" ;;
+                "cmd_corr_clear_asset") desc="Supprime les corrélations d'un asset (id interactif)" ;;
+                "cmd_corr_stats") desc="Affiche le COUNT des corrélations par statut" ;;
+                "cmd_corr_rejects") desc="Affiche les 20 derniers rejets de corrélation" ;;
+                "cmd_corr_clear_rejects") desc="Supprime tous les rejets de corrélation" ;;
+                "cmd_corr_top") desc="Affiche le top 10 des assets par nombre de corrélations" ;;
+                "cmd_docs_list") desc="Liste les PDFs avec taille et date" ;;
+                "cmd_docs_clear") desc="Supprime TOUS les PDFs (avec confirmation)" ;;
+                "cmd_docs_size") desc="Affiche la taille totale du dossier documents" ;;
+                "cmd_cve_stats") desc="Affiche le COUNT des CVE par vendor" ;;
+                "cmd_cve_last") desc="Affiche les 10 dernières CVE importées" ;;
+                "cmd_audit_assets") desc="Affiche les assets sans vendor NVD (jamais corrélés)" ;;
+                "cmd_audit_os") desc="Affiche les assets sans OS normalisé" ;;
+                "cmd_audit_orphans") desc="Affiche les corrélations sans asset ou CVE valide" ;;
+                "cmd_sys_info") desc="Affiche RAM, CPU, température, uptime" ;;
+                "cmd_sys_ports") desc="Vérifie les ports 3000 (Grafana) et 8000 (FastAPI)" ;;
+                "cmd_sys_services") desc="Affiche le statut de FastAPI, MariaDB, Grafana" ;;
+                "cmd_check_env") desc="Vérifie que les variables .env sont présentes" ;;
+                "cmd_check_db") desc="Vérifie la connexion à la BDD + COUNT des tables" ;;
+                "cmd_check_disk") desc="Affiche l'espace disque (documents + logs)" ;;
+                "cmd_update_deps") desc="Met à jour les dépendances Python" ;;
+                "cmd_version") desc="Affiche les versions de Python, FastAPI, MariaDB" ;;
+            esac
+            printf "   %-20s %s\n" "$subcmd" "$desc"
+        fi
+    done
 }
 
 # Vérifier si une commande existe
@@ -162,7 +231,7 @@ check_mariadb() {
     return 0
 }
 
-# Vérifier si systemd est disponible (pour FastAPI)
+# Vérifier si systemd est disponible
 check_systemd() {
     if ! command_exists systemctl; then
         echo "⚠️  systemctl n'est pas disponible (environnement non-systemd ?)."
@@ -171,9 +240,10 @@ check_systemd() {
     return 0
 }
 
-# --- COMMANDES FASTAPI --------------------------------------------------------
+# --- COMMANDES FASTAPI ---
 
 cmd_fastapi_start() {
+    clear
     if ! check_systemd; then
         echo "❌ Impossible de démarrer le service (systemd requis)."
         exit 1
@@ -184,6 +254,7 @@ cmd_fastapi_start() {
 }
 
 cmd_fastapi_stop() {
+    clear
     if ! check_systemd; then
         echo "❌ Impossible d'arrêter le service (systemd requis)."
         exit 1
@@ -194,6 +265,7 @@ cmd_fastapi_stop() {
 }
 
 cmd_fastapi_restart() {
+    clear
     if ! check_systemd; then
         echo "❌ Impossible de redémarrer le service (systemd requis)."
         exit 1
@@ -204,6 +276,7 @@ cmd_fastapi_restart() {
 }
 
 cmd_fastapi_status() {
+    clear
     if ! check_systemd; then
         echo "⚠️  systemd non disponible. Vérification manuelle..."
         if pgrep -f "uvicorn.*main:app" >/dev/null; then
@@ -224,9 +297,10 @@ cmd_fastapi_status() {
     fi
 }
 
-# --- COMMANDES LOGS ----------------------------------------------------------
+# --- COMMANDES LOGS ---
 
 cmd_logs() {
+    clear
     local filter="$1"
     local tail_lines=50
     if [ ! -f "$LOG_FILE" ]; then
@@ -244,21 +318,25 @@ cmd_logs() {
 }
 
 cmd_logs_err() {
+    clear
     cmd_logs "ERROR\|EXCEPTION\|Traceback"
 }
 
 cmd_logs_corr() {
+    clear
     cmd_logs "correlate\|CVE\|correlation"
 }
 
-# --- COMMANDES BASE DE DONNÉES ----------------------------------------------
+# --- COMMANDES BASE DE DONNÉES ---
 
 cmd_db() {
+    clear
     echo "🗃️  Commande MySQL pour se connecter à $DB_NAME :"
     echo "   mysql --host=$DB_HOST --port=$DB_PORT --user=$DB_USER --password=$DB_PASSWORD $DB_NAME"
 }
 
 cmd_db_connect() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -267,6 +345,7 @@ cmd_db_connect() {
 }
 
 cmd_db_backup() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -284,6 +363,7 @@ cmd_db_backup() {
 }
 
 cmd_db_schema() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -300,6 +380,7 @@ cmd_db_schema() {
 }
 
 cmd_db_size() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -313,6 +394,7 @@ cmd_db_size() {
 }
 
 cmd_db_vacuum() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -323,6 +405,7 @@ cmd_db_vacuum() {
 }
 
 cmd_db_check() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -332,9 +415,10 @@ cmd_db_check() {
     echo "✅ Vérification terminée."
 }
 
-# --- COMMANDES CORRÉLATIONS --------------------------------------------------
+# --- COMMANDES CORRÉLATIONS ---
 
 cmd_correlate() {
+    clear
     echo "🔄 Lancement du pipeline de corrélation + analyse..."
     cd "$PROJECT_DIR" || exit 1
     if [ -f "$VENV_PYTHON" ]; then
@@ -345,6 +429,7 @@ cmd_correlate() {
 }
 
 cmd_corr_clear() {
+    clear
     read -p "⚠️  Êtes-vous sûr de vouloir SUPPRIMER TOUTES les corrélations ? (y/N) " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -361,6 +446,7 @@ cmd_corr_clear() {
 }
 
 cmd_corr_clear_asset() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -382,6 +468,7 @@ cmd_corr_clear_asset() {
 }
 
 cmd_corr_stats() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -394,6 +481,7 @@ cmd_corr_stats() {
 }
 
 cmd_corr_rejects() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -406,6 +494,7 @@ cmd_corr_rejects() {
 }
 
 cmd_corr_clear_rejects() {
+    clear
     read -p "⚠️  Êtes-vous sûr de vouloir vider la table correlation_rejects ? (y/N) " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -422,6 +511,7 @@ cmd_corr_clear_rejects() {
 }
 
 cmd_corr_top() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -435,9 +525,10 @@ cmd_corr_top() {
               LIMIT 10;" "$DB_NAME"
 }
 
-# --- COMMANDES DOCUMENTS ------------------------------------------------------
+# --- COMMANDES DOCUMENTS ---
 
 cmd_docs_list() {
+    clear
     if [ ! -d "$DOCS_DIR" ]; then
         echo "❌ Dossier documents introuvable : $DOCS_DIR"
         exit 1
@@ -447,6 +538,7 @@ cmd_docs_list() {
 }
 
 cmd_docs_clear() {
+    clear
     read -p "⚠️  Êtes-vous sûr de vouloir SUPPRIMER TOUS les PDFs ? (y/N) " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -463,6 +555,7 @@ cmd_docs_clear() {
 }
 
 cmd_docs_size() {
+    clear
     if [ ! -d "$DOCS_DIR" ]; then
         echo "❌ Dossier documents introuvable : $DOCS_DIR"
         exit 1
@@ -471,9 +564,10 @@ cmd_docs_size() {
     echo "📏 Taille totale de $DOCS_DIR : $size"
 }
 
-# --- COMMANDES CVE ------------------------------------------------------------
+# --- COMMANDES CVE ---
 
 cmd_cve_stats() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -487,6 +581,7 @@ cmd_cve_stats() {
 }
 
 cmd_cve_last() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -498,9 +593,10 @@ cmd_cve_last() {
               LIMIT 10;" "$DB_NAME"
 }
 
-# --- COMMANDES AUDIT ----------------------------------------------------------
+# --- COMMANDES AUDIT ---
 
 cmd_audit_assets() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -513,6 +609,7 @@ cmd_audit_assets() {
 }
 
 cmd_audit_os() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -524,6 +621,7 @@ cmd_audit_os() {
 }
 
 cmd_audit_orphans() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -536,15 +634,16 @@ cmd_audit_orphans() {
               WHERE a.id IS NULL OR cv.id IS NULL;" "$DB_NAME"
 }
 
-# --- COMMANDES SYSTÈME --------------------------------------------------------
+# --- COMMANDES SYSTÈME ---
 
 cmd_sys_info() {
+    clear
     echo "💻 Informations système :"
     echo "   --- Mémoire ---"
     free -h
     echo ""
     echo "   --- CPU ---"
-    lscpu | grep -E "Model name|CPU(s):|Thread(s) per core|Core(s) per socket"
+    lscpu | grep -E "Model name|CPU\(s\):|Thread\(s\) per core|Core\(s\) per socket"
     echo ""
     echo "   --- Température (si disponible) ---"
     if command_exists sensors; then
@@ -558,6 +657,7 @@ cmd_sys_info() {
 }
 
 cmd_sys_ports() {
+    clear
     echo "🌐 Vérification des ports :"
     for port in 3000 8000; do
         if command_exists nc; then
@@ -573,6 +673,7 @@ cmd_sys_ports() {
 }
 
 cmd_sys_services() {
+    clear
     echo "🛠️  Statut des services :"
     if check_systemd; then
         for service in "$SERVICE_NAME" mariadb grafana-server; do
@@ -589,6 +690,7 @@ cmd_sys_services() {
 }
 
 cmd_check_env() {
+    clear
     echo "🔑 Vérification des variables d'environnement :"
     local env_vars=("DB_HOST" "DB_PORT" "DB_USER" "DB_NAME" "DB_PASSWORD" "NVD_API_KEY" "MISTRAL_API_KEY" "SERVER_IP" "MISTRAL_MODEL")
     local missing=0
@@ -608,6 +710,7 @@ cmd_check_env() {
 }
 
 cmd_check_db() {
+    clear
     if ! check_mariadb; then
         exit 1
     fi
@@ -622,6 +725,7 @@ cmd_check_db() {
 }
 
 cmd_check_disk() {
+    clear
     echo "💽 Espace disque :"
     echo "   --- Dossier documents ($DOCS_DIR) ---"
     if [ -d "$DOCS_DIR" ]; then
@@ -639,6 +743,7 @@ cmd_check_disk() {
 }
 
 cmd_update_deps() {
+    clear
     echo "🔄 Mise à jour des dépendances Python..."
     cd "$PROJECT_DIR" || exit 1
     if [ -f "$VENV_PYTHON" ]; then
@@ -650,6 +755,7 @@ cmd_update_deps() {
 }
 
 cmd_version() {
+    clear
     echo "📋 Versions des composants :"
     echo "   --- Python ---"
     python3 --version 2>/dev/null || echo "   (non trouvé)"
@@ -665,84 +771,40 @@ cmd_version() {
     mysql --version 2>/dev/null || echo "   (non trouvé)"
 }
 
-# --- DISPATCHER PRINCIPAL ----------------------------------------------------
+# --- DISPATCHER PRINCIPAL ---
 
-# Dictionnaire des commandes (pour l'autocomplétion future)
-declare -A COMMANDS=(
-    # FastAPI
-    ["start"]="cmd_fastapi_start"
-    ["stop"]="cmd_fastapi_stop"
-    ["restart"]="cmd_fastapi_restart"
-    ["status"]="cmd_fastapi_status"
-
-    # Logs
-    ["logs"]="cmd_logs"
-    ["logs-err"]="cmd_logs_err"
-    ["logs-corr"]="cmd_logs_corr"
-
-    # BDD
-    ["db"]="cmd_db"
-    ["db-connect"]="cmd_db_connect"
-    ["db-backup"]="cmd_db_backup"
-    ["db-schema"]="cmd_db_schema"
-    ["db-size"]="cmd_db_size"
-    ["db-vacuum"]="cmd_db_vacuum"
-    ["db-check"]="cmd_db_check"
-
-    # Corrélations
-    ["correlate"]="cmd_correlate"
-    ["corr-clear"]="cmd_corr_clear"
-    ["corr-clear-asset"]="cmd_corr_clear_asset"
-    ["corr-stats"]="cmd_corr_stats"
-    ["corr-rejects"]="cmd_corr_rejects"
-    ["corr-clear-rejects"]="cmd_corr_clear_rejects"
-    ["corr-top"]="cmd_corr_top"
-
-    # Documents
-    ["docs-list"]="cmd_docs_list"
-    ["docs-clear"]="cmd_docs_clear"
-    ["docs-size"]="cmd_docs_size"
-
-    # CVE
-    ["cve-stats"]="cmd_cve_stats"
-    ["cve-last"]="cmd_cve_last"
-
-    # Audit
-    ["audit-assets"]="cmd_audit_assets"
-    ["audit-os"]="cmd_audit_os"
-    ["audit-orphans"]="cmd_audit_orphans"
-
-    # Système
-    ["sys-info"]="cmd_sys_info"
-    ["sys-ports"]="cmd_sys_ports"
-    ["sys-services"]="cmd_sys_services"
-    ["check-env"]="cmd_check_env"
-    ["check-db"]="cmd_check_db"
-    ["check-disk"]="cmd_check_disk"
-    ["update-deps"]="cmd_update_deps"
-    ["version"]="cmd_version"
-)
-
-# Vérifier les arguments
 if [ $# -eq 0 ]; then
     show_help
     exit 1
 fi
 
-# Gérer --help ou -h
-if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+# Gestion de l'aide globale
+if [[ "$1" == "help" || "$1" == "--help" || "$1" == "-h" ]]; then
     show_help
     exit 0
 fi
 
-# Exécuter la commande
-COMMAND="$1"
-shift  # Retirer le premier argument
+# Vérifier si le premier argument est une catégorie
+if [[ -n "${CATEGORIES[$1]+x}" ]]; then
+    CATEGORY="$1"
+    shift
+    if [ $# -eq 0 ] || [[ "$1" == "help" ]]; then
+        show_category_help "$CATEGORY"
+        exit 0
+    fi
+    COMMAND="${CATEGORY}:$1"
+    shift
+else
+    # Si ce n'est pas une catégorie, essayer de trouver une commande directe (pour la rétrocompatibilité)
+    COMMAND="$1"
+    shift
+fi
 
+# Exécuter la commande
 if [ -n "${COMMANDS[$COMMAND]}" ]; then
     ${COMMANDS[$COMMAND]} "$@"
 else
-    echo "❌ Commande inconnue : '$COMMAND'"
-    echo "   Utilisez --help pour voir la liste des commandes."
+    echo "❌ Commande ou catégorie inconnue : '$COMMAND'"
+    echo "Utilisez '$0 help' ou '$0 <catégorie> help' pour l'aide."
     exit 1
 fi
