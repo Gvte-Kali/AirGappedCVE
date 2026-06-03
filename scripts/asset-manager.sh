@@ -7,7 +7,6 @@
 # Description : Outil tout-en-un pour gérer le service, la BDD, les logs,
 #               les corrélations, les documents, et les audits.
 # =============================================================================
-
 # --- CHEMIN RELATIF (fonctionne en dev et prod) ---
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 PROJECT_DIR=$(dirname "$SCRIPT_DIR")
@@ -15,7 +14,6 @@ PROJECT_DIR=$(dirname "$SCRIPT_DIR")
 # Chemins relatifs au projet
 LOG_FILE="$PROJECT_DIR/logs/FastAPI.log"
 VENV_PYTHON="$PROJECT_DIR/venv/bin/python"
-SERVICE_NAME="asset-manager"
 DOCS_DIR="$PROJECT_DIR/documents"
 BACKUP_DIR="$PROJECT_DIR/backups"
 
@@ -26,17 +24,25 @@ else
     SERVICE_NAME="asset-manager-dev"
 fi
 
-# Charger les variables depuis .env si le fichier existe
+# --- CHARGEMENT DU FICHIER .env (méthode robuste) ---
 ENV_FILE="$PROJECT_DIR/.env"
 if [ -f "$ENV_FILE" ]; then
-    export $(grep -v '^#' "$ENV_FILE" | xargs -0)
+    while IFS='=' read -r key value; do
+        # Ignorer les commentaires et les lignes vides
+        [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
+        # Supprimer les guillemets et espaces superflus
+        key=$(echo "$key" | tr -d '[:space:]')
+        value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^["'\'']//' -e 's/["'\'']$//')
+        # Exporter la variable
+        export "$key=$value"
+    done < "$ENV_FILE"
 fi
 
-# Variables par défaut (peuvent être écrasées par .env)
-DB_HOST="${DB_HOST:-}"
-DB_PORT="${DB_PORT:-}"
-DB_USER="${DB_USER:-}"
-DB_NAME="${DB_NAME:-}"
+# --- VARIABLES PAR DÉFAUT (si non définies dans .env) ---
+DB_HOST="${DB_HOST:-127.0.0.1}"
+DB_PORT="${DB_PORT:-3306}"
+DB_USER="${DB_USER:-avea}"
+DB_NAME="${DB_NAME:-asset_vuln_manager}"
 DB_PASSWORD="${DB_PASSWORD:-}"
 MISTRAL_API_KEY="${MISTRAL_API_KEY:-}"
 NVD_API_KEY="${NVD_API_KEY:-}"
@@ -62,45 +68,44 @@ declare -A COMMANDS=(
 
     # Logs
     ["logs:logs"]="cmd_logs"
-    ["logs:logs-err"]="cmd_logs_err"
-    ["logs:logs-corr"]="cmd_logs_corr"
+    ["logs:err"]="cmd_logs_err"          # <-- "logs:err" au lieu de "logs:logs-err"
+    ["logs:corr"]="cmd_logs_corr"        # <-- "logs:corr" au lieu de "logs:logs-corr"
 
     # Base de données
-    ["db:db"]="cmd_db"
-    ["db:db-connect"]="cmd_db_connect"
-    ["db:db-backup"]="cmd_db_backup"
-    ["db:db-schema"]="cmd_db_schema"
-    ["db:db-size"]="cmd_db_size"
-    ["db:db-vacuum"]="cmd_db_vacuum"
-    ["db:db-check"]="cmd_db_check"
+    ["db:connect"]="cmd_db_connect"      # <-- "db:connect" au lieu de "db:db-connect"
+    ["db:backup"]="cmd_db_backup"
+    ["db:schema"]="cmd_db_schema"
+    ["db:size"]="cmd_db_size"
+    ["db:vacuum"]="cmd_db_vacuum"
+    ["db:check"]="cmd_db_check"
 
     # Corrélations
     ["corr:correlate"]="cmd_correlate"
-    ["corr:corr-clear"]="cmd_corr_clear"
-    ["corr:corr-clear-asset"]="cmd_corr_clear_asset"
-    ["corr:corr-stats"]="cmd_corr_stats"
-    ["corr:corr-rejects"]="cmd_corr_rejects"
-    ["corr:corr-clear-rejects"]="cmd_corr_clear_rejects"
-    ["corr:corr-top"]="cmd_corr_top"
+    ["corr:clear"]="cmd_corr_clear"       # <-- "corr:clear" au lieu de "corr:corr-clear"
+    ["corr:clear-asset"]="cmd_corr_clear_asset"
+    ["corr:stats"]="cmd_corr_stats"       # <-- "corr:stats" au lieu de "corr:corr-stats"
+    ["corr:rejects"]="cmd_corr_rejects"   # <-- "corr:rejects" au lieu de "corr:corr-rejects"
+    ["corr:clear-rejects"]="cmd_corr_clear_rejects"
+    ["corr:top"]="cmd_corr_top"           # <-- "corr:top" au lieu de "corr:corr-top"
 
     # Documents
-    ["docs:docs-list"]="cmd_docs_list"
-    ["docs:docs-clear"]="cmd_docs_clear"
-    ["docs:docs-size"]="cmd_docs_size"
+    ["docs:list"]="cmd_docs_list"        # <-- "docs:list" au lieu de "docs:docs-list"
+    ["docs:clear"]="cmd_docs_clear"       # <-- "docs:clear" au lieu de "docs:docs-clear"
+    ["docs:size"]="cmd_docs_size"         # <-- "docs:size" au lieu de "docs:docs-size"
 
     # CVE
-    ["cve:cve-stats"]="cmd_cve_stats"
-    ["cve:cve-last"]="cmd_cve_last"
+    ["cve:stats"]="cmd_cve_stats"        # <-- "cve:stats" au lieu de "cve:cve-stats"
+    ["cve:last"]="cmd_cve_last"           # <-- "cve:last" au lieu de "cve:cve-last"
 
     # Audit
-    ["audit:audit-assets"]="cmd_audit_assets"
-    ["audit:audit-os"]="cmd_audit_os"
-    ["audit:audit-orphans"]="cmd_audit_orphans"
+    ["audit:assets"]="cmd_audit_assets"
+    ["audit:os"]="cmd_audit_os"
+    ["audit:orphans"]="cmd_audit_orphans"
 
     # Système
-    ["sys:sys-info"]="cmd_sys_info"
-    ["sys:sys-ports"]="cmd_sys_ports"
-    ["sys:sys-services"]="cmd_sys_services"
+    ["sys:info"]="cmd_sys_info"           # <-- "sys:info" au lieu de "sys:sys-info"
+    ["sys:ports"]="cmd_sys_ports"         # <-- "sys:ports" au lieu de "sys:sys-ports"
+    ["sys:services"]="cmd_sys_services"   # <-- "sys:services" au lieu de "sys:sys-services"
     ["sys:check-env"]="cmd_check_env"
     ["sys:check-db"]="cmd_check_db"
     ["sys:check-disk"]="cmd_check_disk"
