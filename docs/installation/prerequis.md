@@ -5,141 +5,90 @@ nav_order: 1
 ---
 
 # Prérequis
-{: .no_toc }
 
-<details open markdown="block">
-<summary>Table des matières</summary>
-{: .text-delta }
-1. TOC
-{:toc}
-</details>
+**Préparation du serveur avant installation**
 
 ---
 
-## Système d'exploitation
+## 🖥️ **Système**
 
-Le système a été testé sur **Ubuntu Server**. Il est compatible avec toute distribution Debian/Ubuntu récente ( non testé autre que Ubuntu Server ).
+Testé sur **Ubuntu Server 22.04+** (Raspberry Pi 5 recommandé).
 
 ```bash
-# Mettre à jour le système avant toute installation
+# Mise à jour du système
 sudo apt update && sudo apt upgrade -y
 ```
 
 ---
 
-## Paquets système
+## 📦 **Paquets requis**
 
 ```bash
-sudo apt install -y \
-    python3 \
-    python3-pip \
-    python3-venv \
-    git \
-    curl \
-    mariadb-server \
-    mariadb-client
+sudo apt install -y python3 python3-pip python3-venv git curl mariadb-server
 ```
 
-Versions testées :
-
-| Paquet | Version testée |
-|--------|----------------|
-| Python | 3.12.x |
-| MariaDB | 11.8.x |
-| FastAPI | 0.135.x |
-| Uvicorn | 0.41.x |
-
-{: .note }
-Le projet utilise des fonctionnalités Python standard — toute version ≥ 3.10 devrait fonctionner.
+**Versions recommandées** : Python 3.12+, MariaDB 11.x
 
 ---
 
-## MariaDB
+## 🗃️ **MariaDB**
 
-### Démarrage et sécurisation
+### 1. Démarrage et sécurisation
 
 ```bash
-# Démarrer MariaDB
+# Démarrer et activer MariaDB
 sudo systemctl enable mariadb
 sudo systemctl start mariadb
 
-# Sécuriser l'installation (définir le mot de passe root, supprimer les accès anonymes)
+# Sécuriser (mot de passe root, supprimer accès anonymes)
 sudo mysql_secure_installation
 ```
 
-### Création de la base de données et de l'utilisateur
+### 2. Création base et utilisateur
 
 ```sql
--- Se connecter en root
+-- Se connecter
 sudo mariadb
 
--- Créer la base de données
-CREATE DATABASE asset_vuln_manager
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
+-- Créer la base
+CREATE DATABASE asset_vuln_manager CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- Créer l'utilisateur applicatif
--- Remplacer 'votre_utilisateur' et 'votre_mot_de_passe' par vos valeurs
-CREATE USER 'votre_utilisateur'@'localhost' IDENTIFIED BY 'votre_mot_de_passe';
-
--- Accorder les droits
-GRANT ALL PRIVILEGES ON asset_vuln_manager.* TO 'votre_utilisateur'@'localhost';
+-- Créer utilisateur (remplacer les valeurs)
+CREATE USER 'app_user'@'localhost' IDENTIFIED BY 'votre_mot_de_passe';
+GRANT ALL PRIVILEGES ON asset_vuln_manager.* TO 'app_user'@'localhost';
 FLUSH PRIVILEGES;
-
 EXIT;
 ```
 
-{: .warning }
-Ne pas utiliser l'utilisateur `root` MariaDB pour l'application. Créez toujours un utilisateur dédié avec les droits limités à la base `asset_vuln_manager`.
+⚠️ **Ne pas utiliser root** - Créez un utilisateur dédié.
 
-### Initialisation du schéma
+### 3. Initialisation du schéma
 
 ```bash
-# Importer le schéma initial
-mariadb -u votre_utilisateur -p asset_vuln_manager < schema.sql
+# Depuis le dossier du projet
+mariadb -u app_user -p asset_vuln_manager < sql/schema.sql
 ```
-
-Le fichier `schema.sql` se trouve à la racine du projet.
 
 ---
 
-## Réseau
+## 🌐 **Réseau**
 
-Le service FastAPI écoute sur le **port 3000** par défaut.
-
-Assurez-vous que ce port est accessible depuis les machines qui utiliseront l'interface web. Sur un réseau local isolé (air-gap), aucune règle de pare-feu externe n'est nécessaire.
-
-Pour définir une IP statique sur Ubuntu Server, éditez la configuration Netplan :
-
-```yaml
-# /etc/netplan/00-installer-config.yaml
-network:
-  version: 2
-  ethernets:
-    eth0:
-      dhcp4: false
-      addresses:
-        - 192.168.X.X/24   # votre IP statique
-      routes:
-        - to: default
-          via: 192.168.X.1  # votre gateway
-      nameservers:
-        addresses: [8.8.8.8]
-```
+- **Port API** : 3000 (par défaut)
+- **IP statique** : Recommandée pour le serveur
 
 ```bash
+# Exemple Netplan (Ubuntu)
+sudo nano /etc/netplan/00-installer-config.yaml
+# Configurer votre IP statique, puis :
 sudo netplan apply
 ```
 
 ---
 
-## Clé API Mistral
-
-Le moteur d'analyse nécessite une clé API Mistral AI.
+## 🔑 **Clé API Mistral**
 
 1. Créer un compte sur [console.mistral.ai](https://console.mistral.ai)
 2. Générer une clé API
-3. La renseigner dans le fichier `.env` (voir [Configuration]({{ site.baseurl }}/installation/configuration))
+3. La renseigner dans `.env` (voir [Configuration]({{ site.baseurl }}/installation/configuration))
 
-{: .note }
-En environnement air-gap, le **serveur** doit avoir accès à Internet pour appeler l'API Mistral, même si les **clients** sont isolés. Si le serveur est lui-même air-gappé, l'analyse Mistral ne sera pas disponible — la corrélation CVE fonctionnera quand même en mode pré-triage uniquement.
+ℹ️ **Note** : Le serveur doit avoir accès à Internet pour Mistral AI, même si les clients sont air-gappés.

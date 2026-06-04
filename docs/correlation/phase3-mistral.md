@@ -4,74 +4,66 @@ parent: Moteur de corrélation
 nav_order: 4
 ---
 
-# Phase 3 — Analyse Mistral AI
-{: .no_toc }
+# 🤖 Phase 3 — Analyse Mistral AI
 
-<details open markdown="block">
-<summary>Table des matières</summary>
-{: .text-delta }
-1. TOC
-{:toc}
-</details>
+**Validation contextuelle** - Mistral ajuste le score et rend un verdict sur la pertinence réelle de la CVE.
 
 ---
 
-## Principe
+## 🎯 **Principe**
 
-La Phase 3 envoie chaque corrélation `nouveau` à Mistral AI pour validation contextuelle. Mistral ne recalcule pas le score — il **ajuste** le `score_pre_triage` et rend un **verdict** sur la pertinence réelle de la CVE pour cet asset.
+- Ne **recalcule pas** le score from scratch
+- **Ajuste** le `score_pre_triage` (Phase 2)
+- Rend un **verdict** sur la pertinence
+- Traite les corrélations par **ordre de score décroissant** (les plus critiques en premier)
 
 ---
 
-## Sélection des corrélations à analyser
+## 📋 **Sélection des corrélations**
 
 ```sql
-SELECT co.*, a.*, cv.*, pv.nvd_vendor, ...
+SELECT co.*, a.*, cv.*
 FROM correlations co
 JOIN assets a ON a.id = co.asset_id
 JOIN cve cv ON cv.cve_id = co.cve_id
-...
 WHERE co.statut = 'nouveau'
   AND co.date_analyse IS NULL
   AND co.passer_mistral = 1
-ORDER BY co.score_pre_triage DESC, cv.cvss_v3_score DESC
+ORDER BY co.score_pre_triage DESC
 ```
 
-Les corrélations sont traitées par **ordre de score décroissant** — les plus critiques en premier.
-
-Le champ `passer_mistral = 0` permet d'exclure certaines CVE de l'analyse (configuré automatiquement par `vuln_types.yml` pour les types non pertinents en air-gap comme XSS, CSRF).
+**Exclusion** : `passer_mistral = 0` pour les types non pertinents (XSS, CSRF depuis `vuln_types.yml`)
 
 ---
 
-## Prompt système
+## 💬 **Prompt système**
 
 ```
-Tu es un expert PATCH MANAGEMENT pour environnements air-gapped (isolés d'Internet).
-Ces systèmes sont dans des prisons, donc les accès physiques sont très contrôlés.
+Tu es un expert PATCH MANAGEMENT pour environnements air-gapped.
+Ces systèmes sont isolés d'Internet - accès physiques contrôlés.
 
-Une corrélation CVE↔asset t'est soumise. Elle a déjà un score de pré-triage
-calculé par des règles déterministes. Ta mission est de TRIER, pas de scorer.
+Mission : TRIER, pas scorer.
 
 Verdicts possibles :
 - "patcher"      : asset vulnérable, patch nécessaire
 - "informatif"   : pertinent mais pas urgent (à surveiller)
-- "faux_positif" : ne concerne pas vraiment cet asset
+- "faux_positif" : ne concerne pas cet asset
 ```
 
 ---
 
-## Prompt utilisateur
+## 📝 **Prompt utilisateur**
 
-Le prompt contient :
-
-- **Contexte asset** : nom, type, fabricant, modèle, OS, versions (OS/FW/BIOS), criticité
-- **Données CVE** : ID, description (tronquée à 600 chars), score CVSS, vecteur, produit, versions affectées (JSON, tronqué à 400 chars)
-- **Pré-triage** : score calculé, priorité, méthode de match, type de corrélation
+Contient :
+- **Contexte asset** : nom, type, fabricant, modèle, OS, versions, criticité
+- **Données CVE** : ID, description, score CVSS, vecteur, produit, versions affectées
+- **Pré-triage** : score calculé, priorité, méthode de match
 
 ---
 
-## Format de réponse attendu
+## 📤 **Format de réponse**
 
-Mistral doit répondre **uniquement en JSON valide**, sans markdown :
+**JSON valide uniquement** (pas de markdown) :
 
 ```json
 {
@@ -85,79 +77,32 @@ Mistral doit répondre **uniquement en JSON valide**, sans markdown :
 
 | Champ | Type | Description |
 |-------|------|-------------|
-| `verdict` | string | Décision finale : `patcher`, `informatif`, `faux_positif` |
-| `ajustement_score` | float | Ajustement entre -2.0 et +2.0 appliqué au score_pre_triage |
-| `exploitable_air_gap` | bool/null | La CVE est-elle exploitable malgré l'isolation réseau ? |
-| `justification` | string | Raisonnement en 1-2 phrases |
-| `recommandation` | string | Action concrète recommandée |
+| `verdict` | string | Décision finale |
+| `ajustement_score` | float | Ajustement (-2.0 à +2.0) |
+| `exploitable_air_gap` | bool | Exploitable malgré l'isolation ? |
+| `justification` | string | Raisonnement |
+| `recommandation` | string | Action recommandée |
 
 ---
 
-## Règles données à Mistral
+## 🎯 **Règles données à Mistral**
 
 ```
 - Si la CVE concerne clairement l'OS/firmware → "patcher"
-- Si la CVE concerne un composant non vérifiable sur cet asset → "informatif"
-- Si la CVE ne s'applique pas du tout (mauvais produit, version OK) → "faux_positif"
-- ajustement_score : -2 si air-gap rend ça moins exploitable, +2 si plus dangereux
+- Si la CVE concerne un composant non vérifiable → "informatif"
+- Si la CVE ne concerne pas cet asset → "faux_positif"
+- Ajustement_score : -2.0 à +2.0 (rarement > +1.0)
+- exploitable_air_gap : vrai si exploitable localement/physiquement
 ```
 
 ---
 
-## Calcul du score final
+## ⚙️ **Paramètres**
 
-```python
-score_final = score_pre_triage + ajustement_score
-score_final = max(0.0, min(10.0, score_final))  # clamp 0-10
-
-# Recalcul de la priorité depuis le score final
-if score_final >= 9.0:  priorite_finale = "critique"
-elif score_final >= 7.0: priorite_finale = "haute"
-elif score_final >= 4.0: priorite_finale = "moyenne"
-else:                    priorite_finale = "basse"
-```
-
----
-
-## Mapping verdict → statut
-
-| Verdict Mistral | Statut en base | Explication |
-|-----------------|----------------|-------------|
-| `patcher` | `confirme` | Mistral confirme la vulnérabilité |
-| `informatif` | `nouveau` | Reste en file pour revue opérateur |
-| `faux_positif` | `faux_positif` | Écarté automatiquement |
-
-{: .note }
-Le verdict `informatif` ne clôt pas la corrélation — elle reste en `statut=nouveau` pour que l'opérateur la valide manuellement. Mistral laisse sa trace dans `analyse_mistral` et `type_correlation`.
-
----
-
-## Gestion des erreurs et rate limiting
-
-En cas d'erreur API ou de rate limit (HTTP 429) :
-
-```python
-# Backoff progressif : 20s, 40s, 60s
-wait = (attempt + 1) * 20
-time.sleep(wait)
-```
-
-Après `max_retries` tentatives échouées, la corrélation est **remise en `statut=nouveau`** pour être retraitée au prochain run.
-
----
-
-## Résultat en base
-
-```sql
-UPDATE correlations SET
-    statut = 'confirme',          -- ou 'nouveau' / 'faux_positif'
-    priorite = 'haute',
-    score_contextuel = 8.5,
-    exploitable_air_gap = 1,
-    analyse_mistral = '[Verdict Mistral: patcher] [Ajustement: -1.0]\n\nLa CVE...',
-    risque_reel = 'Mettre à jour vers FortiOS 7.4.x',
-    date_analyse = NOW()
-WHERE id = X;
-```
-
-Le champ `analyse_mistral` contient le verdict, l'ajustement, la justification et la recommandation concaténés pour affichage dans l'interface.
+| Paramètre | Défaut | Description |
+|-----------|--------|-------------|
+| `model` | mistral-large-latest | Modèle Mistral |
+| `delay_seconds` | 15.0 | Délai entre appels API |
+| `max_retries` | 3 | Tentatives en cas d'erreur |
+| `batch_max` | 0 | 0 = illimité |
+| `max_tokens` | 512 | Tokens max par réponse |

@@ -4,77 +4,75 @@ parent: Interface utilisateur
 nav_order: 5
 ---
 
-# Console Scripts
-{: .no_toc }
+# 🎯 Console Scripts
 
-<details open markdown="block">
-<summary>Table des matières</summary>
-{: .text-delta }
-1. TOC
-{:toc}
-</details>
+**Lancer et surveiller les scripts Python depuis l'interface web** - Sans accès SSH.
+
+**URL** : `/ui/console` (lien **Console** dans la navbar)
 
 ---
 
-## Accès
+## 📜 **Scripts disponibles**
 
-`/scripts/console` — lien **Console** dans la navbar.
+| Script | Description | Commande |
+|--------|-------------|----------|
+| **🔄 Corrélation** | Phase 1+2 uniquement | `correlate_and_analyze.py correlate` |
+| **🤖 Analyse Mistral** | Phase 3 uniquement | `correlate_and_analyze.py analyze` |
+| **⚡ Pipeline complet** | Phases 1+2+3 | `correlate_and_analyze.py run-all` |
 
----
-
-## Rôle
-
-La console permet de lancer et surveiller les scripts Python du pipeline depuis l'interface web, sans accès SSH au serveur.
-
----
-
-## Scripts disponibles
-
-| Script | Description |
-|--------|-------------|
-| **Corrélation** | Lance `correlate_and_analyze.py correlate` — Phase 1+2 uniquement |
-| **Analyse Mistral** | Lance `correlate_and_analyze.py analyze` — Phase 3 uniquement |
-| **Pipeline complet** | Lance `correlate_and_analyze.py run-all` — Phases 1+2+3 |
-
-Les mêmes scripts sont aussi accessibles directement depuis la page Vulnérabilités via les boutons en haut à droite.
+⚠️ **Mêmes scripts accessibles** depuis la page Vulnérabilités (boutons en haut à droite).
 
 ---
 
-## Suivi de l'exécution
+## 📊 **Suivi de l'exécution**
 
 ### Barre de progression
 
-Une barre de progression animée s'affiche pendant l'exécution. La progression est **simulée** (incréments de 5% toutes les 2 secondes) car le script Python ne remonte pas de pourcentage exact — seul le statut terminé/en cours est connu.
+- Barre animée pendant l'exécution
+- **Progression simulée** (incréments de 5% toutes les 2 secondes)
+- Le script Python ne remonte pas de pourcentage exact
 
 ### Logs en temps réel
 
-Les logs du script sont affichés en temps réel dans une zone de texte monospace (scroll automatique). Le polling est effectué toutes les **2 secondes** sur l'endpoint `GET /api/correlations/run-status`.
+- Affichage en temps réel dans une zone monospace
+- Scroll automatique
+- **Polling** : toutes les 2 secondes sur `/api/correlations/run-status`
 
 ### États de fin
 
 | Résultat | Couleur barre | Déclencheur |
 |----------|--------------|-------------|
-| Succès | Verte | Message contient "succès" |
-| Erreur | Rouge | Tout autre message de fin |
+| ✅ **Succès** | Verte | Message contient "succès" |
+| ❌ **Erreur** | Rouge | Tout autre message de fin |
 
 ---
 
-## Gestion des exécutions concurrentes
+## 🚫 **Gestion des exécutions concurrentes**
 
-Si un script est déjà en cours d'exécution, tout nouveau lancement retourne un **HTTP 409** et un message d'avertissement. Un seul pipeline peut tourner à la fois.
+- Un seul pipeline peut tourner à la fois
+- Nouveau lancement → **HTTP 409** + message d'avertissement
+- **Solution** : Attendre la fin de l'exécution en cours
 
 ---
 
-## Logs persistants
+## 📝 **Logs persistants**
 
-Les logs sont aussi écrits dans `logs/FastAPI.log` côté serveur. Pour une analyse approfondie :
+Les logs sont aussi écrits dans `logs/FastAPI.log` côté serveur.
 
 ```bash
+# Voir les logs en temps réel
 tail -f logs/FastAPI.log
-```
 
-ou via journalctl en production :
-
-```bash
+# En production (systemd)
 sudo journalctl -u asset-manager -f
 ```
+
+---
+
+## 💡 **Bonnes pratiques**
+
+- ✅ **Lancer le pipeline complet** la nuit pour les gros inventaires
+- ✅ **Vérifier les logs** après chaque exécution
+- ✅ **Utiliser les filtres** avant de lancer une analyse Mistral ciblée
+- ❌ **Ne pas lancer plusieurs pipelines** en parallèle
+- ❌ **Ne pas interrompre** une exécution en cours (attendre la fin)
