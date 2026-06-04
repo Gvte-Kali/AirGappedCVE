@@ -38,13 +38,15 @@ Suivre les dépendances entre tables :
 
 ---
 
-## 📖 **Pages disponibles**
+## 📖 **Voir aussi**
 
-| Page | Description |
-|------|-------------|
-| [🏢 Clients & Sites]({{ site.baseurl }}/referentiels/clients-sites) | Hiérarchie, contacts, cascade |
-| [💻 Assets]({{ site.baseurl }}/referentiels/assets) | Champs, versions OS, criticité |
-| [🏭 Fabricants]({{ site.baseurl }}/referentiels/fabricants) | Nomenclature NVD, identifier le bon vendor |
-| [🏷️ Modèles]({{ site.baseurl }}/referentiels/modeles) | nvd_product, cpe_part, types produit |
-| [📊 OS & Versions]({{ site.baseurl }}/referentiels/os-versions) | Référentiel normalisé, formats |
-| [⚙️ Types d'équipements]({{ site.baseurl }}/referentiels/equipment-types) | Configuration du moteur de corrélation |
+Les référentiels sont gérés via l'interface utilisateur :
+
+| Référentiel | Page UI |
+|-------------|---------|
+| **🏢 Clients & Sites** | [/ui/clients]({{ site.baseurl }}/ui/clients) et [/ui/sites]({{ site.baseurl }}/ui/sites) |
+| **💻 Assets** | [/ui/assets]({{ site.baseurl }}/ui/assets) |
+| **🏭 Fabricants** | [/ui/vendors]({{ site.baseurl }}/ui/vendors) |
+| **🏷️ Modèles** | [/ui/models]({{ site.baseurl }}/ui/models) |
+| **📊 OS & Versions** | [/ui/os-versions]({{ site.baseurl }}/ui/os-versions) |
+| **⚙️ Types d'équipements** | [/ui/equipment-types]({{ site.baseurl }}/ui/equipment-types) |
