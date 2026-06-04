@@ -1,101 +1,97 @@
 ---
 title: Page Types d'équipements
 parent: Interface utilisateur
-nav_order: 3
+nav_order: 10
 ---
 
-# Page Types d'équipements
-{: .no_toc }
+# ⚙️ Page Types d'équipements
 
-<details open markdown="block">
-<summary>Table des matières</summary>
-{: .text-delta }
-1. TOC
-{:toc}
-</details>
+**Configuration du moteur de corrélation par type**
+
+**URL** : `/ui/equipment-types` (menu **Référentiels → ⚙️ Types d'équipements**)
 
 ---
 
-## Accès
-
-`/ui/equipment-types` — menu **Référentiels → ⚙️ Types d'équipements**.
-
----
-
-## Rôle de la page
-
-Cette page configure le comportement du moteur de corrélation CVE pour chaque catégorie d'équipement. C'est une page de configuration avancée — les modifications impactent directement les corrélations au prochain lancement du pipeline.
-
----
-
-## Tableau
-
-Le tableau affiche tous les types d'équipements avec leurs paramètres de corrélation.
-
-### En-tête sticky
-
-L'en-tête du tableau reste visible en permanence lors du scroll — utile quand le tableau est long et qu'on édite une ligne en bas de page.
+## 📋 **Tableau des types**
 
 ### Colonnes
 
 | Colonne | Description |
 |---------|-------------|
-| Code | Identifiant technique unique (ex: `serveur`, `nas`) |
-| Label | Nom affiché dans l'interface |
-| OS (FK) | ✓ si `use_os_version = 1` |
-| Version OS | ✓ si `use_version_os = 1` |
-| Firmware | ✓ si `use_version_firmware = 1` |
-| BIOS | ✓ si `use_version_bios = 1` |
-| Source vendor | Badge coloré : OS (FK) / Firmware (FK) / Matériel / Auto |
-| Assets | Nombre d'assets utilisant ce type |
-| Actions | Bouton 🗑️ (désactivé si assets > 0) |
+| **Nom** | Nom du type |
+| **Description** | Description |
+| **Vendor Source** | Source du vendor NVD |
+| **Assets** | Nombre d'assets de ce type |
+| **Actions** | Voir/Modifier/Supprimer |
 
 ---
 
-## Édition inline
+## ✏️ **Modal de création / édition**
 
-Cliquer sur une ligne la passe en mode édition directement dans le tableau. Les champs éditables sont :
+### Champs principaux
 
-- **Label** — texte libre
-- **OS (FK)** — checkbox
-- **Version OS** — checkbox
-- **Firmware** — checkbox
-- **BIOS** — checkbox
-- **Source vendor** — select (os_fk / fw_fk / materiel / detection_auto)
+| Champ | Type | Obligatoire | Description |
+|-------|------|-------------|-------------|
+| **Nom** | Texte | ✅ | Nom du type (ex: Serveur, NAS, Caméra IP) |
+| **Description** | Texte long | ❌ | Description |
 
-Deux boutons apparaissent : ✅ Sauv. et ✖ (annuler). La touche `Échap` annule également l'édition.
+### Configuration corrélation
 
----
+| Champ | Type | Obligatoire | Description | Valeurs |
+|-------|------|-------------|-------------|---------|
+| **vendor_source** | Select | ✅ | Source du vendor NVD | os_fk/fw_fk/materiel/detection_auto |
+| **use_os_version** | Booléen | ❌ | Utiliser OS normalisé | 0/1 |
+| **use_version_os** | Booléen | ❌ | Utiliser version OS texte libre | 0/1 |
+| **use_version_firmware** | Booléen | ❌ | Utiliser firmware | 0/1 |
+| **use_version_bios** | Booléen | ❌ | Utiliser BIOS | 0/1 |
 
-## Création d'un nouveau type
+### Options avancées
 
-Le bouton **＋ Nouveau type** insère une nouvelle ligne en haut du tableau en mode édition. Le champ **Code** est alors éditable (il ne l'est plus après création).
-
-Le code doit être unique — une erreur est retournée si le code existe déjà.
-
----
-
-## Suppression
-
-Le bouton 🗑️ est **désactivé** si le type est utilisé par au moins un asset. Il faut d'abord réaffecter ou supprimer les assets concernés.
-
----
-
-## Badges Source vendor
-
-| Badge | Couleur | Signification |
-|-------|---------|---------------|
-| OS (FK) | Bleu | Vendor depuis l'OS normalisé |
-| Firmware (FK) | Orange | Vendor depuis le firmware normalisé |
-| Matériel | Vert | Vendor du fabricant matériel |
-| Auto | Jaune | Détection automatique (fallback) |
+| Champ | Type | Obligatoire | Description | Défaut |
+|-------|------|-------------|-------------|--------|
+| **correlation_enabled** | Booléen | ❌ | Activer la corrélation | 1 |
+| **auto_correlate** | Booléen | ❌ | Lancer automatiquement | 1 |
+| **default_criticite** | Select | ❌ | Criticité par défaut | moyen |
+| **default_statut** | Select | ❌ | Statut par défaut | actif |
 
 ---
 
-## Impact des modifications
+## 🎯 **Actions**
 
-Les modifications apportées dans cette page prennent effet au **prochain lancement de la corrélation**. Les corrélations déjà en base ne sont pas rétroactivement modifiées.
+| Bouton | Action |
+|--------|--------|
+| 👁️ **Voir** | Ouvrir en lecture seule |
+| ✏️ **Modifier** | Ouvrir en édition |
+| 🗑️ **Supprimer** | Supprimer le type (avec confirmation) |
+| ➕ **Nouveau type** | Créer un nouveau type |
+| 📤 **Exporter** | Exporter en CSV |
 
-Pour réappliquer une configuration modifiée sur les corrélations existantes :
-1. Supprimer les corrélations concernées en base
-2. Relancer la corrélation depuis l'interface
+---
+
+## ⚠️ **Attention**
+
+- **Impact sur la corrélation** : Modifier un type peut affecter les assets existants
+- **Vendor source** : Détermine comment le vendor NVD est déterminé
+- **Champs de version** : Déterminent quels champs sont utilisés pour la comparaison
+
+---
+
+## 💡 **Astuces**
+
+- ✅ **Tester avec un asset** avant de déployer un nouveau type
+- ✅ **Utiliser des noms clairs** (ex: "Serveur Windows", "NAS Synology")
+- ✅ **Configurer correctement vendor_source** pour chaque type
+- ❌ **Ne pas modifier un type** déjà utilisé par des assets (créer un nouveau type)
+- ❌ **Ne pas supprimer un type** sans vérifier les dépendances
+
+---
+
+## 📖 **Exemples de configuration**
+
+| Type | vendor_source | use_os_version | use_version_os | use_version_firmware |
+|------|---------------|----------------|----------------|---------------------|
+| Serveur Windows | os_fk | 1 | 0 | 0 |
+| Serveur Linux | os_fk | 1 | 1 | 0 |
+| NAS Synology | materiel | 1 | 1 | 0 |
+| Switch Cisco | fw_fk | 0 | 0 | 1 |
+| Caméra IP | materiel | 0 | 0 | 1 |

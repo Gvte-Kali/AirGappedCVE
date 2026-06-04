@@ -4,127 +4,119 @@ parent: Guides opérationnels
 nav_order: 6
 ---
 
-# Formats de versions par fabricant
-{: .no_toc }
+# 📊 Formats de versions par fabricant
 
-<details open markdown="block">
-<summary>Table des matières</summary>
-{: .text-delta }
-1. TOC
-{:toc}
-</details>
+**Format à utiliser pour la saisie des versions dans le champ `Version exacte` (texte libre)**
 
 ---
 
-Ce guide documente le format à utiliser pour la saisie des versions dans le champ **Version exacte** (texte libre) de la page Assets.
+## 🎯 **Principe de comparaison**
 
-## Principe de la comparaison
-
-Le moteur extrait les composants numériques d'une chaîne de version avec `normalize_version()` :
+Le moteur extrait les composants numériques avec `normalize_version()` :
 
 ```python
 "7.2.2-72806 Update 3"  →  [7, 2, 2, 72806, 3]
 "6.2.4-25553"           →  [6, 2, 4, 25553]
 ```
 
-La comparaison se fait composant par composant. **Plus la version est précise, moins il y aura de faux positifs.**
+**Plus la version est précise, moins il y aura de faux positifs.**
 
 ---
 
-## Référence par fabricant
+## 📋 **Référence par fabricant**
 
 ### Synology — DiskStation Manager (DSM)
 
-| Format | `X.X.X-XXXXX` ou `X.X.X-XXXXX Update X` |
-|--------|------------------------------------------|
-| Exemple sans update | `7.2.2-72806` |
-| Exemple avec update | `7.2.2-72806 Update 3` |
-| Où trouver | Panneau de configuration → Informations → Version DSM |
-| Note | Le numéro de build (5 chiffres après le tiret) est important pour la comparaison avec les CVE NVD |
+| Format | Exemple | Où trouver |
+|--------|---------|------------|
+| `X.X.X-XXXXX` | `7.2.2-72806` | Panneau de configuration → Informations |
+| `X.X.X-XXXXX Update X` | `7.2.2-72806 Update 3` | Panneau de configuration → Informations |
 
-### Microsoft — Windows Server
-
-| Format | `XXXX` (année de la version) |
-|--------|------------------------------|
-| Exemple | `2022`, `2019`, `2016` |
-| Où trouver | `winver.exe` → ligne "Version" |
-| Note | ⚠️ La comparaison de version est **désactivée** pour les serveurs Windows (`use_version_os = 0`). La corrélation se fait uniquement par produit NVD (`windows_server_2022`). Saisir l'année pour l'affichage uniquement. |
-
-### Microsoft — Windows 10 / 11
-
-| Format | `XXHX Build XXXXX` |
-|--------|---------------------|
-| Exemple | `24H2 Build 26100` |
-| Où trouver | `winver.exe` → ligne complète |
-| Note | Le moteur extrait `[24, 2, 26100]` pour la comparaison |
-
-### Fortinet — FortiOS
-
-| Format | `X.X.X` |
-|--------|---------|
-| Exemple | `7.4.3` |
-| Où trouver | CLI : `get system status` → ligne "Version" |
-
-### Axis — AXIS OS (caméras)
-
-| Format | `X.XX.X` |
-|--------|---------|
-| Exemple | `11.11.7` |
-| Où trouver | Interface web → Setup → About → Server → Firmware version |
-
-### Hikvision — Firmware caméra
-
-| Format | `VX.X.X build XXXXXX` |
-|--------|------------------------|
-| Exemple | `V5.7.15 build 230220` |
-| Où trouver | Interface web → Configuration → System → Device Information → Firmware Version |
-| Note | Le moteur extrait `[5, 7, 15, 230220]` |
-
-### Raspberry Pi — Raspberry Pi OS
-
-| Format | Numéro de version Debian |
-|--------|--------------------------|
-| Exemple | `12` (Bookworm), `11` (Bullseye) |
-| Où trouver | `cat /etc/os-release` → `VERSION_ID` |
-
-### Cisco — IOS / IOS XE
-
-| Format | `XX.X(X)` ou `XX.X.X` |
-|--------|------------------------|
-| Exemple IOS | `15.2(7)` |
-| Exemple IOS XE | `17.9.3` |
-| Où trouver | `show version` → première ligne |
-
-### Linux — Ubuntu Server
-
-| Format | `XX.XX` (LTS) ou `XX.XX.X` |
-|--------|---------------------------|
-| Exemple | `22.04`, `24.04` |
-| Où trouver | `lsb_release -r` ou `cat /etc/os-release` |
-| nvd_vendor | `canonical` |
-| nvd_product | `ubuntu_linux` |
-
-### Linux — Debian
-
-| Format | Numéro de version majeure |
-|--------|--------------------------|
-| Exemple | `12` (Bookworm), `11` (Bullseye) |
-| Où trouver | `cat /etc/debian_version` |
-| nvd_vendor | `debian` |
-| nvd_product | `debian_linux` |
+⚠️ **Le numéro de build (5 chiffres) est important** pour la comparaison avec les CVE NVD.
 
 ---
 
-## Cas particuliers
+### Microsoft — Windows Server
 
-### Version avec suffixe texte
+| Format | Exemple | Où trouver | Note |
+|--------|---------|------------|------|
+| `XXXX` | `2022`, `2019`, `2016` | `winver.exe` → ligne "Version" | ⚠️ Comparaison de version **désactivée** (`use_version_os = 0`). Corrélation par produit NVD uniquement (`windows_server_2022`). Saisir l'année pour l'affichage. |
 
-Si la version contient du texte avant les chiffres (ex: `DSM (DiskStation Manager) 7.2.2-72806`), le moteur ignore le préfixe et extrait uniquement les composants numériques. La saisie `7.2.2-72806` dans le champ libre est donc équivalente — le préfixe du nom OS est ajouté automatiquement.
+---
 
-### Asset sans version connue
+### Microsoft — Windows 10 / 11
 
-Si la version n'est pas disponible lors de l'intervention, laisser le champ vide. La corrélation se fera en mode `informatif` — toutes les CVE du produit remonteront. Compléter la version lors de la prochaine intervention.
+| Format | Exemple | Où trouver |
+|--------|---------|------------|
+| `XXHX Build XXXXX` | `24H2 Build 26100` | `winver.exe` → ligne complète |
 
-### Version inconnue du NVD
+Le moteur extrait `[24, 2, 26100]` pour la comparaison.
 
-Si le moteur compare une version asset avec une plage CVE et que le format est incompatible (ex: version `Custom Build 2024-01-15`), `normalize_version()` extraira `[2024, 1, 15]` — ce qui peut donner des résultats inattendus. Dans ce cas, il est préférable de laisser le champ vide.
+---
+
+### Fortinet — FortiOS
+
+| Format | Exemple | Où trouver |
+|--------|---------|------------|
+| `X.X.X` | `7.4.3` | CLI : `get system status` → ligne "Version" |
+
+---
+
+### Axis — AXIS OS (caméras)
+
+| Format | Exemple | Où trouver |
+|--------|---------|------------|
+| `X.XX.X` | `11.11.7` | Interface web → Setup → About → Server → Firmware version |
+
+---
+
+### Hikvision — Firmware caméra
+
+| Format | Exemple | Où trouver |
+|--------|---------|------------|
+| `VX.X.X build XXXXXX` | `V5.7.15 build 230220` | Interface web → Configuration → System → Device Information → Firmware Version |
+
+---
+
+### ZKTeco — Lecteurs biométriques
+
+| Format | Exemple | Où trouver |
+|--------|---------|------------|
+| `X.X.X` | `9.5.3` | Interface web → System → Device Info → Firmware Version |
+
+---
+
+### Ubuntu / Debian
+
+| Format | Exemple | Où trouver |
+|--------|---------|------------|
+| `XX.XX` | `22.04`, `20.04` | `lsb_release -a` → Distrib Description |
+| `XX.XX.X` | `22.04.3` | `lsb_release -a` → Distrib Release |
+
+---
+
+### Cisco — IOS / NX-OS
+
+| Format | Exemple | Où trouver |
+|--------|---------|------------|
+| `XX.X(X)X` | `15.2(4)E6` | CLI : `show version` → Cisco IOS Software |
+| `X.X(X)X` | `9.3(9)A` | CLI : `show version` → NX-OS |
+
+---
+
+### VMware — ESXi
+
+| Format | Exemple | Où trouver |
+|--------|---------|------------|
+| `X.X.X-XXXXX` | `7.0.3-20328358` | CLI : `vmware -vl` → Version |
+| `X.X.X XXXXX` | `7.0.3 20328358` | Interface web → Host → Summary |
+
+---
+
+## 💡 **Bonnes pratiques**
+
+- ✅ **Saisir la version complète** (inclure build numbers si disponibles)
+- ✅ **Utiliser le format du fabricant** (ne pas modifier)
+- ✅ **Vérifier sur le site du fabricant** si incertain
+- ❌ **Ne pas inventer de format**
+- ❌ **Ne pas omettre les numéros de build** (sauf pour Windows Server)

@@ -4,26 +4,65 @@ parent: Interface utilisateur
 nav_order: 6
 ---
 
-# Recherche globale
-{: .no_toc }
+# 🔎 Recherche globale
+
+**Rechercher rapidement un client, site ou asset** depuis n'importe quelle page.
+
+**URL** : `/ui/recherche` (ou barre de recherche en haut à droite)
 
 ---
 
-## Présentation
+## 🎯 **Fonctionnement**
 
-La barre de recherche en haut à droite de la navbar permet de retrouver rapidement un **client**, un **site** ou un **asset** depuis n'importe quelle page.
+- **Barre de recherche** en haut à droite de toutes les pages
+- **Page dédiée** accessible via `/ui/recherche`
+- **Recherche en temps réel** (debounce 300ms)
 
-## Comportement
+---
 
-- La recherche s'active à partir de **2 caractères** saisis
-- Les résultats sont affichés dans un menu déroulant sous le champ
-- Les résultats sont groupés par type (Clients, Sites, Assets)
-- Un clic sur un résultat navigue vers la page correspondante
+## 📝 **Champ de recherche**
 
-## Implémentation
+- **Texte libre** : Saisir un nom, une IP, un numéro de série, etc.
+- **Recherche multi-champs** : Cherche dans :
+  - Noms des clients
+  - Noms des sites
+  - Noms des assets
+  - Adresses IP
+  - Adresses MAC
+  - Numéros de série
+  - Hostnames
 
-La recherche globale est implémentée dans `ui/static/app-search.js` et consomme les endpoints API avec le paramètre `search`.
+---
 
-## Pages concernées
+## 📊 **Résultats**
 
-La barre de recherche est présente sur toutes les pages de l'interface — elle est incluse dans la navbar commune.
+### Format
+
+| Type | Nom | Détails | Actions |
+|------|-----|---------|--------|
+| 🏢 Client | Nom du client | Nombre de sites/assets | Voir |
+| 📍 Site | Nom du site | Client parent | Voir |
+| 💻 Asset | Nom de l'asset | Client/Site/Type | Voir |
+
+### Tri
+
+- **Par défaut** : Pertinence DESC
+- **Cliquer sur l'en-tête** pour changer le tri
+
+---
+
+## 🎯 **Actions sur les résultats**
+
+| Bouton | Action |
+|--------|--------|
+| 👁️ **Voir** | Ouvrir la fiche détaillée |
+| 🔗 **Lien direct** | Aller directement à la page correspondante |
+
+---
+
+## 💡 **Astuces**
+
+- ✅ **Saisir au moins 3 caractères** pour déclencher la recherche
+- ✅ **Utiliser des termes précis** (nom exact, IP complète)
+- ✅ **Rechercher par numéro de série** pour trouver un asset spécifique
+- ❌ **Éviter les termes trop génériques** (ex: "serveur", "nas")

@@ -4,179 +4,120 @@ parent: Interface utilisateur
 nav_order: 1
 ---
 
-# Page Vulnérabilités
-{: .no_toc }
+# 🔍 Page Vulnérabilités
 
-<details open markdown="block">
-<summary>Table des matières</summary>
-{: .text-delta }
-1. TOC
-{:toc}
-</details>
+**Page centrale du système** - Liste toutes les corrélations CVE détectées.
+
+**URL** : `/ui/vulns` (lien **Vulnérabilités** dans la navbar)
 
 ---
 
-## Accès
+## 📊 **Cartes de statistiques**
 
-`/ui/vulns` — lien **Vulnérabilités** dans la navbar.
-
-C'est la page centrale du système. Elle liste toutes les corrélations CVE détectées, avec leurs scores, statuts et analyses Mistral.
-
----
-
-## Cartes de statistiques
-
-Quatre cartes en haut de page affichent en temps réel :
+4 cartes en haut de page :
 
 | Carte | Description |
 |-------|-------------|
-| Total Détectées | Nombre total de corrélations en base |
-| Critiques | Nombre de corrélations avec `priorite = critique` |
-| Impact Haut | Nombre de corrélations avec `priorite = haute` |
-| Référentiel | Toujours `CVE` — rappel du référentiel utilisé |
+| 📈 **Total Détectées** | Nombre total de corrélations en base |
+| 🔴 **Critiques** | Corrélations avec `priorite = critique` |
+| 🟠 **Impact Haut** | Corrélations avec `priorite = haute` |
+| 📚 **Référentiel** | Toujours `CVE` |
 
 ---
 
-## Boutons de pipeline
+## ⚡ **Boutons de pipeline**
 
-Trois boutons en haut à droite permettent de lancer le pipeline de corrélation :
+3 boutons en haut à droite :
 
-| Bouton | Action | Commande équivalente |
-|--------|--------|---------------------|
-| 🔄 Corrélation | Lance uniquement la Phase 1+2 | `correlate` |
-| 🤖 Analyse Mistral | Lance uniquement la Phase 3 | `analyze` |
-| ⚡ Tout exécuter | Lance le pipeline complet | `run-all` |
+| Bouton | Action | Commande |
+|--------|--------|----------|
+| 🔄 **Corrélation** | Phase 1+2 uniquement | `correlate` |
+| 🤖 **Analyse Mistral** | Phase 3 uniquement | `analyze` |
+| ⚡ **Tout exécuter** | Pipeline complet | `run-all` |
 
-Une confirmation est demandée avant chaque lancement. Une barre de progression avec logs en temps réel s'affiche pendant l'exécution.
-
-{: .note }
-Si une corrélation est déjà en cours, le bouton renvoie un statut 409 et un message d'avertissement.
+⚠️ **Confirmation demandée** avant chaque lancement. Barre de progression avec logs en temps réel.
 
 ---
 
-## Panneau de filtres
+## 🔍 **Panneau de filtres**
 
-Le panneau de filtres est **repliable** — cliquer sur l'en-tête `🔍 CRITÈRES DE RECHERCHE` l'ouvre ou le ferme. Un résumé des filtres actifs est affiché dans l'en-tête même quand le panneau est fermé.
+**Repliable** - Cliquer sur `🔍 CRITÈRES DE RECHERCHE` pour ouvrir/fermer.
 
 ### Filtres disponibles
 
 | Filtre | Type | Description |
 |--------|------|-------------|
-| Client | Typeahead | Filtre par client (recherche dynamique) |
-| Site | Typeahead | Filtre par site (indépendant du client) |
-| Type d'équipement | Typeahead | Filtre par type (NAS, serveur, PC…) |
-| Fabricant | Typeahead | Filtre par fabricant NVD |
-| Modèle | Typeahead | Filtre par modèle (affiné si fabricant sélectionné) |
-| Système d'exploitation | Typeahead | Filtre par nom OS |
-| Version OS | Typeahead + texte libre | Filtre par version |
-| Firmware | Typeahead | Filtre par firmware |
-| Nom d'asset | Texte libre | Filtre par nom d'inventaire |
-| Identifiant CVE | Texte libre | Filtre par CVE (ex: `CVE-2024-`) |
-| Statut | Multi-select | nouveau / en_analyse / confirme / mitige / faux_positif / patche |
-| Priorité | Multi-select | critique / haute / moyenne / basse |
+| **Client** | Typeahead | Recherche dynamique |
+| **Site** | Typeahead | Indépendant du client |
+| **Type d'équipement** | Typeahead | NAS, serveur, PC… |
+| **Fabricant** | Typeahead | Fabricant NVD |
+| **Modèle** | Typeahead | Affiné si fabricant sélectionné |
+| **Système d'exploitation** | Typeahead | Nom OS |
+| **Version OS** | Typeahead + texte | Version |
+| **Firmware** | Typeahead | Version firmware |
+| **Nom d'asset** | Texte libre | Nom d'inventaire |
+| **Identifiant CVE** | Texte libre | Ex: `CVE-2024-` |
+| **Statut** | Multi-select | nouveau/en_analyse/confirme/mitige/faux_positif/patche |
+| **Priorité** | Multi-select | critique/haute/moyenne/basse |
 
-### Comportement des typeaheads
-
-- Clic sur le champ → affiche les 20 premières propositions
-- Saisie → affine la recherche en temps réel (debounce 150ms)
-- Sélection → déclenche automatiquement le rechargement du tableau
-
-### Multi-select statut et priorité
-
-Les statuts et priorités sont des cases à cocher. Par défaut :
-- Statuts cochés : `nouveau`, `en_analyse`, `confirme`
-- Priorités cochées : toutes
-
-Les liens **Tout / Aucun** permettent de sélectionner ou désélectionner rapidement tous les éléments.
+**Défauts** :
+- Statuts : `nouveau`, `en_analyse`, `confirme`
+- Priorités : toutes
 
 ---
 
-## Tableau des vulnérabilités
+## 📋 **Tableau des vulnérabilités**
 
 ### Colonnes
 
 | Colonne | Description |
 |---------|-------------|
-| CVE | Identifiant CVE cliquable |
-| Asset / IP | Nom interne + type d'équipement |
-| Localisation | Client + Site |
-| Statut | Badge coloré selon le statut |
-| Priorité | Badge coloré selon la priorité |
-| Score CVSS | Score + sévérité avec tooltip sur la description CVE au survol |
-| Confirmé IA | ✓ Oui si `type_correlation = affirme`, — Non sinon |
-| Vérifié le | Date et heure de détection |
-| Actions | Boutons d'action rapide |
+| **CVE** | Identifiant CVE (cliquable pour détail) |
+| **Score** | Score final (après ajustement Mistral) |
+| **Priorité** | critique/élevée/moyenne/basse |
+| **Asset** | Nom de l'asset |
+| **Client** | Nom du client |
+| **Site** | Nom du site |
+| **OS** | Système d'exploitation |
+| **Version** | Version OS |
+| **Fabricant** | Fabricant NVD |
+| **Type** | Type de corrélation (Affirmé/Informatif) |
+| **Statut** | Statut actuel |
+| **Verdict** | Verdict Mistral |
+| **Date** | Date de détection |
 
-### Badge statuts
+### Tri
 
-| Statut | Couleur |
-|--------|---------|
-| Nouveau | Bleu |
-| En analyse | Jaune |
-| Confirmé | Rouge |
-| Mitigé | Orange |
-| Faux positif | Gris |
-| Patché | Vert |
+Cliquer sur l'en-tête d'une colonne pour trier (ascendant/descendant).
 
-### Tooltip Score CVSS
-
-Au survol du score CVSS, une infobulle affiche la description complète de la CVE. Utile pour comprendre rapidement la nature de la vulnérabilité sans ouvrir le détail.
+**Tri par défaut** : Score DESC, Date DESC
 
 ---
 
-## Actions rapides
+## 🎯 **Actions rapides**
 
-Chaque ligne dispose de 4 boutons d'action :
-
-| Bouton | Action | Description |
-|--------|--------|-------------|
-| 🔍 | Détails | Ouvre le modal de détail complet |
-| ✖ | Faux positif | Passe directement en `faux_positif` |
-| ✅ | Confirmer | Passe directement en `confirme` |
-| 🩹 | Patché | Passe directement en `patche` |
-
-Les boutons ✖, ✅ et 🩹 sont des actions immédiates sans confirmation. Le tableau se recharge automatiquement après chaque action.
+| Bouton | Action |
+|--------|--------|
+| 🔍 | Ouvrir le détail de la corrélation |
+| ❌ | Marquer comme faux positif |
+| ✅ | Marquer comme confirmé |
+| 📝 | Ouvrir les notes |
+| 📥 | Exporter en CSV |
 
 ---
 
-## Modal de détail
+## 📤 **Export**
 
-Accessible via le bouton 🔍. Affiche :
-
-### Informations asset
-- Nom, type, OS, firmware, criticité
-- Client et site
-
-### Informations CVE
-- Description complète
-- Score CVSS v3 + vecteur
-- Fabricant et produit NVD
-
-### Analyse Mistral
-- Verdict, ajustement, justification
-- Recommandation d'action
-
-### Champs éditables
-- **Statut** — select (nouveau / en_analyse / confirme / mitige / faux_positif / patche)
-- **Priorité** — select (critique / haute / moyenne / basse)
-- **Override utilisateur** — décision manuelle qui prime sur le statut automatique (a_patcher / informatif / faux_positif)
-- **Notes** — zone de texte libre pour les notes opérateur
-
-Le bouton 💾 Sauvegarder envoie un `PATCH /api/correlations/{id}` avec les modifications.
+- **CSV** : Bouton en haut à droite
+- **PDF** : Via le menu Actions → Générer rapport PDF
+- **JSON** : Via l'API `/api/correlations/export`
 
 ---
 
-## Pagination
+## 💡 **Astuces**
 
-Le tableau est paginé à 50 éléments par page. La pagination affiche les 5 pages autour de la page courante avec des boutons précédent/suivant.
-
----
-
-## Barre de progression pipeline
-
-Lors du lancement d'un pipeline, une carte s'affiche avec :
-- Un spinner + message d'état
-- Une barre de progression animée (progression simulée)
-- Une zone de logs en temps réel (polling toutes les 2 secondes sur `/api/correlations/run-status`)
-
-La barre passe au vert en cas de succès, au rouge en cas d'erreur. Le bouton **Masquer** permet de fermer la carte sans interrompre le pipeline.
+- ✅ Utiliser les filtres pour cibler les corrélations à traiter
+- ✅ Trier par **Score DESC** pour voir les plus critiques en premier
+- ✅ Utiliser la **recherche globale** pour trouver rapidement une CVE ou un asset
+- ✅ **Rafraîchir** le tableau après une corrélation pour voir les nouvelles détections
+- ❌ Ne pas laisser trop de corrélations en statut `nouveau` (lancer Mistral régulièrement)

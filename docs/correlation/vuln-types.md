@@ -4,27 +4,21 @@ parent: Moteur de corrélation
 nav_order: 8
 ---
 
-# vuln_types.yml — Classification des types d'attaque
-{: .no_toc }
+# 🏷️ vuln_types.yml — Classification des types d'attaque
 
-<details open markdown="block">
-<summary>Table des matières</summary>
-{: .text-delta }
-1. TOC
-{:toc}
-</details>
+**Classifie les CVE par type** - Utilisé pour ajuster le score (Phase 2) et exclure certains types de l'analyse Mistral.
 
 ---
 
-## Rôle
+## 🎯 **Rôle**
 
-Le fichier `scripts/vuln_types.yml` classifie les CVE par type d'attaque. Cette classification est utilisée dans le pré-triage (Phase 2) pour ajuster le score et dans l'analyse Mistral pour mieux contextualiser la CVE.
-
-Elle permet aussi d'**exclure automatiquement** de l'analyse Mistral certains types de vulnérabilités non pertinents en air-gap (XSS, CSRF…), économisant des appels API.
+- Ajustement du score en **Phase 2**
+- Exclusion automatique de l'analyse Mistral pour les types non pertinents en air-gap (XSS, CSRF…)
+- Meilleure contextualisation pour Mistral
 
 ---
 
-## Format
+## 📝 **Format**
 
 ```yaml
 types:
@@ -35,155 +29,80 @@ types:
     keywords:
       - "mot-clé-dans-description"
       - "autre-mot-clé"
-    priorite: 0-4        # impact sur le score pré-triage
-    passer_mistral: true/false  # envoyer à Mistral ?
+    priorite: 0-4        # Impact sur le score
+    passer_mistral: true/false  # Envoyer à Mistral ?
 ```
 
 ---
 
-## Priorités et leur impact sur le score
+## ⚖️ **Priorités et ajustements**
 
-| Valeur | Catégories typiques | Ajustement score |
-|--------|--------------------|--------------------|
-| `4` | RCE, corruption mémoire, injection commande, firmware | **+1.5** |
-| `3` | Élévation de privilèges, DoS, bypass auth, écriture fichier | **+0.5** |
-| `2` | Défaut / Unknown | 0 |
-| `1` | Divulgation d'info, crypto faible, mauvaise config | **-1.0** |
-| `0` | XSS, CSRF, SSRF, open redirect | **-5.0** |
-
----
-
-## Classification par CWE vs keywords
-
-Le moteur cherche d'abord une correspondance par **CWE** (plus précis), puis par **keywords** dans la description de la CVE (fallback).
-
-```python
-# Priorité : CWE > keywords > Unknown
-for cwe in cwes:
-    if cwe in CWE_TO_TYPE:
-        return CWE_TO_TYPE[cwe]  # match CWE
-
-for keyword, type_id in KEYWORDS_TO_TYPE:
-    if keyword in description.lower():
-        return type_id  # match keyword
-
-return "Unknown"  # fallback
-```
+| Priorité | Catégories typiques | Ajustement score |
+|----------|--------------------|-----------------|
+| 4 | RCE, corruption mémoire, injection commande, firmware | **+1.5** |
+| 3 | Élévation de privilèges, DoS, bypass auth, écriture fichier | **+0.5** |
+| 2 | Défaut / Unknown | 0 |
+| 1 | Divulgation d'info, crypto faible, mauvaise config | **-1.0** |
+| 0 | XSS, CSRF, SSRF, open redirect | **-5.0** |
 
 ---
 
-## Types standards et leurs CWE
+## 🔍 **Matching**
 
-### RCE — Remote Code Execution (priorité 4)
-```yaml
-RCE:
-  cwe_ids: ["CWE-94", "CWE-78", "CWE-77", "CWE-502", "CWE-913"]
-  keywords: ["remote code execution", "arbitrary code", "rce"]
-  priorite: 4
-  passer_mistral: true
-```
-
-### MemCorrupt — Corruption mémoire (priorité 4)
-```yaml
-MemCorrupt:
-  cwe_ids: ["CWE-787", "CWE-119", "CWE-125", "CWE-416", "CWE-122"]
-  keywords: ["buffer overflow", "out-of-bounds", "heap overflow", "use after free"]
-  priorite: 4
-  passer_mistral: true
-```
-
-### FirmwareBIOS — Firmware/BIOS (priorité 4)
-```yaml
-FirmwareBIOS:
-  cwe_ids: ["CWE-1277", "CWE-276"]
-  keywords: ["firmware", "bios", "uefi", "bootloader"]
-  priorite: 4
-  passer_mistral: true
-```
-
-### LPE — Local Privilege Escalation (priorité 3)
-```yaml
-LPE:
-  cwe_ids: ["CWE-269", "CWE-264", "CWE-732", "CWE-426", "CWE-427"]
-  keywords: ["privilege escalation", "local privilege", "elevation of privilege"]
-  priorite: 3
-  passer_mistral: true
-```
-
-### AuthBypass — Bypass authentification (priorité 3)
-```yaml
-AuthBypass:
-  cwe_ids: ["CWE-287", "CWE-306", "CWE-798", "CWE-259"]
-  keywords: ["authentication bypass", "unauthorized access", "improper authentication"]
-  priorite: 3
-  passer_mistral: true
-```
-
-### DoS — Déni de service (priorité 3)
-```yaml
-DoS:
-  cwe_ids: ["CWE-400", "CWE-770", "CWE-703"]
-  keywords: ["denial of service", "dos", "crash", "unavailable"]
-  priorite: 3
-  passer_mistral: true
-```
-
-### InfoDisc — Divulgation d'information (priorité 1)
-```yaml
-InfoDisc:
-  cwe_ids: ["CWE-200", "CWE-201", "CWE-203", "CWE-359"]
-  keywords: ["information disclosure", "sensitive information", "data leak"]
-  priorite: 1
-  passer_mistral: true
-```
-
-### XSS — Cross-Site Scripting (priorité 0)
-```yaml
-XSS:
-  cwe_ids: ["CWE-79", "CWE-80"]
-  keywords: ["cross-site scripting", "xss"]
-  priorite: 0
-  passer_mistral: false  # Non pertinent en air-gap
-```
-
-### CSRF — Cross-Site Request Forgery (priorité 0)
-```yaml
-CSRF:
-  cwe_ids: ["CWE-352"]
-  keywords: ["cross-site request forgery", "csrf"]
-  priorite: 0
-  passer_mistral: false  # Non pertinent en air-gap
-```
+1. **Par CWE** (prioritaire) : Correspondance exacte avec les CWE de la CVE
+2. **Par keywords** (fallback) : Recherche dans la description de la CVE
+3. **Unknown** (défaut) : Si aucun match
 
 ---
 
-## Ajouter un nouveau type
+## 📊 **Types standards**
 
-1. Identifier le CWE correspondant sur [cwe.mitre.org](https://cwe.mitre.org)
-2. Choisir les keywords présents dans les descriptions CVE typiques
-3. Définir la priorité selon l'impact en contexte air-gap
-4. Décider si Mistral doit analyser ce type (`passer_mistral`)
+### Priorité 4 (Ajustement +1.5)
 
-```yaml
-NouveauType:
-  cwe_ids:
-    - "CWE-XXX"
-  keywords:
-    - "mot-clé-typique"
-  priorite: 3
-  passer_mistral: true
-```
+| Type | CWE principaux | Keywords |
+|------|----------------|----------|
+| **RCE** | CWE-94, CWE-78, CWE-77, CWE-502 | remote code execution, arbitrary code |
+| **MemCorrupt** | CWE-787, CWE-119, CWE-125 | buffer overflow, out-of-bounds, use after free |
+| **FirmwareBIOS** | CWE-1277, CWE-276 | firmware, bios, uefi, bootloader |
+| **CmdInjection** | CWE-78, CWE-77 | command injection, shell injection |
 
-{: .note }
-Le fichier est chargé au **démarrage du script**. Toute modification est prise en compte au prochain run de corrélation.
+### Priorité 3 (Ajustement +0.5)
+
+| Type | CWE principaux | Keywords |
+|------|----------------|----------|
+| **LPE** | CWE-269, CWE-264 | privilege escalation, elevation |
+| **DoS** | CWE-400, CWE-770 | denial of service, crash |
+| **AuthBypass** | CWE-287, CWE-290 | authentication bypass, auth bypass |
+| **FileWrite** | CWE-269, CWE-732 | arbitrary file write, file upload |
+
+### Priorité 1 (Ajustement -1.0)
+
+| Type | CWE principaux | Keywords |
+|------|----------------|----------|
+| **InfoDisc** | CWE-200, CWE-530 | information disclosure, data leak |
+| **WeakCrypto** | CWE-327, CWE-326 | weak encryption, hardcoded password |
+| **Misconfiguration** | CWE-16, CWE-639 | misconfiguration, default config |
+
+### Priorité 0 (Ajustement -5.0, `passer_mistral: false`)
+
+| Type | CWE principaux | Keywords |
+|------|----------------|----------|
+| **XSS** | CWE-79 | cross-site scripting |
+| **CSRF** | CWE-352 | cross-site request forgery |
+| **SSRF** | CWE-918 | server-side request forgery |
+| **OpenRedirect** | CWE-601 | open redirect |
 
 ---
 
-## Impact sur `passer_mistral`
+## 💡 **Personnalisation**
 
-Le champ `passer_mistral` dans la table `correlations` est défini à l'insertion selon la classification :
+Pour ajouter un nouveau type :
 
-- `passer_mistral = 1` → la corrélation sera envoyée à Mistral en Phase 3
-- `passer_mistral = 0` → la corrélation reste en `statut=nouveau` sans analyse Mistral
-
-Les types avec `passer_mistral: false` (XSS, CSRF, SSRF, OpenRedirect) sont des vulnérabilités web qui ne s'appliquent pas aux systèmes air-gappés. Les exclure de Mistral évite des appels API inutiles et du bruit dans les résultats.
+```yaml
+types:
+  MonNouveauType:
+    cwe_ids: ["CWE-XXX"]
+    keywords: ["mon-mot-clé"]
+    priorite: 3
+    passer_mistral: true
+```

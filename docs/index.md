@@ -7,91 +7,52 @@ nav_order: 1
 # Air-Gapped CVEs
 {: .fs-9 }
 
-Système de gestion d'assets informatiques et de vulnérabilités CVE,
-conçu pour les prestataires informatiques gérant des équipements en environnement **air-gappé**.
+**Gestion d'assets et vulnérabilités pour environnements isolés**
 {: .fs-6 .fw-300 }
 
 ---
 
-## Présentation
+## 🎯 **À quoi ça sert ?**
 
-L'**Air-Gapped CVEs** est une application web permettant à un prestataire informatique de :
+Air-Gapped CVEs permet aux prestataires informatiques de :
 
-- **Inventorier** les équipements de ses clients (serveurs, NAS, PC, caméras, lecteurs biométriques…)
-- **Corréler automatiquement** les CVE du NVD avec les assets présents en base
-- **Analyser** les vulnérabilités détectées grâce à Mistral AI, en tenant compte du contexte air-gap
-- **Prioriser et tracer** les actions correctives par client et par site
+- ✅ **Inventorier** les équipements clients (serveurs, NAS, PC, caméras, etc.)
+- ✅ **Corréler automatiquement** les CVE NVD avec vos assets
+- ✅ **Analyser** les vulnérabilités avec Mistral AI (contexte air-gap)
+- ✅ **Prioriser** les actions correctives par client/site
 
-Le système est conçu pour fonctionner **sans agent déployé chez les clients**. Toutes les données sont saisies manuellement ou importées lors des interventions sur site.
-
----
-
-## Contrainte fondamentale : Air-Gap
-
-Tous les environnements clients sont **physiquement isolés d'Internet**.
-Cette contrainte influence toute la logique d'analyse de risque :
-
-{: .highlight }
-Une CVE exploitable uniquement via Internet (vecteur `AV:N`) est **systématiquement pénalisée** dans le scoring. Une CVE exploitable en réseau local (`AV:L`) ou physiquement (`AV:P`) est au contraire **bonifiée**.
+**Particularité** : Fonctionne **sans agent** chez le client. Toutes les données sont saisies manuellement ou importées.
 
 ---
 
-## Architecture
+## 🔒 **Contrainte Air-Gap**
+
+Les environnements clients sont **physiquement isolés d'Internet**. Impact sur le scoring :
+
+- ❌ **Pénalisé** : CVE exploitable via Internet (`AV:N`)
+- ✅ **Bonifié** : CVE exploitable en local (`AV:L`) ou physiquement (`AV:P`)
+
+---
+
+## 🏗️ **Architecture**
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                  Raspberry Pi 5                     │
-│                  Ubuntu Server                      │
-│                                                     │
-│  ┌──────────┐    ┌──────────┐    ┌──────────────┐   │
-│  │ MariaDB  │◄───│ FastAPI  │◄───│   Frontend   │   │
-│  │          │    │          │    │   (HTML/JS)  │   │
-│  └──────────┘    └──────────┘    └──────────────┘   │
-│       ▲               │                             │
-│       │          ┌────▼─────┐    ┌──────────────┐   │
-│       └──────────│ Scripts  │    │   Grafana    │   │
-│                  │ Python   │    │  (à venir)   │   │
-│                  │ + Mistral│    └──────────────┘   │
-│                  └──────────┘                       │
-└─────────────────────────────────────────────────────┘
+Raspberry Pi 5 / Ubuntu Server
+├── MariaDB 11.x    → Base de données
+├── FastAPI         → API REST
+├── Scripts Python  → Corrélation + Mistral AI
+└── Frontend HTML   → Interface web
 ```
 
-| Composant | Rôle |
-|-----------|------|
-| **MariaDB** | Base de données centrale — assets, CVE, corrélations |
-| **FastAPI** | API REST — expose toutes les opérations CRUD |
-| **Scripts Python** | Moteur de corrélation CVE + analyse Mistral AI |
-| **Frontend** | Interface web custom (HTML/JS/Bootstrap) |
-| **Grafana** | Dashboards de visualisation *(à venir)* |
-| **Cron** | Planification des scripts automatiques |
-
 ---
 
-## Stack technique
-
-| Technologie | Usage |
-|-------------|-------|
-| Python 3.12 | Scripts, API FastAPI |
-| MariaDB 10.11 | Base de données |
-| FastAPI | API REST |
-| Mistral AI | Analyse contextuelle des vulnérabilités |
-| Bootstrap 5 | Interface utilisateur |
-| Grafana | Visualisation *(à venir)* |
-| systemd | Gestion du service en production |
-| Raspberry Pi 5 | Serveur de production |
-
----
-
-## Navigation
+## 📚 **Documentation**
 
 | Section | Description |
 |---------|-------------|
-| [Installation]({{ site.baseurl }}/installation) | Prérequis, déploiement, configuration |
-| [Base de données]({{ site.baseurl }}/database) | Schéma, tables, vues |
-| [Référentiels métier]({{ site.baseurl }}/referentiels) | Clients, assets, fabricants, OS |
-| [Moteur de corrélation]({{ site.baseurl }}/correlation) | Les 3 phases, scoring, Mistral |
-| [API FastAPI]({{ site.baseurl }}/api) | Endpoints, paramètres, pagination |
-| [Interface utilisateur]({{ site.baseurl }}/ui) | Pages, filtres, actions |
-| [Guides opérationnels]({{ site.baseurl }}/guides) | Workflows, bonnes pratiques |
-| [Référence technique]({{ site.baseurl }}/reference) | Config, variables, glossaire |
-| [Grafana]({{ site.baseurl }}/grafana) | Dashboards *(à venir)* |
+| [📥 Installation]({{ site.baseurl }}/installation) | Déploiement rapide |
+| [🗃️ Base de données]({{ site.baseurl }}/database) | Tables principales |
+| [⚡ Corrélation]({{ site.baseurl }}/correlation) | Comment ça marche |
+| [🎯 Guides]({{ site.baseurl }}/guides) | Workflows pratiques |
+| [🖥️ Interface]({{ site.baseurl }}/ui) | Utilisation quotidienne |
+| [🔌 API]({{ site.baseurl }}/api) | Référence technique |

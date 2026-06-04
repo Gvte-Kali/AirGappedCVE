@@ -1,94 +1,93 @@
 ---
 title: Page OS & Versions
 parent: Interface utilisateur
-nav_order: 4
+nav_order: 9
 ---
 
-# Page OS & Versions
-{: .no_toc }
+# 📊 Page OS & Versions
 
-<details open markdown="block">
-<summary>Table des matières</summary>
-{: .text-delta }
-1. TOC
-{:toc}
-</details>
+**Référentiel des versions OS/Firmware/BIOS normalisées NVD**
+
+**URL** : `/ui/os-versions` (menu **Référentiels → 📊 OS & Versions**)
 
 ---
 
-## Accès
+## 📋 **Tableau des versions**
 
-`/ui/os-versions` — menu **Référentiels → 🖥️ OS & Versions**.
-
----
-
-## Rôle de la page
-
-Cette page gère le référentiel des OS, firmwares et BIOS normalisés selon la nomenclature NVD. C'est ici qu'on ajoute les nouvelles versions d'OS au fur et à mesure des mises à jour des équipements clients.
-
-Chaque entrée correspond à un produit NVD unique `(nvd_vendor, nvd_product)`.
-
----
-
-## Filtres
-
-Un filtre par type de produit permet d'afficher uniquement les OS, les firmwares ou les BIOS.
-
----
-
-## Tableau
-
-### Colonnes principales
+### Colonnes
 
 | Colonne | Description |
 |---------|-------------|
-| Nom OS | Nom affiché (ex: `Windows Server`, `DSM`) |
-| Version | Version affichée (ex: `2022`, `7.1.1`) |
-| nvd_vendor | Identifiant vendor NVD exact |
-| nvd_product | Identifiant produit NVD exact |
-| Type | os / firmware / bios |
-
-### À venir — Bloc F
-
-Deux colonnes seront ajoutées prochainement :
-
-| Colonne | Description |
-|---------|-------------|
-| Format version | Format attendu pour la saisie (ex: `X.X.X-XXXXX`) |
-| Où trouver | Localisation de la version sur l'équipement (ex: `Panneau de config → Informations`) |
-
-Ces colonnes alimenteront le lien ❓ dans la page Assets qui guide l'opérateur lors de la saisie d'une version libre.
+| **Nom** | Nom affiché |
+| **Fabricant** | Fabricant |
+| **nvd_vendor** | Vendor NVD |
+| **nvd_product** | Produit NVD |
+| **Version** | Version exacte |
+| **Type OS** | os/firmware/bios |
+| **Assets** | Nombre d'assets utilisant cette version |
+| **Actions** | Voir/Modifier/Supprimer |
 
 ---
 
-## Ajout d'une entrée
+## ✏️ **Modal de création / édition**
 
-Pour ajouter un nouvel OS ou firmware :
+### Champs
 
-1. Trouver le `nvd_vendor` et `nvd_product` exacts sur [nvd.nist.gov](https://nvd.nist.gov)
-2. Cliquer sur **＋ Nouveau** dans l'interface
-3. Renseigner :
-   - **Nom OS** : nom lisible pour l'interface (ex: `FortiOS`)
-   - **Version** : version affichée (ex: `7.4.3`)
-   - **nvd_vendor** : identifiant NVD exact (ex: `fortinet`)
-   - **nvd_product** : identifiant NVD exact (ex: `fortios`)
-   - **Type** : `os`, `firmware` ou `bios`
-
-{: .warning }
-La contrainte d'unicité `(nvd_vendor, nvd_product)` interdit les doublons. Si un produit existe déjà avec une version différente, il faut modifier l'entrée existante ou créer une nouvelle entrée avec un `nvd_product` légèrement différent si le NVD le justifie.
+| Champ | Type | Obligatoire | Description |
+|-------|------|-------------|-------------|
+| **Fabricant** | Typeahead | ✅ | Fabricant |
+| **Nom** | Texte | ✅ | Nom affiché (ex: DSM 7.2.2) |
+| **nvd_vendor** | Texte | ✅ | Vendor NVD (ex: synology) |
+| **nvd_product** | Texte | ✅ | Produit NVD (ex: diskstation_manager) |
+| **Version** | Texte | ✅ | Version exacte (ex: 7.2.2-72806) |
+| **Type OS** | Select | ✅ | os/firmware/bios |
 
 ---
 
-## Lien avec les assets
+## 🎯 **Actions**
 
-Une fois une entrée créée, elle devient disponible dans le typeahead de la page Assets :
-- Typeahead niveau 1 (Système d'exploitation) : filtre par `os_nom`
-- Typeahead niveau 2 (Version OS) : filtre par `os_nom` sélectionné
-
-L'asset lié à cette entrée via `os_version_id` bénéficiera d'une corrélation CVE en mode **affirme**.
+| Bouton | Action |
+|--------|--------|
+| 👁️ **Voir** | Ouvrir en lecture seule |
+| ✏️ **Modifier** | Ouvrir en édition |
+| 🗑️ **Supprimer** | Supprimer la version (avec confirmation) |
+| ➕ **Nouvelle version** | Créer une nouvelle version |
+| 📤 **Exporter** | Exporter en CSV |
 
 ---
 
-## Volume de données
+## ⚠️ **Attention**
 
-Le référentiel `os_versions` contient ~20 000 entrées importées depuis le NVD. La recherche est optimisée par des index sur `os_nom`, `nvd_vendor` et `type_produit`.
+- **Clé de corrélation** : Le triplet (nvd_vendor, nvd_product, version) doit être exact
+- **Type OS** : Détermine comment la version est utilisée (OS, firmware, BIOS)
+- **SET NULL** : Supprimer une version ne supprime pas les assets qui l'utilisent (déréférencement)
+
+---
+
+## 💡 **Astuces**
+
+- ✅ **Utiliser les versions complètes** (inclure les numéros de build)
+- ✅ **Vérifier sur NVD** avant de créer
+- ✅ **Respecter le format du fabricant**
+- ❌ **Ne pas modifier une version** déjà utilisée par des assets
+- ❌ **Ne pas supprimer une version** sans vérifier les dépendances
+
+---
+
+## 🔍 **Vérification**
+
+Vérifier que la version est utilisée :
+
+```sql
+SELECT COUNT(*) as nb_assets
+FROM assets
+WHERE os_version_id = X OR fw_version_id = X OR bios_version_id = X;
+```
+
+Vérifier les CVE disponibles :
+
+```sql
+SELECT COUNT(*) as nb_cve
+FROM cve
+WHERE fabricant = 'nvd_vendor' AND produit = 'nvd_product';
+```

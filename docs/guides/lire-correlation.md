@@ -4,32 +4,22 @@ parent: Guides opérationnels
 nav_order: 4
 ---
 
-# Interpréter une corrélation CVE
-{: .no_toc }
+# 🔍 Interpréter une corrélation CVE
 
-<details open markdown="block">
-<summary>Table des matières</summary>
-{: .text-delta }
-1. TOC
-{:toc}
-</details>
+**Lire et comprendre les informations d'une corrélation**
 
 ---
 
-Ce guide explique comment lire et interpréter les informations d'une corrélation CVE dans le détail.
+## 📱 **Ouvrir le détail**
+
+Depuis `/ui/vulns`, cliquer sur 🔍 d'une ligne pour ouvrir le modal de détail.
 
 ---
 
-## Ouvrir le détail
-
-Depuis la page `/ui/vulns`, cliquer sur le bouton 🔍 d'une ligne pour ouvrir le modal de détail.
-
----
-
-## Bloc Asset
+## 💻 **Bloc Asset**
 
 ```
-Nom         : NAS
+Nom         : NAS-Synology-01
 Type        : nas
 OS          : N/A  DSM (DiskStation Manager) 7.2.2-72806 Update 3
 Firmware    : N/A
@@ -38,12 +28,12 @@ Criticité   : moyen
 
 | Champ | Interprétation |
 |-------|---------------|
-| OS | `N/A` = pas d'`os_version_id` FK / la valeur après = `version_os` texte libre |
-| Criticité | Influence le score — `eleve`/`critique` = +1.0 au pré-triage |
+| OS | `N/A` = pas d'`os_version_id` FK / valeur après = `version_os` texte libre |
+| Criticité | Influence le score — `élevé`/`critique` = **+1.0** au pré-triage |
 
 ---
 
-## Bloc CVE
+## 🔬 **Bloc CVE**
 
 ```
 CVSS v3 : 8.2 (HIGH)
@@ -61,17 +51,18 @@ Produit : diskstation_manager
 | `AV:P` | Physical | ✅ Exploitable avec accès physique |
 | `AC:L` | Low complexity | Facilement exploitable |
 | `PR:H` | High privileges | Nécessite des droits admin |
-| `S:C` | Changed scope | Impact au-delà du composant vulnérable |
-| `C:H/I:H/A:H` | High CIA | Impact maximal sur confidentialité/intégrité/disponibilité |
+| `S:C` | Changed scope | Impact au-delà du composant |
+| `C:H/I:H/A:H` | High CIA | Impact maximal sur CIA |
 
 ---
 
-## Bloc Scores
+## 📊 **Bloc Scores**
 
 ```
 Score contextuel : 8.8
 Air-gap          : ⚠️ Exploitable
 Type             : Affirmé
+Verdict          : patcher
 ```
 
 ### Score contextuel
@@ -80,94 +71,67 @@ Type             : Affirmé
 score_pre_triage (calculé localement) + ajustement Mistral = score_contextuel
 ```
 
-Exemple :
+**Exemple** :
 - CVSS de base : 8.2
-- AV:L → +0.5 (local, exploitable en air-gap)
-- Version affirme → +1.0
-- CWE-269 (privilèges) → +0.5
-- LPE priorité 4 → +1.5
+- AV:L → **+0.5** (local, exploitable en air-gap)
+- Version affirmée → **+1.0**
+- CWE-269 (privilèges) → **+0.5**
+- LPE priorité 4 → **+1.5**
 - **Score pré-triage : 10.0** (clampé)
-- Ajustement Mistral : -1.0 (contexte prison, accès physique contrôlé)
+- Ajustement Mistral : **-1.0** (contexte prison, accès physique contrôlé)
 - **Score final : 9.0 → critique**
 
 ### Type de corrélation
 
 | Valeur | Signification |
 |--------|---------------|
-| `Affirmé` | La version de l'asset est dans le range vulnérable CVE — corrélation certaine |
-| `Informatif` | La version n'a pas pu être confirmée — à valider manuellement |
+| `Affirmé` | Version de l'asset dans le range vulnérable → corrélation certaine |
+| `Informatif` | Version non confirmée → à valider manuellement |
 
 ### Air-gap
 
 | Valeur | Signification |
 |--------|---------------|
-| ⚠️ Exploitable | Mistral estime que la CVE est exploitable malgré l'isolation réseau |
-| ✓ Non exploitable | Mistral estime que l'isolation rend la CVE non exploitable |
-| ? | Pas encore analysé par Mistral |
+| ✅ Exploitable | Exploitable malgré l'isolation |
+| ❌ Non exploitable | Nécessite Internet |
+| ⚠️ Partiellement | Dépend du contexte |
 
 ---
 
-## Bloc Analyse Mistral
+## 🎯 **Bloc Verdict**
 
 ```
-[Verdict Mistral: patcher] [Ajustement: -1.0]
-
-La CVE affecte directement le DSM avec un vecteur local (AV:L)
-exploitable même en air-gap.
-
-Recommandation: Mettre à jour le DSM vers une version ≥ 6.2.4-25553
+Verdict : patcher
+Justification : CVE critique affectant DSM 7.2.2, exploitable localement
+Recommandation : Appliquer le patch Synology DSM 7.2.2-72806 Update 4
 ```
 
-| Champ | Interprétation |
-|-------|---------------|
-| Verdict | `patcher` = patch nécessaire / `informatif` = à surveiller / `faux_positif` = non applicable |
-| Ajustement | Entre -2.0 et +2.0 — modifie le score pré-triage |
-| Justification | Raisonnement de Mistral en 1-2 phrases |
-| Recommandation | Action concrète à réaliser |
+| Verdict | Signification | Action |
+|---------|---------------|--------|
+| `patcher` | Asset vulnérable, patch nécessaire | **Action immédiate** |
+| `informatif` | Pertinent mais pas urgent | Surveiller |
+| `faux_positif` | Ne concerne pas cet asset | Ignorer |
+| `mitige` | Risque atténué | Valider le contexte |
 
 ---
 
-## Champs éditables par l'opérateur
+## 📅 **Bloc Historique**
 
-### Statut
-
-| Statut | Quand l'utiliser |
-|--------|-----------------|
-| `nouveau` | En attente de revue |
-| `en_analyse` | En cours d'investigation |
-| `confirme` | Vulnérabilité confirmée, patch planifié |
-| `mitige` | Risque atténué par une mesure compensatoire |
-| `faux_positif` | Ne s'applique pas à cet asset |
-| `patche` | Patch appliqué |
-
-### Override utilisateur
-
-L'override permet de forcer une décision qui prime sur le statut automatique. Il est visible dans la vue `v_vulnerabilites_tableau` via `COALESCE(override_utilisateur, statut)`.
-
-| Override | Quand l'utiliser |
-|----------|-----------------|
-| `a_patcher` | Forcer le traitement en priorité malgré un verdict Mistral douteux |
-| `informatif` | Dégrader une corrélation `confirme` jugée non critique |
-| `faux_positif` | Invalider définitivement une corrélation |
-
-### Notes
-
-Champ libre pour documenter les décisions, les actions entreprises, les dates d'intervention planifiées.
+```
+Date détection : 2024-06-01 10:30:00
+Date analyse : 2024-06-01 10:35:00
+Dernière modification : 2024-06-01 14:20:00 (par admin)
+```
 
 ---
 
-## Workflow opérateur recommandé
+## 🔧 **Bloc Override** (si applicable)
 
 ```
-1. Filtrer sur statut = "nouveau" et priorité = "critique"/"haute"
-2. Pour chaque corrélation :
-   a. Lire le type (affirme/informatif) → fiabilité du match
-   b. Lire le vecteur CVSS → exploitabilité en air-gap
-   c. Lire l'analyse Mistral → verdict et recommandation
-   d. Décider :
-      - Patch nécessaire → statut = "confirme" + noter la date planifiée
-      - À surveiller → statut = "en_analyse"
-      - Faux positif → statut = "faux_positif"
-      - Déjà patché → statut = "patche"
-3. Filtrer sur statut = "confirme" pour voir les actions à entreprendre
+Override opérateur : faux_positif
+Raison : Équipement en DMZ isolée, pas exposé
+Date : 2024-06-01 14:20:00
+Utilisateur : admin
 ```
+
+L'override **prime** sur le verdict automatique.

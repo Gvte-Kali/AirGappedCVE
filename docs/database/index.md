@@ -4,49 +4,42 @@ nav_order: 3
 has_children: true
 ---
 
-# Base de données
+# 🗃️ Base de données
 
-La base de données **MariaDB** est le cœur du système. Elle centralise les assets, les CVE, les corrélations et tous les référentiels métier.
+**MariaDB** - Cœur du système : assets, CVE, corrélations et référentiels.
 
-## Vue d'ensemble
+---
+
+## 📊 **Structure globale**
 
 ```
 asset_vuln_manager
-│
 ├── Référentiels métier
-│   ├── clients
-│   ├── sites
-│   ├── assets
-│   ├── asset_software
-│   ├── product_vendors
-│   ├── product_models
-│   ├── os_versions
-│   └── equipment_types
+│   ├── clients, sites
+│   ├── assets (équipements)
+│   ├── product_vendors, product_models
+│   ├── os_versions, equipment_types
+│   └── asset_software
 │
-├── Référentiels CVE/CWE (NVD)
-│   ├── cve
-│   ├── cwe
-│   └── cve_cwe
+├── Référentiels NVD
+│   ├── cve, cwe, cve_cwe
+│   └── ...
 │
 ├── Moteur de corrélation
 │   ├── correlations
 │   ├── correlation_rejects
 │   └── historique_analyses
 │
-├── Divers
-│   └── utilisateurs
-│
 └── Vues
-    ├── v_assets
-    ├── v_clients
-    ├── v_sites
-    ├── v_fabricants
-    ├── v_modeles
+    ├── v_assets, v_clients, v_sites
+    ├── v_fabricants, v_modeles
     └── v_vulnerabilites_tableau
 ```
 
-## Pages
+---
 
-- [Schéma & Relations]({{ site.baseurl }}/database/schema) — diagramme des dépendances entre tables
-- [Tables]({{ site.baseurl }}/database/tables) — description détaillée de chaque table et colonne
-- [Vues]({{ site.baseurl }}/database/vues) — vues SQL et leur usage
+## 📖 **Documentation**
+
+- [🔗 Schéma & Relations]({{ site.baseurl }}/database/schema) — Diagramme des tables
+- [📋 Tables]({{ site.baseurl }}/database/tables) — Description des colonnes
+- [👁️ Vues]({{ site.baseurl }}/database/vues) — Vues SQL utiles

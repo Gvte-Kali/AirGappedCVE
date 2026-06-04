@@ -4,37 +4,51 @@ parent: Guides opérationnels
 nav_order: 7
 ---
 
-# Synchronisation NVD
-{: .no_toc }
+# 🔄 Synchronisation NVD
 
-<details open markdown="block">
-<summary>Table des matières</summary>
-{: .text-delta }
-1. TOC
-{:toc}
-</details>
+**Mise à jour du référentiel CVE/CWE local**
 
 ---
 
-## Principe
+## 🎯 **Principe**
 
-Le moteur de corrélation CVE travaille sur une **copie locale** de la base NVD (National Vulnerability Database). Cette copie doit être mise à jour régulièrement pour disposer des dernières CVE publiées.
+Le moteur de corrélation travaille sur une **copie locale** de la base NVD.
 
-La synchronisation est réalisée par des scripts Python dédiés, distincts du pipeline de corrélation.
-
----
-
-## Scripts de synchronisation
-
-{: .note }
-Les scripts de synchronisation NVD ne sont pas encore documentés dans cette version. Cette section sera complétée lors de leur implémentation formelle. Les informations ci-dessous décrivent le comportement actuel de la base.
+- ✅ **Avantage** : Pas de dépendance à Internet pour la corrélation
+- ⚠️ **Contrainte** : Nécessite une synchronisation régulière
 
 ---
 
-## État actuel de la base CVE
+## 📥 **Scripts de synchronisation**
+
+### Script principal
+
+```bash
+# Télécharger et importer les dernières CVE
+python3 scripts/download_nvd.py
+```
+
+**Options** :
+```bash
+# Synchronisation complète (longue)
+python3 scripts/download_nvd.py --full
+
+# Synchronisation incrémentale (rapide)
+python3 scripts/download_nvd.py --incremental
+
+# Depuis une date spécifique
+python3 scripts/download_nvd.py --since 2024-01-01
+
+# Limiter aux vendors spécifiques
+python3 scripts/download_nvd.py --vendors microsoft,synology,fortinet
+```
+
+---
+
+## 📊 **État de la base**
 
 ```sql
--- Nombre de CVE en base
+-- Nombre total de CVE
 SELECT COUNT(*) as total FROM cve;
 -- Résultat : ~932 000 CVE
 
@@ -59,9 +73,9 @@ LIMIT 1;
 
 ---
 
-## Vérifier la couverture d'un vendor
+## 🔍 **Vérifier la couverture d'un vendor**
 
-Avant de lancer une corrélation sur un nouvel équipement, vérifier que des CVE existent pour son vendor :
+Avant de lancer une corrélation sur un nouvel équipement :
 
 ```sql
 -- CVE disponibles pour un vendor
@@ -78,47 +92,80 @@ GROUP BY produit
 ORDER BY nb DESC;
 ```
 
-Si le résultat est 0, les CVE de ce vendor ne sont pas encore importées.
-
 ---
 
-## Table `historique_analyses`
+## ⚙️ **Configuration**
 
-Chaque synchronisation est enregistrée dans `historique_analyses` :
+Dans `scripts/config.yml` :
 
-```sql
--- Dernières synchronisations
-SELECT type_analyse, statut, nb_nouveaux, nb_mis_a_jour,
-       duree_secondes, date_execution
-FROM historique_analyses
-WHERE type_analyse IN ('sync_cve', 'sync_cwe')
-ORDER BY date_execution DESC
-LIMIT 10;
+```yaml
+nvd:
+  data_dir: "data/nvd"          # Répertoire de stockage
+  raw_dir: "data/nvd/raw"      # Fichiers JSON bruts
+  processed_dir: "data/nvd/processed"  # Fichiers traités
+  batch_size: 1000              # Taille des batches
+  max_workers: 4               # Nombre de workers
+  timeout: 30                  # Timeout requêtes HTTP
 ```
 
 ---
 
-## Paramètres de filtrage des CVE
+## 📅 **Planification**
 
-Le moteur n'utilise pas toutes les CVE importées — il applique des filtres lors du chargement en cache :
+### Synchronisation automatique (cron)
 
-| Filtre | Paramètre | Défaut | Effet |
-|--------|-----------|--------|-------|
-| Score minimum | `cvss_min` | 4.0 | Ignore les CVE de sévérité très faible |
-| Score réseau min | `cvss_network_min` | 7.0 | Ignore les CVE réseau de sévérité MEDIUM (peu pertinentes en air-gap) |
-| Date minimum | `date_min` | `2015-01-01` | Ignore les CVE très anciennes |
-| Limite par vendor | `vendor_cve_limit` | 2000 | Limite le cache mémoire par vendor |
+```bash
+# Synchronisation incrémentale quotidienne à 2h
+0 2 * * * /opt/asset-manager/venv/bin/python3 /opt/asset-manager/scripts/download_nvd.py --incremental
 
-Ces paramètres sont configurables dans `scripts/config.yml`.
+# Synchronisation complète hebdomadaire le dimanche à 3h
+0 3 * * 0 /opt/asset-manager/venv/bin/python3 /opt/asset-manager/scripts/download_nvd.py --full
+```
+
+### Synchronisation manuelle
+
+```bash
+# Lancer une sync complète
+sudo systemctl stop asset-manager
+python3 scripts/download_nvd.py --full
+sudo systemctl start asset-manager
+```
 
 ---
 
-## À venir
+## 💡 **Bonnes pratiques**
 
-La documentation complète de la synchronisation NVD sera ajoutée lors de l'implémentation des scripts dédiés. Elle couvrira :
+- ✅ **Synchroniser régulièrement** (quotidiennement pour les mises à jour incrémentales)
+- ✅ **Vérifier les logs** après chaque synchronisation
+- ✅ **Surveiller l'espace disque** (la base NVD complète fait ~10-15 Go)
+- ❌ **Ne pas synchroniser pendant les heures de pointe**
+- ❌ **Ne pas interrompre une synchronisation en cours**
 
-- Synchronisation initiale complète depuis le NVD
-- Synchronisation incrémentale (deltas quotidiens)
-- Planification via Cron
-- Gestion des erreurs et reprise
-- Monitoring de la fraîcheur des données
+---
+
+## 🚨 **Dépannage**
+
+### Problème : Aucune CVE trouvée pour un vendor
+
+1. Vérifier l'orthographe du `nvd_vendor`
+2. Vérifier que le vendor existe dans la base :
+   ```sql
+   SELECT COUNT(*) FROM cve WHERE fabricant = 'votre_vendor';
+   ```
+3. Synchroniser à nouveau :
+   ```bash
+   python3 scripts/download_nvd.py --vendors votre_vendor
+   ```
+
+### Problème : Synchronisation lente
+
+- Augmenter `batch_size` dans `config.yml`
+- Augmenter `max_workers` (mais pas au-delà du nombre de cœurs CPU)
+
+### Problème : Espace disque insuffisant
+
+- Nettoyer les fichiers temporaires :
+  ```bash
+  rm -rf data/nvd/raw/*
+  ```
+- Synchroniser par vendors spécifiques plutôt que tout le NVD

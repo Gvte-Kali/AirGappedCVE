@@ -4,40 +4,35 @@ parent: Guides opérationnels
 nav_order: 3
 ---
 
-# Configurer un type d'équipement
-{: .no_toc }
+# ⚙️ Configurer un type d'équipement
 
-<details open markdown="block">
-<summary>Table des matières</summary>
-{: .text-delta }
-1. TOC
-{:toc}
-</details>
+**Choisir les bons paramètres dans `/ui/equipment-types`**
 
 ---
 
-Ce guide aide à choisir les bons paramètres lors de la création ou modification d'un type d'équipement dans `/ui/equipment-types`.
+## ❓ **2 Questions fondamentales**
+
+### 1️⃣ **Quelle est la source du vendor NVD ?**
+
+| Source | `vendor_source` | Exemples |
+|--------|-----------------|----------|
+| **OS** | `os_fk` | PC, serveurs, laptops |
+| **Firmware** | `fw_fk` | Switches, routeurs |
+| **Matériel** | `materiel` | NAS, caméras, lecteurs biométriques |
+| **Auto** | `detection_auto` | Essaie os_fk → fw_fk → OS textuel → vendor matériel |
+
+### 2️⃣ **Quel champ de version utiliser ?**
+
+| Champ | Option | Exemples |
+|-------|--------|----------|
+| OS normalisé FK | `use_os_version = 1` | Ubuntu 22.04, DSM 7.2 |
+| Version OS texte libre | `use_version_os = 1` | "Windows Server 2019" |
+| Firmware FK | `use_version_firmware = 1` | Firmware switch |
+| BIOS FK | `use_version_bios = 1` | BIOS UEFI |
 
 ---
 
-## Les deux questions fondamentales
-
-Avant de configurer un type, répondre à deux questions :
-
-**1. Quelle est la source du vendor NVD pour cet équipement ?**
-- L'OS définit le vendor → `os_fk` (PC, serveurs, laptops)
-- Le firmware définit le vendor → `fw_fk` (switches, routeurs)
-- Le fabricant matériel définit le vendor → `materiel` (NAS, caméras, lecteurs)
-
-**2. Quel champ de version utiliser pour comparer avec les CVE ?**
-- OS normalisé FK → `use_os_version = 1`
-- Version texte libre → `use_version_os = 1`
-- Firmware FK → `use_version_firmware = 1`
-- BIOS FK → `use_version_bios = 1`
-
----
-
-## Arbre de décision
+## 🌳 **Arbre de décision**
 
 ```
 L'équipement a un OS installé (Windows, Linux, DSM…) ?
@@ -62,113 +57,59 @@ L'équipement a un OS installé (Windows, Linux, DSM…) ?
       │
       └── Ex: switch → materiel, firmware=1
             caméra → materiel, firmware=1
-            lecteur biométrique → materiel, firmware=1
 ```
 
 ---
 
-## Configurations types par catégorie
+## 📋 **Configurations types**
 
 ### Serveur Windows / Linux
 
-```
-OS (FK)      : ✅
-Version OS   : ❌  (builds Windows non comparables)
-Firmware     : ❌
-BIOS         : ❌
-Vendor source: os_fk
-```
-
-Pourquoi `Version OS = ❌` pour Windows ? Les CVE Windows utilisent des builds `10.0.14393.xxxx` que `normalize_version("2022")` ne peut pas comparer correctement. Le filtre produit (`windows_server_2022`) est suffisant.
-
-### NAS (Synology, QNAP…)
-
-```
-OS (FK)      : ✅
-Version OS   : ✅  (DSM 7.x.x-XXXXX comparables avec NVD)
-Firmware     : ❌
-BIOS         : ❌
-Vendor source: materiel
+```yaml
+vendor_source: os_fk
+use_os_version: 1
+use_version_os: 0  # builds Windows non comparables
+use_version_firmware: 0
+use_version_bios: 0
 ```
 
-### PC / Laptop
+### NAS Synology / QNAP
 
-```
-OS (FK)      : ✅
-Version OS   : ✅
-Firmware     : ❌
-BIOS         : ❌
-Vendor source: os_fk
-```
-
-### Switch / Routeur / Pare-feu
-
-```
-OS (FK)      : ❌
-Version OS   : ❌
-Firmware     : ✅
-BIOS         : ❌
-Vendor source: fw_fk  (si firmware normalisé dans os_versions)
-              ou materiel (si vendor matériel = éditeur CVE)
+```yaml
+vendor_source: materiel
+use_os_version: 1
+use_version_os: 1
+use_version_firmware: 0
+use_version_bios: 0
 ```
 
-### Caméra IP (Axis, Hikvision…)
+### Switch / Routeur
 
-```
-OS (FK)      : ❌
-Version OS   : ❌
-Firmware     : ✅
-BIOS         : ❌
-Vendor source: materiel
-```
-
-### Lecteur biométrique / Lecteur de cartes
-
-```
-OS (FK)      : ❌
-Version OS   : ❌
-Firmware     : ✅
-BIOS         : ❌
-Vendor source: materiel
+```yaml
+vendor_source: fw_fk  # ou materiel
+use_os_version: 0
+use_version_os: 0
+use_version_firmware: 1
+use_version_bios: 0
 ```
 
-### Raspberry Pi
+### Caméra IP / Lecteur biométrique
 
-```
-OS (FK)      : ✅
-Version OS   : ✅
-Firmware     : ❌
-BIOS         : ❌
-Vendor source: os_fk
+```yaml
+vendor_source: materiel
+use_os_version: 0
+use_version_os: 0
+use_version_firmware: 1
+use_version_bios: 0
 ```
 
 ---
 
-## Erreurs fréquentes
+## 🎯 **Options avancées**
 
-### Trop de faux positifs
-
-**Symptôme :** Des CVE remontent pour des produits qui ne concernent pas l'équipement.
-
-**Cause probable :** `vendor_source = detection_auto` trop permissif, ou `use_version_os = 1` sur un équipement dont les versions ne sont pas comparables (Windows Server).
-
-**Solution :** Passer à `vendor_source = os_fk` ou `materiel` selon le type, et désactiver `use_version_os` si les formats de version ne sont pas comparables.
-
-### Aucune corrélation détectée
-
-**Symptôme :** 0 CVE trouvée pour un équipement alors que des CVE existent.
-
-**Cause probable :** `vendor_source` incorrect — le moteur cherche dans le mauvais vendor NVD.
-
-**Solution :**
-1. Vérifier le `nvd_vendor` du fabricant de l'asset
-2. Vérifier que des CVE existent en base pour ce vendor : `SELECT COUNT(*) FROM cve WHERE fabricant = 'nvd_vendor'`
-3. Vérifier que `vendor_source` correspond à la source correcte pour ce type
-
-### Corrélations en mode `informatif` au lieu d`affirme`
-
-**Symptôme :** Toutes les corrélations sont `informatif`.
-
-**Cause probable :** `use_os_version = 0` (OS FK non activé) ou `os_version_id` non renseigné sur les assets.
-
-**Solution :** Activer `use_os_version = 1` dans le type ET renseigner l'OS normalisé sur les assets.
+| Option | Description | Défaut |
+|--------|-------------|--------|
+| `correlation_enabled` | Activer la corrélation pour ce type | 1 |
+| `auto_correlate` | Lancer automatiquement la corrélation | 1 |
+| `default_criticite` | Criticité par défaut | moyen |
+| `default_statut` | Statut par défaut | actif |

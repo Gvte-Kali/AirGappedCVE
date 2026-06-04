@@ -1,47 +1,88 @@
 # ── Dépendances directes ──────────────────────────────────────────────────────
 
 # API web
-fastapi==0.135.1
-uvicorn==0.41.0
-starlette==0.52.1
+fastapi==0.136.3
+uvicorn==0.48.0
+starlette==1.2.0
 websockets==16.0
 
 # Validation des données
-pydantic==2.12.5
+pydantic==2.13.4
+pydantic-settings==2.14.1
 
 # Base de données
-PyMySQL==1.1.2
+PyMySQL==1.2.0
 
 # Variables d'environnement
 python-dotenv==1.2.2
 
 # IA / Mistral
-mistralai
+mistralai==2.4.8
 
 # Génération de PDF
-reportlab
+reportlab==4.5.1
+pillow==12.2.0
 
 # Requêtes HTTP
-requests
+requests==2.34.2
+httpx==0.28.1
+httpx-sse==0.4.3
 
 # CLI
-typer
+typer==0.26.7
+shellingham==1.5.4
 
 # Progression en console
-tqdm
+tqdm==4.67.3
 
 # Manipulation de fichiers xlsx
-openpyxl>=3.1.0
-python-multipart
+openpyxl==3.1.5
+et-xmlfile==2.0.0
+python-multipart==0.0.29
+
+# Parsing YAML
+PyYAML==6.0.3
+
+# WebSocket support
+sse-starlette==3.4.4
+
+# Utilitaires
+click==8.4.1
+h11==0.16.0
+idna==3.17
+certifi==2026.5.20
+urllib3==2.7.0
+charset-normalizer==3.4.7
 
 # ── Dépendances transitives (installées automatiquement) ─────────────────────
 
 annotated-doc==0.0.4
 annotated-types==0.7.0
-anyio==4.12.1
-click==8.3.1
-h11==0.16.0
-idna==3.11
-pydantic_core==2.41.5
+anyio==4.13.0
+attrs==26.1.0
+beautifulsoup4==4.14.3
+cachetools==7.1.4
+cffi==2.0.0
+eval_type_backport==0.3.1
+google-auth==2.53.0
+googleapis-common-protos==1.75.0
+httpcore==1.0.9
+importlib_metadata==8.7.1
+jaraco.classes==3.4.0
+jaraco.context==6.1.2
+jaraco.functools==4.5.0
+mdit-py-plugins==0.6.1
+more-itertools==11.1.0
+packaging==26.2
+pydantic_core==2.46.4
+pyasn1==0.6.3
+pyasn1_modules==0.4.2
+pycparser==3.0.0
+python-dateutil==2.9.0.post0
+pyperclip==1.11.0
+pytz==2024.2
+soupsieve==2.8.4
+tomli_w==1.2.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
+zipp==4.1.0
