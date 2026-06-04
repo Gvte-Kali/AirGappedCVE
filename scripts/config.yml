@@ -3,7 +3,7 @@ correlation:
   cvss_network_min: 7
   date_min: '2015-01-01'
   vendor_cve_limit: 0
-  dry_run: true
+  dry_run: false
   verbose: false
   os_vendor_map:
     windows: microsoft
@@ -27,7 +27,7 @@ mistral:
   max_retries: 3
   batch_max: 0
   max_tokens: 512
-  force: false
+  force: true
   system_prompt: 'Tu es un expert PATCH MANAGEMENT pour environnements air-gapped
     (isolés d''Internet).
 

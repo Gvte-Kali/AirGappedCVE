@@ -25,7 +25,7 @@ NOTE : Doc en attente — priorité au développement applicatif.
           Alors soit le fichier d'import n'a pas le bon format, soit l'insertion n'est pas bonne, soit l'ui affiche mal quelque chose
           quoiqu'il arrive il faut trouver d'où ça vient
 
-[ ] G2 - Page cve.html
+[✅] G2 - Page cve.html
           La page ne charge pas les cve, j'ai une 'erreur de chargement'
           Dans les logs : 
 INFO:     77.245.137.78:0 - "GET /ui/cve HTTP/1.1" 200 OK
@@ -33,23 +33,19 @@ INFO:     77.245.137.78:0 - "GET /api/cve/fabricants HTTP/1.1" 404 Not Found
 INFO:     77.245.137.78:0 - "GET /api/cve/types HTTP/1.1" 404 Not Found
 INFO:     77.245.137.78:0 - "GET /api/cve/?limit=50&skip=0 HTTP/1.1" 404 Not Found
 
-[ ] G3 - Dans le moteur de corrélation, j'ai cru remarquer que certaines CVE, dans de rares cas, étaient insérées en 'nouveau'
+[✅] G3 - Dans le moteur de corrélation, j'ai cru remarquer que certaines CVE, dans de rares cas, étaient insérées en 'nouveau'
           Voir exemple : [   51 / 62 ] — laptop [ Rioz ] — CVE-2024-38123
          ? nouveau | score=6.4 | MemCorrupt
          Trouver d'ù vient l'insertion en 'nouveau' et faire en sorte qu'il n'y ait que 2 choix en sortie de mistral : 
          1. vulnérabilité confirmée, donc asset corrélé, donc etat confirmé
          2. vulnérabilité non confirmée, donc etat faux-positif
 
-[ ] G4 - /ui/os-versions.html
-          Plus rien ne s'affiche dans les versions OS, j'ai une erreur 404.
-          La seule chose qui a changé sur cette page est le main.py
-          Rien d'autre en rapport (router ou html) n'a été modifié
-
-[ ] G5 - faire un point sur chaque fonction de asset-manager.sh + retirer les inutiles
+[✅] G4 - faire un point sur chaque fonction de asset-manager.sh + retirer les inutiles
           Retier audit, cve last, 
           Tester toutes les fonctions
 
-          
+[] G5 - Lorsqu'on fait une modification de l'argument pour forcer à ré-analyser les cve par le moteur de corrélation, ça n'arrive pas au lancement d'après
+          Trouver d'où vient le problème et patcher
 
 ===================================================
 Idées pour la fin du projet avant la mise en prod |

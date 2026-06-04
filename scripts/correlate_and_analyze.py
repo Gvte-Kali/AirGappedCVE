@@ -1257,7 +1257,7 @@ def analyze_with_mistral(client, correlation, max_retries=None):
 # Mapping verdict Mistral → statut BDD
 VERDICT_TO_STATUT = {
     "patcher": "confirme",
-    "informatif": "nouveau",
+    "informatif": "faux_positif",
     "faux_positif": "faux_positif",
 }
 

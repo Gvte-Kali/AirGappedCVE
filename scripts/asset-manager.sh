@@ -4,8 +4,7 @@
 # asset-manager — CLI de maintenance pour AirGappedCVE
 # Auteur : Gvte-Kali / Vibe Code
 # Version : 1.1.0
-# Description : Outil tout-en-un pour gérer le service, la BDD, les logs,
-#               les corrélations, les documents, et les audits.
+# Description : Outil tout-en-un pour gérer la maintenance de la stack.
 # =============================================================================
 # --- CHEMIN RELATIF (fonctionne en dev et prod) ---
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -54,8 +53,7 @@ declare -A CATEGORIES=(
     ["db"]="Gestion de la base de données (connect, backup, schema, size, vacuum, check)"
     ["corr"]="Gestion des corrélations (correlate, stats, clear, rejects, top)"
     ["docs"]="Gestion des documents PDF (list, clear, size)"
-    ["cve"]="Statistiques et dernières CVE (stats, last)"
-    ["audit"]="Audit des données (assets, os, orphans)"
+    ["cve"]="Statistiques et dernières CVE (show)"
     ["sys"]="Informations système (info, ports, services, env, disk, deps, version)"
 )
 
@@ -92,13 +90,7 @@ declare -A COMMANDS=(
     ["docs:size"]="cmd_docs_size"         # <-- "docs:size" au lieu de "docs:docs-size"
 
     # CVE
-    ["cve:stats"]="cmd_cve_stats"        # <-- "cve:stats" au lieu de "cve:cve-stats"
-    ["cve:last"]="cmd_cve_last"           # <-- "cve:last" au lieu de "cve:cve-last"
-
-    # Audit
-    ["audit:assets"]="cmd_audit_assets"
-    ["audit:os"]="cmd_audit_os"
-    ["audit:orphans"]="cmd_audit_orphans"
+    ["cve:show"]="cmd_cve_show"
 
     # Système
     ["sys:info"]="cmd_sys_info"           # <-- "sys:info" au lieu de "sys:sys-info"
@@ -194,11 +186,7 @@ show_category_help() {
                 "cmd_docs_list") desc="Liste les PDFs avec taille et date" ;;
                 "cmd_docs_clear") desc="Supprime TOUS les PDFs (avec confirmation)" ;;
                 "cmd_docs_size") desc="Affiche la taille totale du dossier documents" ;;
-                "cmd_cve_stats") desc="Affiche le COUNT des CVE par vendor" ;;
-                "cmd_cve_last") desc="Affiche les 10 dernières CVE importées" ;;
-                "cmd_audit_assets") desc="Affiche les assets sans vendor NVD (jamais corrélés)" ;;
-                "cmd_audit_os") desc="Affiche les assets sans OS normalisé" ;;
-                "cmd_audit_orphans") desc="Affiche les corrélations sans asset ou CVE valide" ;;
+                "cmd_cve_show") desc="Affiche le COUNT des CVE par vendor" ;;
                 "cmd_sys_info") desc="Affiche RAM, CPU, température, uptime" ;;
                 "cmd_sys_ports") desc="Vérifie les ports 3000 (Grafana) et 8000 (FastAPI)" ;;
                 "cmd_sys_services") desc="Affiche le statut de FastAPI, MariaDB, Grafana" ;;
@@ -578,73 +566,29 @@ cmd_docs_size() {
 
 # --- COMMANDES CVE ---
 
-cmd_cve_stats() {
+cmd_cve_show() {
     clear
     if ! check_mariadb; then
         exit 1
     fi
-    echo "📊 Statistiques des CVE par vendor :"
+    echo "📊 Statistiques des CVE par statut :"
     mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
-          -e "SELECT vendor, COUNT(*) AS 'Nombre de CVE'
-              FROM cve
-              GROUP BY vendor
-              ORDER BY COUNT(*) DESC
-              LIMIT 20;" "$DB_NAME"
+          -e "SELECT
+                  s.statut,
+                  COUNT(c.id) AS nombre_cve
+              FROM (
+                  SELECT 'nouveau' AS statut UNION ALL
+                  SELECT 'en_analyse' UNION ALL
+                  SELECT 'confirme' UNION ALL
+                  SELECT 'faux_positif' UNION ALL
+                  SELECT 'patche'
+              ) s
+              LEFT JOIN correlations c ON s.statut = c.statut
+              GROUP BY s.statut
+              ORDER BY FIELD(s.statut, 'nouveau', 'en_analyse', 'confirme', 'faux_positif', 'patche');" "$DB_NAME" | \
+          awk 'NR==1 {print; next} {print $1 ": " $2}'
 }
 
-cmd_cve_last() {
-    clear
-    if ! check_mariadb; then
-        exit 1
-    fi
-    echo "🆕 10 dernières CVE importées :"
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
-          -e "SELECT id, cve_id, cvss_v3_score, published_date
-              FROM cve
-              ORDER BY published_date DESC
-              LIMIT 10;" "$DB_NAME"
-}
-
-# --- COMMANDES AUDIT ---
-
-cmd_audit_assets() {
-    clear
-    if ! check_mariadb; then
-        exit 1
-    fi
-    echo "🔍 Assets sans vendor NVD (jamais corrélés) :"
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
-          -e "SELECT a.id, a.nom, a.vendor, a.produit
-              FROM assets a
-              LEFT JOIN product_vendors pv ON a.vendor = pv.vendor_name
-              WHERE pv.id IS NULL AND a.vendor IS NOT NULL;" "$DB_NAME"
-}
-
-cmd_audit_os() {
-    clear
-    if ! check_mariadb; then
-        exit 1
-    fi
-    echo "🔍 Assets sans OS normalisé :"
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
-          -e "SELECT a.id, a.nom, a.os, a.os_version
-              FROM assets a
-              WHERE a.os IS NULL OR a.os = '';" "$DB_NAME"
-}
-
-cmd_audit_orphans() {
-    clear
-    if ! check_mariadb; then
-        exit 1
-    fi
-    echo "🔍 Corrélations orphelines (sans asset ou CVE valide) :"
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
-          -e "SELECT c.id, c.asset_id, c.cve_id
-              FROM correlations c
-              LEFT JOIN assets a ON c.asset_id = a.id
-              LEFT JOIN cve cv ON c.cve_id = cv.id
-              WHERE a.id IS NULL OR cv.id IS NULL;" "$DB_NAME"
-}
 
 # --- COMMANDES SYSTÈME ---
 

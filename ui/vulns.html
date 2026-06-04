@@ -456,10 +456,6 @@
                                     </label>
                                     <label class="d-flex align-items-center gap-2 m-0"
                                         style="font-size:0.82rem; cursor:pointer">
-                                        <input type="checkbox" class="filtre-statut" value="mitige"> Mitigé
-                                    </label>
-                                    <label class="d-flex align-items-center gap-2 m-0"
-                                        style="font-size:0.82rem; cursor:pointer">
                                         <input type="checkbox" class="filtre-statut" value="faux_positif"> Faux positif
                                     </label>
                                     <label class="d-flex align-items-center gap-2 m-0"
@@ -941,7 +937,6 @@
                 'nouveau': 'Nouveau',
                 'en_analyse': 'En analyse',
                 'confirme': 'Confirmé',
-                'mitige': 'Mitigé',
                 'faux_positif': 'Faux positif',
                 'patche': 'Patché'
             };
@@ -1066,7 +1061,6 @@
                                 <option value="nouveau" ${v.statut === 'nouveau' ? 'selected' : ''}>Nouveau</option>
                                 <option value="en_analyse" ${v.statut === 'en_analyse' ? 'selected' : ''}>En analyse</option>
                                 <option value="confirme" ${v.statut === 'confirme' ? 'selected' : ''} selected>Confirmé</option>
-                                <option value="mitige" ${v.statut === 'mitige' ? 'selected' : ''}>Mitigé</option>
                                 <option value="faux_positif" ${v.statut === 'faux_positif' ? 'selected' : ''}>Faux positif</option>
                                 <option value="patche" ${v.statut === 'patche' ? 'selected' : ''}>Patché</option>
                             </select>

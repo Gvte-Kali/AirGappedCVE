@@ -94,7 +94,7 @@ CREATE TABLE `assets` (
   CONSTRAINT `fk_assets_model` FOREIGN KEY (`model_id`) REFERENCES `product_models` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_assets_os_version` FOREIGN KEY (`os_version_id`) REFERENCES `os_versions` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_assets_vendor` FOREIGN KEY (`vendor_id`) REFERENCES `product_vendors` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -117,7 +117,7 @@ CREATE TABLE `clients` (
   `date_modification` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `idx_nom` (`nom`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -141,7 +141,7 @@ CREATE TABLE `correlation_rejects` (
   KEY `idx_cve` (`cve_id`),
   KEY `idx_raison` (`raison`),
   KEY `idx_date` (`date_rejet`)
-) ENGINE=InnoDB AUTO_INCREMENT=293 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1169 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -157,7 +157,7 @@ CREATE TABLE `correlations` (
   `cve_id` varchar(20) NOT NULL,
   `type_correlation` enum('affirme','informatif') NOT NULL DEFAULT 'informatif',
   `override_utilisateur` enum('a_patcher','informatif','faux_positif') DEFAULT NULL,
-  `statut` enum('nouveau','en_analyse','confirme','informatif','faux_positif','mitige','patche') DEFAULT 'nouveau',
+  `statut` enum('nouveau','en_analyse','confirme','faux_positif','patche') DEFAULT 'nouveau',
   `priorite` enum('critique','haute','moyenne','basse') DEFAULT NULL,
   `exploitable_air_gap` tinyint(1) DEFAULT NULL,
   `analyse_mistral` text DEFAULT NULL,
@@ -184,9 +184,10 @@ CREATE TABLE `correlations` (
   KEY `idx_passe_correlation` (`passe_correlation`),
   KEY `idx_type_attaque` (`type_attaque`),
   KEY `idx_passer_mistral` (`passer_mistral`),
+  KEY `idx_correlations_cve_id` (`cve_id`),
   CONSTRAINT `correlations_ibfk_1` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE,
   CONSTRAINT `correlations_ibfk_2` FOREIGN KEY (`cve_id`) REFERENCES `cve` (`cve_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=98 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -220,7 +221,10 @@ CREATE TABLE `cve` (
   KEY `idx_fabricant_produit` (`fabricant`,`produit`),
   KEY `idx_severite` (`cvss_v3_severity`),
   KEY `idx_score` (`cvss_v3_score`),
-  KEY `idx_corr_filter` (`fabricant`,`cvss_v3_score`,`date_publication`)
+  KEY `idx_corr_filter` (`fabricant`,`cvss_v3_score`,`date_publication`),
+  KEY `idx_cve_fabricant` (`fabricant`),
+  KEY `idx_cve_cve_id` (`cve_id`),
+  KEY `idx_cve_date_publication` (`date_publication`)
 ) ENGINE=InnoDB AUTO_INCREMENT=932143 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -336,7 +340,7 @@ CREATE TABLE `os_versions` (
   KEY `idx_os_nom` (`os_nom`),
   KEY `idx_nvd_vendor` (`nvd_vendor`),
   KEY `idx_type_produit` (`type_produit`)
-) ENGINE=InnoDB AUTO_INCREMENT=33502 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=33503 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -408,7 +412,7 @@ CREATE TABLE `sites` (
   KEY `idx_client` (`client_id`),
   KEY `idx_nom` (`nom`),
   CONSTRAINT `sites_ibfk_1` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -683,4 +687,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2026-06-04  7:54:02
+-- Dump completed on 2026-06-04 13:45:58
