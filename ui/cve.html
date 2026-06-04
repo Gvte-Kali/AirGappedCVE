@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="fr" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Vulnérabilités CVE</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/app-search.css">
+    <link rel="stylesheet" href="/static/app-premium.css">
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+        }
+
+        .card,
+        .modal-content {
+            background-color: #161b22;
+            border-color: #30363d;
+        }
+
+        .table {
+            color: #c9d1d9;
+        }
+
+        .badge-critique {
+            background-color: #f85149;
+        }
+
+        .badge-haute {
+            background-color: #f0883e;
+        }
+
+        .badge-moyenne {
+            background-color: #d29922;
+        }
+
+        .badge-basse {
+            background-color: #3fb950;
+        }
+
+        thead.sticky-header th {
+            background-color: #0d1117;
+            box-shadow: 0 1px 0 #30363d;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ─── NAVBAR ─────────────────────────────────────────── -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">🛡️ Air-Gapped CVEs</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="nav">
+                <div class="d-flex ms-auto align-items-center gap-2">
+
+                    <!-- Recherche globale -->
+                    <div class="position-relative am-search" data-am-search-root>
+                        <input class="form-control form-control-sm" type="search"
+                            placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
+                        <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
+                    </div>
+
+                    <ul class="navbar-nav ms-2 align-items-center gap-1">
+
+                        <!-- Accueil -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Accueil</a>
+                        </li>
+
+                        <!-- Vulnérabilités -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ui/vulns">Vulnérabilités</a>
+                        </li>
+
+                        <!-- Inventaire -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Inventaire
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">GESTION</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
+                                <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
+                                <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">IMPORT</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/import">📥 Import Assets</a></li>
+                                <li><a class="dropdown-item" href="/ui/documents">📄 Documents</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Référentiels -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Référentiels
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">MATÉRIEL</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
+                                <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">LOGICIEL</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/os-versions">🖥️ OS &amp; Versions</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                            </ul>
+                        </li>
+
+                        <!-- Outils -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Outils
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CONFIGURATION</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/parametres">🔧 Paramètres corrélation</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">EXÉCUTION</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/scripts/console">🖥️ Console</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">DÉVELOPPEUR</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/docs">📖 API Docs</a></li>
+                            </ul>
+                        </li>
+
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenu -->
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <h6 class="section-title mb-2">Sécurité & Risques</h6>
+                <h1 class="fw-bold m-0 stat-number">VULNÉRABILITÉS CVE</h1>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="card mb-4">
+            <div class="p-4">
+                <h6 class="section-title mb-3">🔍 FILTRES</h6>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label stat-label">Numéro de CVE</label>
+                        <input type="text" class="form-control" id="filtreCVE" placeholder="ex: CVE-2024-...">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label stat-label">Fabricant</label>
+                        <select class="form-select" id="filtreFabricant">
+                            <option value="">Tous les fabricants</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label stat-label">Type de vulnérabilité</label>
+                        <select class="form-select" id="filtreType">
+                            <option value="">Tous les types</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    <button class="btn btn-primary" onclick="chargerCVE()">🔍 Rechercher</button>
+                    <button class="btn btn-outline-secondary" onclick="reinitialiserFiltres()">🔄 Réinitialiser</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau des CVE -->
+        <div class="card mb-4">
+            <div class="table-responsive" style="overflow: visible;">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="sticky-header" style="position: sticky; top: 56px; z-index: 10;">
+                        <tr>
+                            <th class="ps-4">CVE ID</th>
+                            <th>Fabricant</th>
+                            <th>Produit</th>
+                            <th>Type</th>
+                            <th>CVSS v3</th>
+                            <th>Sévérité</th>
+                            <th>Description</th>
+                            <th>Date publication</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="8" class="text-center">Aucune CVE trouvée</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav id="paginationContainer">
+            <ul class="pagination justify-content-center" id="pagination"></ul>
+        </nav>
+    </div>
+
+    <script src="/static/bootstrap.bundle.min.js"></script>
+    <script>
+        let pageActuelle = 1;
+        const itemsParPage = 50;
+        let fabricants = [];
+        let types = [];
+
+        // Charger les listes de filtres au démarrage
+        async function chargerFiltres() {
+            try {
+                const [fabRes, typeRes] = await Promise.all([
+                    fetch('/api/cve/fabricants'),
+                    fetch('/api/cve/types')
+                ]);
+                fabricants = (await fabRes.json()).fabricants;
+                types = (await typeRes.json()).types;
+
+                const fabricantSelect = document.getElementById('filtreFabricant');
+                fabricantSelect.innerHTML = '<option value="">Tous les fabricants</option>';
+                fabricants.forEach(f => {
+                    fabricantSelect.innerHTML += `<option value="${f}">${f}</option>`;
+                });
+
+                const typeSelect = document.getElementById('filtreType');
+                typeSelect.innerHTML = '<option value="">Tous les types</option>';
+                types.forEach(t => {
+                    typeSelect.innerHTML += `<option value="${t}">${t}</option>`;
+                });
+            } catch (e) {
+                console.error('Erreur chargement filtres:', e);
+            }
+        }
+
+        // Charger les CVE
+        async function chargerCVE(page = 1) {
+            pageActuelle = page;
+            const skip = (page - 1) * itemsParPage;
+
+            const params = new URLSearchParams({ limit: itemsParPage, skip });
+            const cve = document.getElementById('filtreCVE').value;
+            const fabricant = document.getElementById('filtreFabricant').value;
+            const type = document.getElementById('filtreType').value;
+
+            if (cve) params.append('cve_id', cve);
+            if (fabricant) params.append('fabricant', fabricant);
+            if (type) params.append('type_vulnerabilite', type);
+
+            try {
+                const response = await fetch(`/api/cve/?${params}`);
+                const data = await response.json();
+                afficherTableau(data.items);
+                afficherPagination(data.total);
+            } catch (e) {
+                console.error('Erreur:', e);
+                document.getElementById('tableBody').innerHTML =
+                    '<tr><td colspan="8" class="text-center text-danger">Erreur de chargement</td></tr>';
+            }
+        }
+
+        // Afficher le tableau
+        function afficherTableau(data) {
+            const tbody = document.getElementById('tableBody');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Aucune CVE trouvée</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(cve => `
+                <tr>
+                    <td class="ps-4"><code>${cve.cve_id || 'N/A'}</code></td>
+                    <td>${cve.fabricant || 'N/A'}</td>
+                    <td>${cve.produit || 'N/A'}</td>
+                    <td><span class="badge bg-secondary">${cve.type_attaque || 'N/A'}</span></td>
+                    <td><span class="badge bg-secondary">${cve.cvss_v3_score || 'N/A'}</span></td>
+                    <td>
+                        <span class="badge badge-${cve.cvss_v3_severity?.toLowerCase() || 'basse'}">
+                            ${cve.cvss_v3_severity || 'N/A'}
+                        </span>
+                    </td>
+                    <td><small>${(cve.description || 'N/A').substring(0, 80)}...</small></td>
+                    <td><small>${cve.date_publication || 'N/A'}</small></td>
+                </tr>
+            `).join('');
+        }
+
+        // Pagination
+        function afficherPagination(total) {
+            const nbPages = Math.ceil(total / itemsParPage);
+            const pagination = document.getElementById('pagination');
+            if (nbPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <li class="page-item ${pageActuelle === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="chargerCVE(${pageActuelle - 1}); return false;">‹</a>
+                </li>
+            `;
+
+            const debut = Math.max(1, pageActuelle - 2);
+            const fin = Math.min(nbPages, pageActuelle + 2);
+            for (let i = debut; i <= fin; i++) {
+                html += `
+                    <li class="page-item ${i === pageActuelle ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="chargerCVE(${i}); return false;">${i}</a>
+                    </li>
+                `;
+            }
+
+            html += `
+                <li class="page-item ${pageActuelle === nbPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="chargerCVE(${pageActuelle + 1}); return false;">›</a>
+                </li>
+            `;
+            pagination.innerHTML = html;
+        }
+
+        // Réinitialiser les filtres
+        function reinitialiserFiltres() {
+            document.getElementById('filtreCVE').value = '';
+            document.getElementById('filtreFabricant').value = '';
+            document.getElementById('filtreType').value = '';
+            chargerCVE(1);
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            chargerFiltres();
+            chargerCVE();
+        });
+    </script>
+</body>
+
+</html>

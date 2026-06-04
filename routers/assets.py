@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Response, Query
 from pydantic import BaseModel
 from typing import Optional
 from database import get_connection
+import pymysql.cursors
 
 router = APIRouter()
 
@@ -74,7 +75,7 @@ def list_assets(
 ):
     conn = get_connection()
     try:
-        with conn.cursor() as cursor:
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
             # Build WHERE clause dynamically based on filters
             where_clauses = []
             params = []
@@ -183,7 +184,7 @@ def list_assets(
 def get_asset(asset_id: int):
     conn = get_connection()
     try:
-        with conn.cursor() as cursor:
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
             cursor.execute("""
                 SELECT
                     a.*,
@@ -233,7 +234,7 @@ def get_asset(asset_id: int):
 def create_asset(asset: AssetCreate):
     conn = get_connection()
     try:
-        with conn.cursor() as cursor:
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
             cursor.execute("SELECT id FROM sites WHERE id = %s", (asset.site_id,))
             if not cursor.fetchone():
                 raise HTTPException(status_code=404, detail="Site non trouvé")
@@ -290,7 +291,7 @@ def create_asset(asset: AssetCreate):
 def update_asset(asset_id: int, asset: AssetUpdate):
     conn = get_connection()
     try:
-        with conn.cursor() as cursor:
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
             cursor.execute("SELECT * FROM assets WHERE id = %s", (asset_id,))
             existing = cursor.fetchone()
             if not existing:
@@ -371,7 +372,7 @@ def update_asset(asset_id: int, asset: AssetUpdate):
 def delete_asset(asset_id: int):
     conn = get_connection()
     try:
-        with conn.cursor() as cursor:
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
             cursor.execute("SELECT id FROM assets WHERE id = %s", (asset_id,))
             if not cursor.fetchone():
                 raise HTTPException(status_code=404, detail="Asset non trouvé")
