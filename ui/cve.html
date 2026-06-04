@@ -39,12 +39,16 @@
             background-color: #3fb950;
         }
 
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+
         thead.sticky-header th {
             background-color: #0d1117;
             box-shadow: 0 1px 0 #30363d;
         }
 
-        /* Style pour le typeahead */
         .suggestion-box {
             position: absolute;
             background: #161b22;
@@ -66,11 +70,23 @@
         .suggestion-item:hover {
             background-color: #0d1117;
         }
+
+        /* Style pour les boutons d'action */
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            line-height: 1;
+        }
     </style>
 </head>
 
 <body>
-    <!-- NAVBAR (identique à ton exemple) -->
+    <!-- ─── NAVBAR ─────────────────────────────────────────── -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">🛡️ Air-Gapped CVEs</a>
@@ -79,24 +95,119 @@
             </button>
             <div class="collapse navbar-collapse" id="nav">
                 <div class="d-flex ms-auto align-items-center gap-2">
+
+                    <!-- Recherche globale -->
+                    <div class="position-relative am-search" data-am-search-root>
+                        <input class="form-control form-control-sm" type="search"
+                            placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
+                        <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
+                    </div>
+
                     <ul class="navbar-nav ms-2 align-items-center gap-1">
-                        <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/ui/vulns">Vulnérabilités</a></li>
+
+                        <!-- Accueil -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Accueil</a>
+                        </li>
+
+                        <!-- Vulnérabilités -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ui/vulns">Vulnérabilités</a>
+                        </li>
+
+                        <!-- Inventaire -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button"
-                                data-bs-toggle="dropdown">Inventaire</a>
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Inventaire
+                            </a>
                             <ul class="dropdown-menu dropdown-menu-dark">
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">GESTION</h6>
+                                </li>
                                 <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
                                 <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
                                 <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">IMPORT</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/import">📥 Import Assets</a></li>
+                                <li><a class="dropdown-item" href="/ui/documents">📄 Documents</a></li>
                             </ul>
                         </li>
+
+                        <!-- Référentiels -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Référentiels
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">MATÉRIEL</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
+                                <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">LOGICIEL</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/os-versions">🖥️ OS &amp; Versions</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CVE</h6>
+                                </li>
+                        </li>
+                        <li><a class="dropdown-item" href="/ui/cve">❌ Liste des CVEs</a></li>
+                        <li>
+                    </ul>
+                    </li>
+
+                    <!-- Outils -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            Outils
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                            <li>
+                                <h6 class="dropdown-header"
+                                    style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CONFIGURATION</h6>
+                            </li>
+                            <li><a class="dropdown-item" href="/ui/parametres">🔧 Paramètres corrélation</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <h6 class="dropdown-header"
+                                    style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">EXÉCUTION</h6>
+                            </li>
+                            <li><a class="dropdown-item" href="/scripts/console">🖥️ Console</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <h6 class="dropdown-header"
+                                    style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">DÉVELOPPEUR</h6>
+                            </li>
+                            <li><a class="dropdown-item" href="/docs">📖 API Docs</a></li>
+                        </ul>
+                    </li>
+
                     </ul>
                 </div>
             </div>
         </div>
     </nav>
-
     <!-- CONTENU -->
     <div class="container py-5">
         <div class="d-flex justify-content-between align-items-end mb-5">
@@ -152,11 +263,12 @@
                             <th>Sévérité</th>
                             <th>Description</th>
                             <th>Date publication</th>
+                            <th class="pe-4">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="8" class="text-center">Aucune CVE trouvée</td>
+                            <td colspan="9" class="text-center">Chargement en cours...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -169,18 +281,37 @@
         </nav>
     </div>
 
+    <!-- MODAL DÉTAILS CVE -->
+    <div class="modal fade" id="modalDetailsCVE" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitleCVE">Détails de la vulnérabilité</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalBodyCVE">
+                    <!-- Contenu chargé dynamiquement -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/bootstrap.bundle.min.js"></script>
     <script>
         // =============================================
         // CONFIGURATION
         // =============================================
         let pageActuelle = 1;
-        const itemsParPage = 10; // <-- 10 CVE par page
+        const itemsParPage = 10;
         let fabricants = [];
         let types = [];
+        let cveEnCours = null;
 
         // =============================================
-        // TYPEAHEAD POUR FABRICANT (inspiré de ton exemple)
+        // TYPEAHEAD POUR FABRICANT
         // =============================================
         function makeSuggestionBox(inputId, hiddenId, boxId, fetcher, labelFn) {
             const input = document.getElementById(inputId);
@@ -229,26 +360,22 @@
         }
 
         // =============================================
-        // CHARGEMENT DES FILTRES (fabricants, types)
+        // CHARGEMENT DES FILTRES
         // =============================================
         async function chargerFiltres() {
             try {
-                // Charge les fabricants pour le typeahead
                 const fabRes = await fetch('/api/cve/fabricants');
                 fabricants = (await fabRes.json()).fabricants || [];
 
-                // Charge les types de vulnérabilités
                 const typeRes = await fetch('/api/cve/types');
                 types = (await typeRes.json()).types || [];
 
-                // Remplit le select des types
                 const typeSelect = document.getElementById('filtreType');
                 typeSelect.innerHTML = '<option value="">Tous les types</option>';
                 types.forEach(t => {
                     typeSelect.innerHTML += `<option value="${t}">${t}</option>`;
                 });
 
-                // Initialise le typeahead pour fabricant
                 makeSuggestionBox(
                     'filtreFabricantSearch',
                     'filtreFabricantId',
@@ -266,11 +393,13 @@
         }
 
         // =============================================
-        // CHARGEMENT DES CVE (par pages de 10)
+        // CHARGEMENT DES CVE
         // =============================================
         async function chargerCVE(page = 1) {
             pageActuelle = page;
             const skip = (page - 1) * itemsParPage;
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center"><span class="spinner-border spinner-border-sm" role="status"></span> Chargement...</td></tr>';
 
             const params = new URLSearchParams({ limit: itemsParPage, skip });
             const cve = document.getElementById('filtreCVE').value;
@@ -289,8 +418,7 @@
                 afficherPagination(data.total);
             } catch (e) {
                 console.error('Erreur:', e);
-                document.getElementById('tableBody').innerHTML =
-                    '<tr><td colspan="8" class="text-center text-danger">Erreur de chargement</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Erreur de chargement</td></tr>';
             }
         }
 
@@ -300,7 +428,7 @@
         function afficherTableau(data) {
             const tbody = document.getElementById('tableBody');
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Aucune CVE trouvée</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center">Aucune CVE trouvée</td></tr>';
                 return;
             }
 
@@ -316,10 +444,72 @@
                             ${cve.cvss_v3_severity || 'N/A'}
                         </span>
                     </td>
-                    <td><small>${(cve.description || 'N/A').substring(0, 80)}...</small></td>
+                    <td><small>${(cve.description || 'N/A').substring(0, 100)}...</small></td>
                     <td><small>${cve.date_publication || 'N/A'}</small></td>
+                    <td class="pe-4">
+                        <button class="btn btn-sm btn-outline-info action-btn" onclick="afficherDetailsCVE('${cve.cve_id}')" title="Voir les détails">
+                            🔍
+                        </button>
+                    </td>
                 </tr>
             `).join('');
+        }
+
+        // =============================================
+        // AFFICHER LES DÉTAILS D'UNE CVE (NOUVEAU)
+        // =============================================
+        async function afficherDetailsCVE(cveId) {
+            try {
+                const response = await fetch(`/api/cve/${cveId}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                cveEnCours = await response.json();
+
+                const modal = new bootstrap.Modal(document.getElementById('modalDetailsCVE'));
+                document.getElementById('modalTitleCVE').textContent = `Détails de ${cveId}`;
+
+                // Formatage des dates
+                const formatDate = (dateStr) => {
+                    if (!dateStr) return 'N/A';
+                    const d = new Date(dateStr);
+                    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                };
+
+                document.getElementById('modalBodyCVE').innerHTML = `
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Informations générales</h6>
+                            <p>
+                                <strong>ID:</strong> <code>${cveEnCours.cve_id || 'N/A'}</code><br>
+                                <strong>Fabricant:</strong> ${cveEnCours.fabricant || 'N/A'}<br>
+                                <strong>Produit:</strong> ${cveEnCours.produit || 'N/A'}<br>
+                                <strong>Type de vulnérabilité:</strong> <span class="badge bg-secondary">${cveEnCours.type_attaque || 'N/A'}</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Scores</h6>
+                            <p>
+                                <strong>CVSS v3:</strong> ${cveEnCours.cvss_v3_score || 'N/A'} (${cveEnCours.cvss_v3_severity || 'N/A'})<br>
+                                <strong>Date de publication:</strong> ${formatDate(cveEnCours.date_publication)}<br>
+                                <strong>Vecteur:</strong> <code>${cveEnCours.cvss_v3_vector || 'N/A'}</code>
+                            </p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <h6 class="text-primary">Description</h6>
+                        <p class="small">${cveEnCours.description || 'N/A'}</p>
+                    </div>
+                    ${cveEnCours.references ?
+                        `<div class="mb-3">
+                            <h6 class="text-primary">Références</h6>
+                            <p class="small">${cveEnCours.references.map(r => `<a href="${r}" target="_blank" class="text-info">${r}</a><br>`).join('')}</p>
+                        </div>` : ''}
+                `;
+                modal.show();
+            } catch (e) {
+                console.error('Erreur:', e);
+                alert('Erreur lors du chargement des détails de la CVE.');
+            }
         }
 
         // =============================================
@@ -373,7 +563,7 @@
         // =============================================
         document.addEventListener('DOMContentLoaded', () => {
             chargerFiltres();
-            chargerCVE(1); // Charge la première page (10 CVE)
+            chargerCVE(1);
         });
     </script>
 </body>

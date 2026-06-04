@@ -120,3 +120,33 @@ def get_fabricants():
             return {"fabricants": [row["fabricant"] for row in cur.fetchall()]}
     finally:
         conn.close()
+
+@router.get("/{cve_id}")
+def get_cve_details(cve_id: str):
+    """
+    Retourne les détails complets d'une CVE par son ID.
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            # Récupère les infos de base depuis cve
+            cur.execute("""
+                SELECT cve_id, description, cvss_v3_score, cvss_v3_severity, cvss_v3_vector,
+                       fabricant, produit, type_attaque, date_publication, references
+                FROM cve
+                WHERE cve_id = %s
+            """, (cve_id,))
+            cve = cur.fetchone()
+            if not cve:
+                raise HTTPException(status_code=404, detail="CVE non trouvée")
+
+            # Formate les références (si stockées sous forme de JSON)
+            if cve.get('references'):
+                try:
+                    cve['references'] = json.loads(cve['references'])
+                except:
+                    cve['references'] = []
+
+            return cve
+    finally:
+        conn.close()

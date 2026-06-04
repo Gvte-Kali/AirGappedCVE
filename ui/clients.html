@@ -10,6 +10,7 @@
 </head>
 
 <body>
+    <!-- ─── NAVBAR ─────────────────────────────────────────── -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">🛡️ Air-Gapped CVEs</a>
@@ -86,38 +87,45 @@
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                            </ul>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CVE</h6>
+                                </li>
                         </li>
+                        <li><a class="dropdown-item" href="/ui/cve">❌ Liste des CVEs</a></li>
+                        <li>
+                    </ul>
+                    </li>
 
-                        <!-- Outils -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                Outils
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-                                <li>
-                                    <h6 class="dropdown-header"
-                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CONFIGURATION</h6>
-                                </li>
-                                <li><a class="dropdown-item" href="/ui/parametres">🔧 Paramètres corrélation</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
-                                    <h6 class="dropdown-header"
-                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">EXÉCUTION</h6>
-                                </li>
-                                <li><a class="dropdown-item" href="/scripts/console">🖥️ Console</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
-                                    <h6 class="dropdown-header"
-                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">DÉVELOPPEUR</h6>
-                                </li>
-                                <li><a class="dropdown-item" href="/docs">📖 API Docs</a></li>
-                            </ul>
-                        </li>
+                    <!-- Outils -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            Outils
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                            <li>
+                                <h6 class="dropdown-header"
+                                    style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CONFIGURATION</h6>
+                            </li>
+                            <li><a class="dropdown-item" href="/ui/parametres">🔧 Paramètres corrélation</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <h6 class="dropdown-header"
+                                    style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">EXÉCUTION</h6>
+                            </li>
+                            <li><a class="dropdown-item" href="/scripts/console">🖥️ Console</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <h6 class="dropdown-header"
+                                    style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">DÉVELOPPEUR</h6>
+                            </li>
+                            <li><a class="dropdown-item" href="/docs">📖 API Docs</a></li>
+                        </ul>
+                    </li>
 
                     </ul>
                 </div>

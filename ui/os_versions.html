@@ -88,38 +88,45 @@
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                            </ul>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CVE</h6>
+                                </li>
                         </li>
+                        <li><a class="dropdown-item" href="/ui/cve">❌ Liste des CVEs</a></li>
+                        <li>
+                    </ul>
+                    </li>
 
-                        <!-- Outils -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                Outils
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-                                <li>
-                                    <h6 class="dropdown-header"
-                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CONFIGURATION</h6>
-                                </li>
-                                <li><a class="dropdown-item" href="/ui/parametres">🔧 Paramètres corrélation</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
-                                    <h6 class="dropdown-header"
-                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">EXÉCUTION</h6>
-                                </li>
-                                <li><a class="dropdown-item" href="/scripts/console">🖥️ Console</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
-                                    <h6 class="dropdown-header"
-                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">DÉVELOPPEUR</h6>
-                                </li>
-                                <li><a class="dropdown-item" href="/docs">📖 API Docs</a></li>
-                            </ul>
-                        </li>
+                    <!-- Outils -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            Outils
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                            <li>
+                                <h6 class="dropdown-header"
+                                    style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CONFIGURATION</h6>
+                            </li>
+                            <li><a class="dropdown-item" href="/ui/parametres">🔧 Paramètres corrélation</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <h6 class="dropdown-header"
+                                    style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">EXÉCUTION</h6>
+                            </li>
+                            <li><a class="dropdown-item" href="/scripts/console">🖥️ Console</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <h6 class="dropdown-header"
+                                    style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">DÉVELOPPEUR</h6>
+                            </li>
+                            <li><a class="dropdown-item" href="/docs">📖 API Docs</a></li>
+                        </ul>
+                    </li>
 
                     </ul>
                 </div>
@@ -327,7 +334,7 @@
                         <td class="text-secondary">${formatDate(row.created_at)}</td>
                         <td>
                             <button class="btn btn-sm btn-outline-secondary"
-                                onclick="ouvrirModification(${row.id}, '${esc(row.os_nom)}', '${esc(row.version||'')}', '${esc(row.nvd_vendor)}', '${esc(row.nvd_product)}', '${row.type_produit}')">
+                                onclick="ouvrirModification(${row.id}, '${esc(row.os_nom)}', '${esc(row.version || '')}', '${esc(row.nvd_vendor)}', '${esc(row.nvd_product)}', '${row.type_produit}')">
                                 ✏️
                             </button>
                         </td>
@@ -487,12 +494,12 @@
         }
 
         async function modifierEntree(id) {
-            const os_nom  = document.getElementById('newOsNom').value.trim();
-            const vendor  = document.getElementById('newVendor').value.trim().toLowerCase();
+            const os_nom = document.getElementById('newOsNom').value.trim();
+            const vendor = document.getElementById('newVendor').value.trim().toLowerCase();
             const product = document.getElementById('newProduct').value.trim().toLowerCase();
             const version = document.getElementById('newVersion').value.trim() || null;
-            const type    = document.getElementById('newType').value;
-            const errDiv  = document.getElementById('ajoutErreur');
+            const type = document.getElementById('newType').value;
+            const errDiv = document.getElementById('ajoutErreur');
             errDiv.classList.add('d-none');
 
             if (!os_nom || !vendor || !product) {
@@ -514,7 +521,7 @@
                 bootstrap.Modal.getInstance(document.getElementById('modalAjout')).hide();
                 page = 1;
                 charger();
-            } catch(e) {
+            } catch (e) {
                 errDiv.textContent = 'Erreur : ' + e.message;
                 errDiv.classList.remove('d-none');
             }
@@ -625,7 +632,8 @@
                 </div>
                 <div class="modal-footer" style="border-color:#30363d;">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="button" class="btn btn-primary" id="btnModalAction" onclick="soumettreFormulaire()">💾 Créer</button>
+                    <button type="button" class="btn btn-primary" id="btnModalAction" onclick="soumettreFormulaire()">💾
+                        Créer</button>
                 </div>
             </div>
         </div>
