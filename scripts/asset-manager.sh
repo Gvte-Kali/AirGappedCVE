@@ -50,7 +50,7 @@ NVD_API_KEY="${NVD_API_KEY:-}"
 # --- CATÉGORIES ET COMMANDES ---
 declare -A CATEGORIES=(
     ["fastapi"]="Gestion du service FastAPI (start/stop/restart/status)"
-    ["logs"]="Affichage et filtrage des logs (logs, logs-err, logs-corr)"
+    ["logs"]="Affichage des logs (show)"
     ["db"]="Gestion de la base de données (connect, backup, schema, size, vacuum, check)"
     ["corr"]="Gestion des corrélations (correlate, stats, clear, rejects, top)"
     ["docs"]="Gestion des documents PDF (list, clear, size)"
@@ -67,9 +67,7 @@ declare -A COMMANDS=(
     ["fastapi:status"]="cmd_fastapi_status"
 
     # Logs
-    ["logs:logs"]="cmd_logs"
-    ["logs:err"]="cmd_logs_err"          # <-- "logs:err" au lieu de "logs:logs-err"
-    ["logs:corr"]="cmd_logs_corr"        # <-- "logs:corr" au lieu de "logs:logs-corr"
+    ["logs:show"]="cmd_logs"
 
     # Base de données
     ["db:connect"]="cmd_db_connect"      # <-- "db:connect" au lieu de "db:db-connect"
@@ -178,9 +176,7 @@ show_category_help() {
                 "cmd_fastapi_stop") desc="Arrête le service FastAPI" ;;
                 "cmd_fastapi_restart") desc="Redémarre le service FastAPI" ;;
                 "cmd_fastapi_status") desc="Affiche le statut du service FastAPI" ;;
-                "cmd_logs") desc="Affiche les 50 dernières lignes de FastAPI.log" ;;
-                "cmd_logs_err") desc="Filtre les lignes contenant ERROR/EXCEPTION/Traceback" ;;
-                "cmd_logs_corr") desc="Filtre les lignes de corrélation" ;;
+                "cmd_logs") desc="Affiche les logs" ;;
                 "cmd_db") desc="Affiche la commande MySQL pour se connecter" ;;
                 "cmd_db_connect") desc="Se connecte directement à MariaDB" ;;
                 "cmd_db_backup") desc="Effectue un dump complet de la BDD" ;;
@@ -332,31 +328,16 @@ cmd_fastapi_status() {
 
 cmd_logs() {
     clear
-    local filter="$1"
-    local tail_lines=50
     if [ ! -f "$LOG_FILE" ]; then
         echo "❌ Fichier de log introuvable : $LOG_FILE"
         echo "   Vérifiez LOG_FILE dans .env ou l'emplacement du projet."
         exit 1
-    fi
-    if [ -n "$filter" ]; then
-        echo "🔍 Filtre appliqué : '$filter' (50 dernières lignes)"
-        tail -n "$tail_lines" "$LOG_FILE" | grep -i --color=always "$filter"
     else
-        echo "📜 Dernières lignes de $LOG_FILE :"
-        tail -n "$tail_lines" "$LOG_FILE"
+        echo "📜 Affichage de $LOG_FILE :"
+        tail -f "$LOG_FILE"
     fi
 }
 
-cmd_logs_err() {
-    clear
-    cmd_logs "ERROR\|EXCEPTION\|Traceback"
-}
-
-cmd_logs_corr() {
-    clear
-    cmd_logs "correlate\|CVE\|correlation"
-}
 
 # --- COMMANDES BASE DE DONNÉES ---
 

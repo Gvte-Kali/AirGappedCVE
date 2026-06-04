@@ -2,7 +2,9 @@ from fastapi import APIRouter, Query, HTTPException
 from typing import Optional, List
 from database import get_connection
 import pymysql.cursors
+import json
 
+# ⚠️ UN SEUL router pour tout le fichier
 router = APIRouter(prefix="/api/cve", tags=["CVE"])
 
 @router.get("/")
@@ -32,7 +34,7 @@ def list_cve(
 
             where_sql = "WHERE " + " AND ".join(where_clauses) if where_clauses else ""
 
-            # 1. Compter le total SANS jointure (ultra-rapide)
+            # 1. Compter le total SANS jointure
             cur.execute(f"""
                 SELECT COUNT(*) as total
                 FROM cve
@@ -40,8 +42,7 @@ def list_cve(
             """, params)
             total = cur.fetchone()["total"]
 
-            # 2. Récupérer les données avec sous-requête pour type_attaque (pas de DISTINCT)
-            #    Si type_vulnerabilite est fourni, ajoute le filtre dans la sous-requête
+            # 2. Récupérer les données avec sous-requête pour type_attaque
             if type_vulnerabilite:
                 where_sql_with_type = f"{where_sql} AND EXISTS (SELECT 1 FROM correlations co WHERE co.cve_id = cve.cve_id AND co.type_attaque = %s)"
                 params_with_type = params + [type_vulnerabilite]
@@ -129,10 +130,13 @@ def get_cve_details(cve_id: str):
     conn = get_connection()
     try:
         with conn.cursor(pymysql.cursors.DictCursor) as cur:
-            # Récupère les infos de base depuis cve
             cur.execute("""
-                SELECT cve_id, description, cvss_v3_score, cvss_v3_severity, cvss_v3_vector,
-                       fabricant, produit, type_attaque, date_publication, references
+                SELECT
+                    id, cve_id, description,
+                    cvss_v2_score, cvss_v2_vector,
+                    cvss_v3_score, cvss_v3_vector, cvss_v3_severity,
+                    fabricant, produit, versions_affectees, cpe_affected,
+                    date_publication, date_modification, source_url
                 FROM cve
                 WHERE cve_id = %s
             """, (cve_id,))
@@ -140,12 +144,24 @@ def get_cve_details(cve_id: str):
             if not cve:
                 raise HTTPException(status_code=404, detail="CVE non trouvée")
 
-            # Formate les références (si stockées sous forme de JSON)
-            if cve.get('references'):
+            # Récupère type_attaque depuis correlations
+            cur.execute("""
+                SELECT type_attaque
+                FROM correlations
+                WHERE cve_id = %s
+                LIMIT 1
+            """, (cve_id,))
+            type_attaque = cur.fetchone()
+            cve['type_attaque'] = type_attaque['type_attaque'] if type_attaque else None
+
+            # Formate les références depuis source_url
+            if cve.get('source_url'):
                 try:
-                    cve['references'] = json.loads(cve['references'])
-                except:
-                    cve['references'] = []
+                    cve['references'] = json.loads(cve['source_url'])
+                except (json.JSONDecodeError, TypeError):
+                    cve['references'] = [cve['source_url']]
+            else:
+                cve['references'] = []
 
             return cve
     finally:

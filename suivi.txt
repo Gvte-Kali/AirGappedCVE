@@ -20,7 +20,7 @@ NOTE : Doc en attente — priorité au développement applicatif.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   BLOC G — FIX BUGS             --> En cours
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[ ] G1 - Les vulnérabilités intégrées depuis l'import ont un souci.
+[✅] G1 - Les vulnérabilités intégrées depuis l'import ont un souci.
           Sur la page assets.html, les assets n'ont aucun type d'équipement rempli
           Alors soit le fichier d'import n'a pas le bon format, soit l'insertion n'est pas bonne, soit l'ui affiche mal quelque chose
           quoiqu'il arrive il faut trouver d'où ça vient
@@ -44,6 +44,11 @@ INFO:     77.245.137.78:0 - "GET /api/cve/?limit=50&skip=0 HTTP/1.1" 404 Not Fou
           Plus rien ne s'affiche dans les versions OS, j'ai une erreur 404.
           La seule chose qui a changé sur cette page est le main.py
           Rien d'autre en rapport (router ou html) n'a été modifié
+
+[ ] G5 - faire un point sur chaque fonction de asset-manager.sh + retirer les inutiles
+          Retier audit, cve last, 
+          Tester toutes les fonctions
+
           
 
 ===================================================

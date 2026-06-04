@@ -460,55 +460,60 @@
         // =============================================
         async function afficherDetailsCVE(cveId) {
             try {
-                const response = await fetch(`/api/cve/${cveId}`);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                // Utilise encodeURIComponent pour gérer les CVE avec des caractères spéciaux
+                const response = await fetch(`/api/cve/${encodeURIComponent(cveId)}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+
                 cveEnCours = await response.json();
 
                 const modal = new bootstrap.Modal(document.getElementById('modalDetailsCVE'));
                 document.getElementById('modalTitleCVE').textContent = `Détails de ${cveId}`;
 
-                // Formatage des dates
                 const formatDate = (dateStr) => {
                     if (!dateStr) return 'N/A';
                     const d = new Date(dateStr);
                     return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
                 };
 
+                // Affiche les références sous forme de liens cliquables
+                const referencesHTML = cveEnCours.references && cveEnCours.references.length
+                    ? cveEnCours.references.map(r => `<a href="${r}" target="_blank" class="text-info">${r}</a><br>`).join('')
+                    : 'Aucune référence';
+
                 document.getElementById('modalBodyCVE').innerHTML = `
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h6 class="text-primary">Informations générales</h6>
-                            <p>
-                                <strong>ID:</strong> <code>${cveEnCours.cve_id || 'N/A'}</code><br>
-                                <strong>Fabricant:</strong> ${cveEnCours.fabricant || 'N/A'}<br>
-                                <strong>Produit:</strong> ${cveEnCours.produit || 'N/A'}<br>
-                                <strong>Type de vulnérabilité:</strong> <span class="badge bg-secondary">${cveEnCours.type_attaque || 'N/A'}</span>
-                            </p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-primary">Scores</h6>
-                            <p>
-                                <strong>CVSS v3:</strong> ${cveEnCours.cvss_v3_score || 'N/A'} (${cveEnCours.cvss_v3_severity || 'N/A'})<br>
-                                <strong>Date de publication:</strong> ${formatDate(cveEnCours.date_publication)}<br>
-                                <strong>Vecteur:</strong> <code>${cveEnCours.cvss_v3_vector || 'N/A'}</code>
-                            </p>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="mb-3">
-                        <h6 class="text-primary">Description</h6>
-                        <p class="small">${cveEnCours.description || 'N/A'}</p>
-                    </div>
-                    ${cveEnCours.references ?
-                        `<div class="mb-3">
-                            <h6 class="text-primary">Références</h6>
-                            <p class="small">${cveEnCours.references.map(r => `<a href="${r}" target="_blank" class="text-info">${r}</a><br>`).join('')}</p>
-                        </div>` : ''}
-                `;
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h6 class="text-primary">Informations générales</h6>
+                    <p>
+                        <strong>ID:</strong> <code>${cveEnCours.cve_id || 'N/A'}</code><br>
+                        <strong>Fabricant:</strong> ${cveEnCours.fabricant || 'N/A'}<br>
+                        <strong>Produit:</strong> ${cveEnCours.produit || 'N/A'}<br>
+                        <strong>Type:</strong> <span class="badge bg-secondary">${cveEnCours.type_attaque || 'N/A'}</span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-primary">Scores</h6>
+                    <p>
+                        <strong>CVSS v3:</strong> ${cveEnCours.cvss_v3_score || 'N/A'} (${cveEnCours.cvss_v3_severity || 'N/A'})<br>
+                        <strong>Date:</strong> ${formatDate(cveEnCours.date_publication)}<br>
+                        <strong>Vecteur:</strong> <code>${cveEnCours.cvss_v3_vector || 'N/A'}</code>
+                    </p>
+                </div>
+            </div>
+            <hr>
+            <div class="mb-3">
+                <h6 class="text-primary">Description</h6>
+                <p class="small">${cveEnCours.description || 'N/A'}</p>
+            </div>
+            <div class="mb-3">
+                <h6 class="text-primary">Références</h6>
+                <p class="small">${referencesHTML}</p>
+            </div>
+        `;
                 modal.show();
             } catch (e) {
-                console.error('Erreur:', e);
-                alert('Erreur lors du chargement des détails de la CVE.');
+                console.error('Erreur détaillée:', e);
+                alert(`Erreur: ${e.message}. Vérifie la console pour plus de détails.`);
             }
         }
 
