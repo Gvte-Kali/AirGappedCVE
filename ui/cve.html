@@ -43,11 +43,34 @@
             background-color: #0d1117;
             box-shadow: 0 1px 0 #30363d;
         }
+
+        /* Style pour le typeahead */
+        .suggestion-box {
+            position: absolute;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            z-index: 1000;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .suggestion-item:hover {
+            background-color: #0d1117;
+        }
     </style>
 </head>
 
 <body>
-    <!-- ─── NAVBAR ─────────────────────────────────────────── -->
+    <!-- NAVBAR (identique à ton exemple) -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">🛡️ Air-Gapped CVEs</a>
@@ -56,114 +79,25 @@
             </button>
             <div class="collapse navbar-collapse" id="nav">
                 <div class="d-flex ms-auto align-items-center gap-2">
-
-                    <!-- Recherche globale -->
-                    <div class="position-relative am-search" data-am-search-root>
-                        <input class="form-control form-control-sm" type="search"
-                            placeholder="Rechercher client, site, asset…" autocomplete="off" data-am-search-input>
-                        <div class="dropdown-menu am-search-menu mt-2" data-am-search-menu></div>
-                    </div>
-
                     <ul class="navbar-nav ms-2 align-items-center gap-1">
-
-                        <!-- Accueil -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="/">Accueil</a>
-                        </li>
-
-                        <!-- Vulnérabilités -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="/ui/vulns">Vulnérabilités</a>
-                        </li>
-
-                        <!-- Inventaire -->
+                        <li class="nav-item"><a class="nav-link" href="/">Accueil</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/ui/vulns">Vulnérabilités</a></li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                Inventaire
-                            </a>
+                            <a class="nav-link dropdown-toggle" href="#" role="button"
+                                data-bs-toggle="dropdown">Inventaire</a>
                             <ul class="dropdown-menu dropdown-menu-dark">
-                                <li>
-                                    <h6 class="dropdown-header"
-                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">GESTION</h6>
-                                </li>
                                 <li><a class="dropdown-item" href="/ui/clients">👥 Clients</a></li>
                                 <li><a class="dropdown-item" href="/ui/sites">🏢 Sites</a></li>
                                 <li><a class="dropdown-item" href="/ui/assets">💻 Assets</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
-                                    <h6 class="dropdown-header"
-                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">IMPORT</h6>
-                                </li>
-                                <li><a class="dropdown-item" href="/ui/import">📥 Import Assets</a></li>
-                                <li><a class="dropdown-item" href="/ui/documents">📄 Documents</a></li>
                             </ul>
                         </li>
-
-                        <!-- Référentiels -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                Référentiels
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-dark">
-                                <li>
-                                    <h6 class="dropdown-header"
-                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">MATÉRIEL</h6>
-                                </li>
-                                <li><a class="dropdown-item" href="/ui/vendors">🏭 Fabricants</a></li>
-                                <li><a class="dropdown-item" href="/ui/models">📦 Modèles</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
-                                    <h6 class="dropdown-header"
-                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">LOGICIEL</h6>
-                                </li>
-                                <li><a class="dropdown-item" href="/ui/os-versions">🖥️ OS &amp; Versions</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                            </ul>
-                        </li>
-
-                        <!-- Outils -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                Outils
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-                                <li>
-                                    <h6 class="dropdown-header"
-                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CONFIGURATION</h6>
-                                </li>
-                                <li><a class="dropdown-item" href="/ui/parametres">🔧 Paramètres corrélation</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
-                                    <h6 class="dropdown-header"
-                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">EXÉCUTION</h6>
-                                </li>
-                                <li><a class="dropdown-item" href="/scripts/console">🖥️ Console</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
-                                    <h6 class="dropdown-header"
-                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">DÉVELOPPEUR</h6>
-                                </li>
-                                <li><a class="dropdown-item" href="/docs">📖 API Docs</a></li>
-                            </ul>
-                        </li>
-
                     </ul>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Contenu -->
+    <!-- CONTENU -->
     <div class="container py-5">
         <div class="d-flex justify-content-between align-items-end mb-5">
             <div>
@@ -172,7 +106,7 @@
             </div>
         </div>
 
-        <!-- Filtres -->
+        <!-- FILTRES -->
         <div class="card mb-4">
             <div class="p-4">
                 <h6 class="section-title mb-3">🔍 FILTRES</h6>
@@ -183,9 +117,12 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label stat-label">Fabricant</label>
-                        <select class="form-select" id="filtreFabricant">
-                            <option value="">Tous les fabricants</option>
-                        </select>
+                        <div class="position-relative">
+                            <input type="text" class="form-control" id="filtreFabricantSearch"
+                                placeholder="Tous les fabricants…" autocomplete="off">
+                            <input type="hidden" id="filtreFabricantId">
+                            <div class="suggestion-box" id="filtreFabricantSuggestions"></div>
+                        </div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label stat-label">Type de vulnérabilité</label>
@@ -195,13 +132,13 @@
                     </div>
                 </div>
                 <div class="d-flex gap-2 mt-4">
-                    <button class="btn btn-primary" onclick="chargerCVE()">🔍 Rechercher</button>
+                    <button class="btn btn-primary" onclick="chargerCVE(1)">🔍 Rechercher</button>
                     <button class="btn btn-outline-secondary" onclick="reinitialiserFiltres()">🔄 Réinitialiser</button>
                 </div>
             </div>
         </div>
 
-        <!-- Tableau des CVE -->
+        <!-- TABLEAU DES CVE -->
         <div class="card mb-4">
             <div class="table-responsive" style="overflow: visible;">
                 <table class="table table-hover align-middle mb-0">
@@ -226,7 +163,7 @@
             </div>
         </div>
 
-        <!-- Pagination -->
+        <!-- PAGINATION -->
         <nav id="paginationContainer">
             <ul class="pagination justify-content-center" id="pagination"></ul>
         </nav>
@@ -234,45 +171,110 @@
 
     <script src="/static/bootstrap.bundle.min.js"></script>
     <script>
+        // =============================================
+        // CONFIGURATION
+        // =============================================
         let pageActuelle = 1;
-        const itemsParPage = 10;
+        const itemsParPage = 10; // <-- 10 CVE par page
         let fabricants = [];
         let types = [];
 
-        // Charger les listes de filtres au démarrage
+        // =============================================
+        // TYPEAHEAD POUR FABRICANT (inspiré de ton exemple)
+        // =============================================
+        function makeSuggestionBox(inputId, hiddenId, boxId, fetcher, labelFn) {
+            const input = document.getElementById(inputId);
+            const hidden = hiddenId ? document.getElementById(hiddenId) : null;
+            const box = document.getElementById(boxId);
+            let debounce;
+
+            async function doSearch() {
+                clearTimeout(debounce);
+                debounce = setTimeout(async () => {
+                    const q = input.value.trim();
+                    try {
+                        const items = await fetcher(q);
+                        box.innerHTML = '';
+                        if (!items.length) {
+                            box.innerHTML = '<div class="suggestion-item text-secondary">Aucun résultat</div>';
+                            box.style.display = 'block';
+                            return;
+                        }
+                        items.slice(0, 20).forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'suggestion-item';
+                            div.textContent = labelFn(item);
+                            div.addEventListener('mousedown', e => {
+                                e.preventDefault();
+                                input.value = labelFn(item);
+                                if (hidden) hidden.value = item.id || item.nom || labelFn(item);
+                                box.style.display = 'none';
+                            });
+                            box.appendChild(div);
+                        });
+                        box.style.display = 'block';
+                    } catch (e) {
+                        console.error('Erreur typeahead:', e);
+                        box.style.display = 'none';
+                    }
+                }, 150);
+            }
+
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', () => {
+                if (hidden) hidden.value = '';
+                doSearch();
+            });
+            input.addEventListener('blur', () => setTimeout(() => box.style.display = 'none', 200));
+        }
+
+        // =============================================
+        // CHARGEMENT DES FILTRES (fabricants, types)
+        // =============================================
         async function chargerFiltres() {
             try {
-                const [fabRes, typeRes] = await Promise.all([
-                    fetch('/api/cve/fabricants'),
-                    fetch('/api/cve/types')
-                ]);
-                fabricants = (await fabRes.json()).fabricants;
-                types = (await typeRes.json()).types;
+                // Charge les fabricants pour le typeahead
+                const fabRes = await fetch('/api/cve/fabricants');
+                fabricants = (await fabRes.json()).fabricants || [];
 
-                const fabricantSelect = document.getElementById('filtreFabricant');
-                fabricantSelect.innerHTML = '<option value="">Tous les fabricants</option>';
-                fabricants.forEach(f => {
-                    fabricantSelect.innerHTML += `<option value="${f}">${f}</option>`;
-                });
+                // Charge les types de vulnérabilités
+                const typeRes = await fetch('/api/cve/types');
+                types = (await typeRes.json()).types || [];
 
+                // Remplit le select des types
                 const typeSelect = document.getElementById('filtreType');
                 typeSelect.innerHTML = '<option value="">Tous les types</option>';
                 types.forEach(t => {
                     typeSelect.innerHTML += `<option value="${t}">${t}</option>`;
                 });
+
+                // Initialise le typeahead pour fabricant
+                makeSuggestionBox(
+                    'filtreFabricantSearch',
+                    'filtreFabricantId',
+                    'filtreFabricantSuggestions',
+                    async q => {
+                        if (!q) return fabricants.slice(0, 20);
+                        return fabricants.filter(f => f.toLowerCase().includes(q.toLowerCase())).slice(0, 20);
+                    },
+                    i => i
+                );
+
             } catch (e) {
                 console.error('Erreur chargement filtres:', e);
             }
         }
 
-        // Charger les CVE
+        // =============================================
+        // CHARGEMENT DES CVE (par pages de 10)
+        // =============================================
         async function chargerCVE(page = 1) {
             pageActuelle = page;
             const skip = (page - 1) * itemsParPage;
 
             const params = new URLSearchParams({ limit: itemsParPage, skip });
             const cve = document.getElementById('filtreCVE').value;
-            const fabricant = document.getElementById('filtreFabricant').value;
+            const fabricant = document.getElementById('filtreFabricantSearch').value;
             const type = document.getElementById('filtreType').value;
 
             if (cve) params.append('cve_id', cve);
@@ -281,6 +283,7 @@
 
             try {
                 const response = await fetch(`/api/cve/?${params}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 afficherTableau(data.items);
                 afficherPagination(data.total);
@@ -291,7 +294,9 @@
             }
         }
 
-        // Afficher le tableau
+        // =============================================
+        // AFFICHAGE DU TABLEAU
+        // =============================================
         function afficherTableau(data) {
             const tbody = document.getElementById('tableBody');
             if (data.length === 0) {
@@ -317,7 +322,9 @@
             `).join('');
         }
 
-        // Pagination
+        // =============================================
+        // PAGINATION
+        // =============================================
         function afficherPagination(total) {
             const nbPages = Math.ceil(total / itemsParPage);
             const pagination = document.getElementById('pagination');
@@ -350,18 +357,23 @@
             pagination.innerHTML = html;
         }
 
-        // Réinitialiser les filtres
+        // =============================================
+        // RÉINITIALISER LES FILTRES
+        // =============================================
         function reinitialiserFiltres() {
             document.getElementById('filtreCVE').value = '';
-            document.getElementById('filtreFabricant').value = '';
+            document.getElementById('filtreFabricantSearch').value = '';
+            document.getElementById('filtreFabricantId').value = '';
             document.getElementById('filtreType').value = '';
             chargerCVE(1);
         }
 
-        // Initialisation
+        // =============================================
+        // INITIALISATION
+        // =============================================
         document.addEventListener('DOMContentLoaded', () => {
             chargerFiltres();
-            chargerCVE();
+            chargerCVE(1); // Charge la première page (10 CVE)
         });
     </script>
 </body>
