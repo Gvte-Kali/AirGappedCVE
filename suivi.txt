@@ -4,12 +4,6 @@
 ═══════════════════════════════════════════════════════════════
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOCS A B C D                                        ✅
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[✅] Moteur corrélation + filtres vulns + boutons ? + thead sticky.
-
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   BLOC E — DOCUMENTATION GITHUB PAGES              ⏸ EN ATTENTE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [✅] E1 à E8 — Sections déployées.
@@ -23,223 +17,17 @@
 NOTE : Doc en attente — priorité au développement applicatif.
 
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOC F — IMPORT EXCEL D'ASSETS                       ✅
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[✅] F1 à F5 — Router, template, preview, confirm, openpyxl.
-[  ] F6 — Tests et affinement (à faire quand un vrai import est lancé)
+
+===================================================
+Idées pour la fin du projet avant la mise en prod |
+===================================================
 
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOC G — PAGE PARAMÈTRES CORRÉLATION                 ✅
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[✅] G0.1 — Suppression os_based_types / vendor_based_types du config.yml
-[✅] G1   — Page /ui/parametres + router /api/parametres-correlation/config
-[✅] G2   — Éditeur vuln_types.yml dans la page paramètres
-[✅] G3   — Section equipment_types dans la page paramètres (partiel)
-[✅] G4   — Script corrélation nettoyé
-[✅] G5   — Navbar restructurée (Inventaire / Référentiels / Outils)
+!! En dernier !! . Créer un script de first install, ce script va être long : 
+    - Créer la bdd avec /sql/schema.sql ( voir si install.sh ne le fait pas déjà )
+    - Faire le premier téléchargement des pages json nvd avec /script/download_nvd.py
+    - Importer les Fabricants et Modèles dans la bdd avec /scripts/import_vendors_models.py
+    - Importer les cve qui correspondent aux fabricants/modèles avec /scripts/cve_sync.py
+    - Importer les os et versions os avec /scripts/extract_os_versions.py
 
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOC H — GESTION DOCUMENTS & PDF
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-[✅] H1 — ui/documents.html : refonte complète
-         • Tableau : colonnes Nom, Type, Taille, Date, Actions
-         • Corriger textes foncés sur fond foncé (lisibilité)
-         • Renommage inline dans la colonne Nom
-           → PATCH /api/documents/{filename}/rename
-         • Double validation avant suppression :
-             1. "Supprimer ce fichier ?"
-             2. "Action irréversible. Confirmer ?"
-           → DELETE /api/documents/{filename}
-         • Bouton télécharger / prévisualiser par ligne
-
-[✅] H2 — routers/documents.py : endpoint renommage
-         PATCH /api/documents/{filename}/rename
-         Body : { "new_name": "nouveau_nom.pdf" }
-         Validation : .pdf obligatoire, pas de path traversal
-
-[✅] H3 — ui/vulns.html : champ nom de fichier dans le modal PDF
-         • Valeur par défaut : rapport_vuln_YYYY_MM_DD_HH_MM.pdf
-           (underscores entre toutes les parties de la date)
-         • Champ éditable avant génération
-         • Extension .pdf forcée, pas d'espaces
-
-[✅] H4 — routers/rapport_pdf.py : prendre en compte le nom personnalisé
-         Champ optionnel "filename" dans RapportRequest
-         Sanitisation + fallback rapport_vuln_YYYY_MM_DD_HH_MM.pdf
-
-Ordre d'exécution : H2 → H4 → H1 → H3
-
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOC I — INTÉGRATION EQUIPMENT_TYPES DANS PARAMÈTRES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-[✅] I001 — ui/assets.html : Détection d'un bug à fix : 
-         Ajouter un asset à la catégorie d'équipement "Lecteur Biométrique" renvoie lors de la sauvegarde de l'asset renseigné : 
-         "ERREUR SQL create_asset: (1048, "Column 'type_equipement' cannot be null")"
-         Je pense que le souci vient du fait que l'api va chercher le type hardcodé quelque part au lieu d'aller chercher l'api /api/equipment-types/
-         Cela pose un problème plus profond : quand on rempli un asset via le menu d'édition, la liste des types d'équipements chargés est laquelle ? L'ancienne version hardcodée ou la nouvelle version en bdd ? 
-
-        
-[✅] I002 — ui/assets.html : Détection d'un bug à fix : 
-         Lors de la mise à jour de l'OS_Version sur un asset avec OS normalisé mais la Version_OS pas normalisée, voici ce que j'obtiens : 
-         L'édition se fait correctement
-         Lors de la réouverture de ma page web, le nouveau contenu s'affiche
-         Lors de la réouverture du menu de modification de l'asset, les champs "Système d'exploitation" et "Version OS" ne sont pas remplis.
-
-[✅] I003 — Réfaction logique Raspberry Pi : 
-         Pour les Raspberry pi, on utilise DietPi. Actuellement la corrélation indique qu'il n'y a pas d'os normalisé donc on skip les raspberry.
-         Cependant, on a uniquement Debian dans les OS disponibles dans la liste de ce qui pourrait être pertinent.
-         DietPi n'existe pas dans les OS. 
-         L'usage de DietPi fait qu'il y a très peu de composants, donc très peu de vunérabilités debian sont réellement concernées pour mon cas d'usage.
-         Je souhaite que les vulnérabilités trouvées dans le kernel linux soient remontées, sans que les cve liées à debian ne le soient. 
-         Sachant que dans mon fichier /scritps/config.yml, j'ai ceci en os_vendor_map : DietPi: linux
-         Qu'est-ce que la corrélation va prioriser ? Mon fichier de config ou ma configuration dans equipment-type ?
-         Et qu'est-ce qui est le plus pertinent pour ma configuration ?
-
-[✅] I1 — ui/parametres.html : ajouter section Equipment Types
-         Reprendre toute la logique de equipment-types.html :
-         • Tableau avec colonnes : Code, Label, OS(FK), Version OS,
-           Firmware, BIOS, Source vendor, Assets, Actions
-         • Édition inline (clic sur une ligne)
-         • Création d'un nouveau type (bouton ＋)
-         • Suppression (désactivée si assets > 0)
-         • En-tête sticky
-         • Badges colorés pour vendor_source
-         Appels API existants :
-           GET    /api/equipment-types
-           POST   /api/equipment-types
-           PUT    /api/equipment-types/{id}
-           DELETE /api/equipment-types/{id}
-
-[✅] I2 — Test verbose du script de corrélation
-         Méthode : lancer avec --verbose et vérifier dans les logs
-         que chaque asset affiche :
-           [CONFIG] X types d'équipements chargés depuis equipment_types
-           [Asset N/N] nom_asset (vendor) — N CVE en cache
-           [vendor_match] Filtre exact OS produit=xxx → N/M CVE retenues
-           [vendor_match] N candidates → M retenues (K exact FK)
-         Checklist de validation :
-           □ vendor_source lu depuis equipment_types (pas config.yml)
-           □ use_os_version / use_version_firmware appliqués correctement
-           □ Corrélations cohérentes avec la config de la page paramètres
-           □ Modifier un type depuis /ui/parametres → relancer → vérifier
-
-[✅] I3 — Si I2 validé : supprimer equipment-types.html
-         • Supprimer ui/equipment-types.html
-         • Retirer la route /ui/equipment-types dans main.py
-         • Retirer l'import du router equipment_types si dédié
-           (le router API /api/equipment-types reste — utilisé par
-            la page paramètres et l'import Excel)
-
-[✅] I4 — Mettre à jour la navbar sur TOUTES les pages html
-         Retirer le lien "⚙️ Types d'équipements" du dropdown Référentiels
-         (il est désormais dans Outils → Paramètres corrélation)
-         Pages concernées : toutes les pages dans ui/ + /routers/scripts.py
-         Fournir le HTML de la navbar à Claude pour génération,
-         puis remplacer manuellement page par page.
-
-[✅] I5.1 — config.yml : ajouter la section prompts
-           Ajouter sous la section mistral :
-           prompts:
-             system: "<contenu actuel de MISTRAL_SYSTEM_PROMPT>"
-
-[✅] I5.2 — correlate_and_analyze.py : lire le prompt depuis config.yml
-           Remplacer la constante MISTRAL_SYSTEM_PROMPT par :
-           MISTRAL_SYSTEM_PROMPT = cfg_mistral("system_prompt", "<prompt par défaut>")
-           Attention : cfg_mistral() lit CFG["mistral"] — il faut soit une nouvelle
-           fonction cfg_prompts() qui lit CFG["prompts"]["system"], soit déplacer
-           system_prompt dans la section mistral du config.yml
-
-[✅] I5.3 — parametres.html : ajouter un textarea dans l'accordéon Mistral
-           Juste avant le bouton Sauvegarder de la section Mistral, ajouter :
-           • Un textarea id="mistral_system_prompt" avec le contenu du prompt
-           • Label : "Prompt système Mistral"
-           • Hauteur : ~8 lignes
-           • Note explicative : "Variables disponibles dans le prompt utilisateur :
-             {nom_interne}, {cve_id}, {cvss_v3_score}, etc."
-
-[✅] I5.4 — JS parametres.html : renderConfig() et collectConfig()
-           • renderConfig() : remplir le textarea depuis cfg.prompts.system
-           • collectConfig() : inclure prompts.system dans le payload PUT
-
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  BLOC G — CLI MAINTENANCE                        ← À FAIRE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-[ ] G1 — Créer scripts/asset-manager (script bash exécutable)
-         chmod +x scripts/asset-manager
-         Charge les variables depuis .env automatiquement
-         Usage : ./scripts/asset-manager <commande>
-         (ou via alias : asset-manager <commande>)
-
-         ── FastAPI ──────────────────────────────────────────
-           start       → démarre le service systemd FastAPI
-           stop        → arrête le service
-           restart     → redémarre le service
-           status      → statut systemd + PID + port
-
-         ── Logs ─────────────────────────────────────────────
-           logs        → tail -f FastAPI.log (50 dernières lignes)
-           logs-err    → tail -f filtré ERROR/EXCEPTION uniquement
-           logs-corr   → tail -f filtré lignes de corrélation
-
-         ── BDD ───────────────────────────────────────────────
-           db          → echo la commande mysql complète
-           db-connect  → connexion directe à mariadb
-           db-backup   → dump complet → /tmp/am_backup_YYYYMMDD.sql
-           db-schema   → dump structure → schema.sql
-           db-size     → taille de chaque table en Mo
-           db-vacuum   → OPTIMIZE TABLE sur corrélations + cve
-           db-check    → CHECK TABLE corruption
-
-         ── Corrélations ─────────────────────────────────────
-           correlate         → lance le pipeline complet
-                               (correlate + analyze + run-all)
-           corr-clear        → supprime toutes les corrélations
-                               (avec confirmation Y/N)
-           corr-clear-asset  → supprime corrélations d'un asset
-                               (demande l'id interactivement)
-           corr-stats        → COUNT par statut depuis la BDD
-           corr-rejects      → 20 derniers rejets de corrélation
-           corr-clear-rejects→ vide la table correlation_rejects
-           corr-top          → top 10 assets par nb corrélations
-
-         ── Documents ────────────────────────────────────────
-           docs-list   → liste les PDFs avec taille et date
-           docs-clear  → supprime tous les PDFs (avec confirmation)
-           docs-size   → taille totale du dossier documents
-
-         ── CVE ──────────────────────────────────────────────
-           cve-stats   → COUNT CVE par vendor dans la BDD
-           cve-last    → 10 dernières CVE importées
-
-         ── Audit ────────────────────────────────────────────
-           audit-assets  → assets sans vendor NVD (jamais corrélés)
-           audit-os      → assets sans OS normalisé
-           audit-orphans → corrélations sans asset ou CVE valide
-
-         ── Système ──────────────────────────────────────────
-           sys-info      → RAM, CPU, température, uptime
-           sys-ports     → vérifie ports 3000/8000
-           sys-services  → statut FastAPI + MariaDB + Grafana
-           check-env     → vérifie variables .env présentes
-           check-db      → connexion BDD + COUNT tables principales
-           check-disk    → espace disque documents + logs
-           update-deps   → pip install -r requirements.txt
-           version       → Python + FastAPI + MariaDB versions
-
-[ ] G2 — Détection automatique dev vs prod
-         Si /opt/asset-manager existe → prod
-         Sinon → dev (/workspace)
-         Variables adaptées automatiquement :
-           PROJECT_DIR, LOG_FILE, VENV_PYTHON, SERVICE_NAME
-
-[ ] G3 — Alias shell (optionnel, instructions affichées par le script)
-         Prod : alias asset-manager="/opt/asset-manager/scripts/asset-manager"
-         Dev  : alias asset-manager="/workspace/scripts/asset-manager"
+    

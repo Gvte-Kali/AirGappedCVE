@@ -443,11 +443,6 @@ def get_cwes_for_cve(cur, cve_id):
 def insert_correlation(cur, asset_id, cve_id, type_corr, passe,
                        score_pre, priorite_pre,
                        type_attaque="Unknown", passer_mistral=True):
-    """
-    Insertion idempotente. Si la corrélation existe déjà, on garde la meilleure
-    passe (cpe_full > vendor_product > os_textuel) et on met à jour
-    le score pre-triage si la nouvelle passe est meilleure.
-    """
     PASSE_PRIORITY = {
         "cpe_full": 0,
         "vendor_product": 1,
@@ -462,31 +457,30 @@ def insert_correlation(cur, asset_id, cve_id, type_corr, passe,
     existing = cur.fetchone()
 
     if existing:
-        # Comparer les passes
         old_passe = existing["passe_correlation"] or "os_textuel"
         if PASSE_PRIORITY.get(passe, 99) < PASSE_PRIORITY.get(old_passe, 99):
-            # Nouvelle passe plus précise → on met à jour
             cur.execute("""
                 UPDATE correlations
                 SET type_correlation = %s,
                     passe_correlation = %s,
                     score_pre_triage = %s,
-                    priorite_pre_triage = %s
+                    priorite_pre_triage = %s,
+                    priorite = %s  # <-- Ajoute la mise à jour de priorite ici
                 WHERE id = %s
-            """, (type_corr, passe, score_pre, priorite_pre, existing["id"]))
+            """, (type_corr, passe, score_pre, priorite_pre, priorite_pre, existing["id"]))
             return "updated"
         return "skipped"
 
-    # Nouvelle corrélation
+    # Nouvelle corrélation : ajoute priorite dans l'INSERT
     cur.execute("""
         INSERT INTO correlations (
             asset_id, cve_id, type_correlation, passe_correlation,
-            score_pre_triage, priorite_pre_triage,
+            score_pre_triage, priorite_pre_triage, priorite,  # <-- Ajoute priorite ici
             type_attaque, passer_mistral,
             statut, date_detection
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'nouveau', NOW())
-    """, (asset_id, cve_id, type_corr, passe, score_pre, priorite_pre,
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'nouveau', NOW())
+    """, (asset_id, cve_id, type_corr, passe, score_pre, priorite_pre, priorite_pre,  # <-- priorite_pre répété
           type_attaque, 1 if passer_mistral else 0))
     return "inserted"
 

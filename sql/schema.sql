@@ -141,7 +141,7 @@ CREATE TABLE `correlation_rejects` (
   KEY `idx_cve` (`cve_id`),
   KEY `idx_raison` (`raison`),
   KEY `idx_date` (`date_rejet`)
-) ENGINE=InnoDB AUTO_INCREMENT=603 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=293 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -186,7 +186,7 @@ CREATE TABLE `correlations` (
   KEY `idx_passer_mistral` (`passer_mistral`),
   CONSTRAINT `correlations_ibfk_1` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE,
   CONSTRAINT `correlations_ibfk_2` FOREIGN KEY (`cve_id`) REFERENCES `cve` (`cve_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=328 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -336,7 +336,7 @@ CREATE TABLE `os_versions` (
   KEY `idx_os_nom` (`os_nom`),
   KEY `idx_nvd_vendor` (`nvd_vendor`),
   KEY `idx_type_produit` (`type_produit`)
-) ENGINE=InnoDB AUTO_INCREMENT=20100 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=33502 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -360,7 +360,7 @@ CREATE TABLE `product_models` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_vendor_product` (`vendor_id`,`nvd_product`),
   CONSTRAINT `product_models_ibfk_1` FOREIGN KEY (`vendor_id`) REFERENCES `product_vendors` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=510439 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=681440 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -379,7 +379,7 @@ CREATE TABLE `product_vendors` (
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_nvd_vendor` (`nvd_vendor`)
-) ENGINE=InnoDB AUTO_INCREMENT=108397 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=144898 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -563,6 +563,10 @@ SET character_set_client = utf8mb4;
 SET character_set_client = @saved_cs_client;
 
 --
+-- Dumping routines for database 'asset_vuln_manager'
+--
+
+--
 -- Final view structure for view `v_assets`
 --
 
@@ -679,4 +683,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2026-05-22  9:32:35
+-- Dump completed on 2026-06-04  7:54:02
