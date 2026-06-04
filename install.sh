@@ -1,570 +1,818 @@
 #!/bin/bash
+cat << "EOF"
+
+${PURPLE}
+${NC}
+
+EOF
+
 # =============================================================================
-# install.sh — Installation complète Asset & Vulnerability Manager
-# Usage : curl -sSL https://raw.githubusercontent.com/Gvte-Kali/AirGappedCVE/main/install.sh | sudo bash
+# VÉRIFICATIONS PRÉLIMINAIRES
+=======
+# =============================================================================
+# VÉRIFICATIONS PRÉLIMINAIRESVÉRIFICATION ROOT
+# =============================================================================
+if [ "$EUID" -ne 0 ]; then
+  echo "Ce script doit être lancé en root." >&2
+  echo "Relance avec : sudo bash $0" >&2
+  exit 1
+fi
+
+# Créer le fichier de log
+mkdir -p "$INSTALL_DIR"
+touch "$LOG_FILE"
+
+# =============================================================================
+# ASCII ART DE BIENVENUE
+# =============================================================================
+cat << "EOF"
+
+${PURPLE}
+${NC}
+
+EOF
+
+# =============================================================================
+# VÉRIFICATIONS PRÉLIMINAIRES
+# =============================================================================
+=======
+# =============================================================================
+# VÉRIFICATION ROOT
+# =============================================================================
+if [ "$EUID" -ne 0 ]; then
+  echo "Ce script doit être lancé en root." >&2
+  echo "Relance avec : sudo bash $0" >&2
+  exit 1
+fi
+
+# Créer le fichier de log
+mkdir -p "$INSTALL_DIR"
+touch "$LOG_FILE"
+
+# =============================================================================
+# VÉRIFICATIONS PRÉLIMINAIRES
+# ==========================================================================================================================================================
+# install_user_friendly.sh — Script d'installation utilisateur pour AirGappedCVE
+# Ce script guide l'utilisateur étape par étape avec barres de progression
+# Usage: sudo bash install_user_friendly.sh
 # =============================================================================
 
 set -euo pipefail
 
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
+INSTALL_DIR="/opt/asset-manager"
+LOG_FILE="$INSTALL_DIR/installation.log"
+ENV_FILE="$INSTALL_DIR/.env"
+SERVICE_NAME="asset-manager"
+SCRIPTS_DIR="$INSTALL_DIR/scripts"
+PATH_FILE="/etc/profile.d/asset-manager.sh"
+REPO_URL="https://github.com/Gvte-Kali/AirGappedCVE.git"
+
+# Couleurs
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
+PURPLE='\033[0;35m'; ORANGE='\033[0;33m'
 
-log()     { echo -e "${GREEN}[OK]${NC}  $1"; }
-warn()    { echo -e "${YELLOW}[!]${NC}   $1"; }
-info()    { echo -e "${CYAN}[~]${NC}   $1"; }
-ask()     { echo -e "${YELLOW}  → $1${NC}"; }
+# Compteur d'erreurs
+ERRORS=0
 
-# Erreur avec conseil de correction
-error() {
-  echo ""
-  echo -e "${RED}${BOLD}[ERREUR]${NC} $1"
-  [ -n "${2:-}" ] && echo -e "         ${YELLOW}→ $2${NC}"
-  echo ""
-  exit 1
-}
+# Temps de début
+START_TIME=$(date +%s)
 
-# Avertissement non fatal avec conseil
-warn_tip() {
-  echo -e "${YELLOW}[!]${NC}   $1"
-  [ -n "${2:-}" ] && echo -e "         ${CYAN}→ $2${NC}"
-}
+# =============================================================================
+# FONCTIONS DE PROGRESSION
+# =============================================================================
 
-# Séparateur visuel
-header() {
-  echo ""
-  echo -e "${BLUE}${BOLD}╔══════════════════════════════════════════╗${NC}"
-  echo -e "${BLUE}${BOLD}║${NC}  $1"
-  echo -e "${BLUE}${BOLD}╚══════════════════════════════════════════╝${NC}"
-}
-
-# Suivi des étapes réussies pour le résumé final
-STEPS_OK=()
-STEPS_WARN=()
-step_ok()   { STEPS_OK+=("$1"); }
-step_warn() { STEPS_WARN+=("$1"); }
-
-# Résumé final appelé à la sortie (succès ou erreur)
-summary() {
-  echo ""
-  echo -e "${BLUE}${BOLD}════════════════════════════════════════════${NC}"
-  echo -e "${BLUE}${BOLD}   Résumé de l'installation${NC}"
-  echo -e "${BLUE}${BOLD}════════════════════════════════════════════${NC}"
-  for s in "${STEPS_OK[@]:-}"; do
-    echo -e "  ${GREEN}✔${NC}  $s"
+# Barre de progression
+# Usage: progress_bar current_step total_steps "message"
+progress_bar() {
+  local current=$1
+  local total=$2
+  local message="$3"
+  local percentage=$((current * 100 / total))
+  local completed=$((current * 50 / total))
+  local remaining=$((50 - completed))
+  
+  local bar="["
+  for ((i=0; i<completed; i++)); do
+    bar+="="
   done
-  for s in "${STEPS_WARN[@]:-}"; do
-    echo -e "  ${YELLOW}⚠${NC}  $s"
+  for ((i=0; i<remaining; i++)); do
+    bar+=" "
   done
-  echo ""
+  bar+="]"
+  
+  printf "\r${CYAN}%3d%% ${bar} ${message}${NC}" "$percentage"
+  
+  if [ "$current" -eq "$total" ]; then
+    echo ""
+  fi
 }
-trap summary EXIT
+
+# Fonction pour afficher une étape avec barre de progression
+step_header() {
+  local step_num=$1
+  local step_name="$2"
+  local total_steps=$3
+  
+  echo ""
+  echo -e "${BLUE}${BOLD}═══════════════════════════════════════════════════${NC}" | tee -a "$LOG_FILE"
+  echo -e "${BLUE}${BOLD}  Étape ${step_num}/${total_steps} — ${step_name}${NC}" | tee -a "$LOG_FILE"
+  echo -e "${BLUE}${BOLD}═══════════════════════════════════════════════════${NC}" | tee -a "$LOG_FILE"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - [STEP] Étape ${step_num}/${total_steps}: ${step_name}" >> "$LOG_FILE"
+}
+
+# =============================================================================
+# FONCTIONS DE LOG
+# =============================================================================
+log()     {
+  echo -e "${GREEN}[✓]${NC}  $1" | tee -a "$LOG_FILE"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - [OK] $1" >> "$LOG_FILE"
+}
+
+error()   {
+  ERRORS=$((ERRORS+1))
+  echo -e "${RED}${BOLD}[ERREUR $ERRORS]${NC} $1" | tee -a "$LOG_FILE"
+  [ -n "${2:-}" ] && echo -e "         ${YELLOW}→ $2${NC}" | tee -a "$LOG_FILE"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - [ERROR $ERRORS] $1" >> "$LOG_FILE"
+  [ -n "${2:-}" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') - [ERROR $ERRORS] Solution: $2" >> "$LOG_FILE"
+}
+
+info()    {
+  echo -e "${CYAN}[~]${NC}   $1" | tee -a "$LOG_FILE"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - [INFO] $1" >> "$LOG_FILE"
+}
+
+header()  {
+  echo "" | tee -a "$LOG_FILE"
+  echo -e "${BLUE}${BOLD}═══════════════════════════════════════════════════${NC}" | tee -a "$LOG_FILE"
+  echo -e "${BLUE}${BOLD}  $1${NC}" | tee -a "$LOG_FILE"
+  echo -e "${BLUE}${BOLD}═══════════════════════════════════════════════════${NC}" | tee -a "$LOG_FILE"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - [HEADER] $1" >> "$LOG_FILE"
+}
+
+# Fonction pour demander si on continue après une erreur
+ask_continue() {
+  if [ $ERRORS -gt 0 ]; then
+    echo ""
+    echo -e "${RED}${BOLD}⚠️  $ERRORS erreur(s) détectée(s)${NC}"
+    echo ""
+    read -rp "Voulez-vous continuer l'installation ? (o/N) : " CONTINUE
+    if [[ ! "$CONTINUE" =~ ^[oOyY]$ ]]; then
+      echo ""
+      error "Installation annulée par l'utilisateur" "Corrigez les erreurs et relancez le script"
+      exit 1
+    fi
+    echo ""
+    info "Reprise de l'installation..."
+  fi
+}
+
+# Fonction pour générer un mot de passe aléatoire de 32 caractères
+generate_password() {
+  tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32
+  echo
+}
+
+# Fonction pour vérifier qu'un port est disponible
+check_port_available() {
+  local port=$1
+  local service_name=$2
+  if ss -tuln | grep -q ":$port " 2>/dev/null; then
+    error "Le port $port est déjà utilisé par $service_name" "Arrêtez le service en cours ou changez le port"
+    return 1
+  fi
+  return 0
+}
+
+# Fonction pour afficher une barre de chargement pendant une opération
+# Usage: run_with_progress "message" "commande"
+run_with_progress() {
+  local message="$1"
+  local command="$2"
+  
+  echo -n "${CYAN}  → $message...${NC}"
+  
+  # Exécuter la commande
+  if eval "$command" > /dev/null 2>&1; then
+    echo -e " ${GREEN}✓${NC}"
+    return 0
+  else
+    echo -e " ${RED}✗${NC}"
+    return 1
+  fi
+}
 
 # =============================================================================
 # VÉRIFICATION ROOT
 # =============================================================================
 if [ "$EUID" -ne 0 ]; then
-  error "Ce script doit être lancé en root." "Relance avec : sudo bash install.sh"
+  echo "Ce script doit être lancé en root." >&2
+  echo "Relance avec : sudo bash $0" >&2
+  exit 1
 fi
 
-SUDO_USER_NAME="${SUDO_USER:-$(logname 2>/dev/null || echo 'pwner')}"
-
-echo ""
-echo -e "${BLUE}${BOLD}╔═══════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}${BOLD}║    Asset & Vulnerability Manager — Installer      ║${NC}"
-echo -e "${BLUE}${BOLD}╚═══════════════════════════════════════════════════╝${NC}"
-echo ""
+# Créer le fichier de log
+mkdir -p "$INSTALL_DIR"
+touch "$LOG_FILE"
 
 # =============================================================================
-# VÉRIFICATION DES PRÉREQUIS
+# ASCII ART DE BIENVENUE
 # =============================================================================
-header "0/7 — Vérification des prérequis"
+cat << "EOF"
 
-# Connexion internet
-info "Vérification de la connexion internet..."
-if ! curl -sf --max-time 5 https://github.com > /dev/null; then
-  error "Pas de connexion internet détectée." "Vérifie ta connexion et réessaie."
-fi
-log "Connexion internet OK"
+${PURPLE}
+${NC}
 
-# Espace disque (minimum 2 Go)
-FREE_KB=$(df / | awk 'NR==2 {print $4}')
-FREE_GB=$(echo "scale=1; $FREE_KB / 1048576" | bc)
-if [ "$FREE_KB" -lt 2097152 ]; then
-  error "Espace disque insuffisant (${FREE_GB} Go disponibles, 2 Go requis)." \
-        "Libère de l'espace avant de relancer."
-fi
-log "Espace disque OK (${FREE_GB} Go disponibles)"
-
-# Ubuntu / Debian uniquement
-if ! command -v apt &>/dev/null; then
-  error "Ce script nécessite un système basé sur Debian/Ubuntu." \
-        "Utilise Ubuntu Server 22.04 ou 24.04 LTS."
-fi
-log "Système compatible détecté"
-
-step_ok "Prérequis validés"
+EOF
 
 # =============================================================================
-header "1/7 — Mise à jour système et dépendances"
+# VÉRIFICATIONS PRÉLIMINAIRES
 # =============================================================================
-info "Mise à jour des paquets (peut prendre quelques minutes)..."
-apt update -q && apt upgrade -y -q || \
-  error "Échec de la mise à jour des paquets." \
-        "Vérifie ta connexion ou les sources APT (/etc/apt/sources.list)."
 
-apt install -y -q curl wget git nano unzip python3 python3-pip python3-venv mariadb-server bc || \
-  error "Échec de l'installation des paquets." \
-        "Relance le script ou installe manuellement : apt install python3 python3-venv mariadb-server"
+header "Vérifications préliminaires"
 
-log "Paquets système installés"
-step_ok "Dépendances système installées"
+# 1. Vérification de l'espace disque
+MIN_SPACE_GB=5
+AVAILABLE_SPACE_KB=$(df /opt --output=avail | tail -1)
+AVAILABLE_SPACE_GB=$((AVAILABLE_SPACE_KB / 1024 / 1024))
 
-# =============================================================================
-header "2/7 — Clone du repo"
-# =============================================================================
-if [ -d /opt/asset-manager/.git ]; then
-  warn "Dossier /opt/asset-manager déjà existant — mise à jour depuis GitHub"
-  cd /opt/asset-manager
-  git pull || warn_tip "git pull échoué, on continue avec la version locale." \
-                       "Tu peux relancer 'git pull' manuellement plus tard."
+if [ "$AVAILABLE_SPACE_GB" -lt "$MIN_SPACE_GB" ]; then
+  error "Espace disque insuffisant sur /opt" "Il faut au moins ${MIN_SPACE_GB}GB, vous avez ${AVAILABLE_SPACE_GB}GB"
+  echo ""
+  df -h /opt
+  exit 1
 else
-  info "Clonage du repo..."
-  git clone https://github.com/Gvte-Kali/AirGappedCVE.git /opt/asset-manager || \
-    error "Échec du clonage du repo GitHub." \
-          "Vérifie que https://github.com/Gvte-Kali/AirGappedCVE est accessible."
-  log "Repo cloné dans /opt/asset-manager"
+  info "Espace disque suffisant (${AVAILABLE_SPACE_GB}GB disponible sur /opt)"
+fi
+
+# 2. Vérification de la mémoire
+MIN_RAM_MB=2048
+TOTAL_RAM_MB=$(free -m 2>/dev/null | awk '/Mem:/ {print $2}' || echo "0")
+
+if [ "$TOTAL_RAM_MB" -lt "$MIN_RAM_MB" ] 2>/dev/null; then
+  warn "Mémoire faible détectée (${TOTAL_RAM_MB}MB). Recommandé: ${MIN_RAM_MB}MB+"
+else
+  info "Mémoire suffisante (${TOTAL_RAM_MB}MB détectés)"
+fi
+
+# 3. Détection de l'architecture
+ARCH=$(uname -m)
+if [[ "$ARCH" == *"arm"* || "$ARCH" == *"aarch64"* ]]; then
+  info "Architecture ARM détectée ($ARCH) - Compatible Raspberry Pi"
+else
+  info "Architecture $ARCH détectée"
+fi
+
+# 4. Vérification de la connectivité internet
+if ping -c 1 -W 2 github.com > /dev/null 2>&1; then
+  info "Connexion internet active"
+else
+  warn "Pas de connexion internet détectée - Certaines étapes peuvent nécessiter une connexion"
+fi
+
+# 5. Vérification des ports
+info "Vérification des ports..."
+check_port_available 8000 "FastAPI"
+check_port_available 3306 "MariaDB"
+
+# 6. Vérification de Python
+PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}' | cut -d. -f1-2 || echo "0.0")
+if [ "$(printf '%s\n%s' "3.12" "$PYTHON_VERSION" | sort -V | head -1)" != "3.12" ]; then
+  warn "Python $PYTHON_VERSION détecté. Recommandé: Python 3.12+"
+else
+  info "Python $PYTHON_VERSION détecté"
+fi
+
+header "Début de l'installation - $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Script: $0"
+echo "Utilisateur: $(whoami)"
+echo "Système: $(lsb_release -d 2>/dev/null | cut -f2-)"
+echo ""
+
+# =============================================================================
+# ÉTAPE 1: MISE À JOUR SYSTÈME ET INSTALLATION DES DÉPENDANCES
+# =============================================================================
+step_header 1 5 "Mise à jour système et installation des dépendances"
+
+# Barre de progression pour la mise à jour
+info "Mise à jour des paquets..."
+if run_with_progress "Mise à jour APT" "apt-get update -qq"; then
+  log "Mise à jour APT terminée"
+else
+  error "Échec de la mise à jour des paquets" "Vérifie ta connexion ou les sources APT (/etc/apt/sources.list)"
+  ask_continue
+fi
+
+if run_with_progress "Mise à niveau des paquets" "apt-get upgrade -y -qq"; then
+  log "Système à jour"
+else
+  error "Échec de la mise à niveau des paquets" "Vérifie ta connexion"
+  ask_continue
+fi
+
+info "Installation des dépendances..."
+if run_with_progress "Installation des dépendances système" "apt-get install -y -qq curl wget git python3 python3-pip python3-venv mariadb-server mariadb-client bc net-tools netcat"; then
+  log "Dépendances installées"
+else
+  error "Échec de l'installation des dépendances" "Relance le script ou installe manuellement"
+  ask_continue
+fi
+
+ask_continue
+
+# =============================================================================
+# ÉTAPE 2: CRÉATION DU DOSSIER ET CLONE DU PROJET
+# =============================================================================
+step_header 2 5 "Clone du projet AirGappedCVE"
+
+if [ -d "$INSTALL_DIR/.git" ]; then
+    info "Dépôt existant détecté — mise à jour..."
+    cd "$INSTALL_DIR"
+    if run_with_progress "Mise à jour du dépôt" "git pull origin main"; then
+      log "Dépôt mis à jour"
+    else
+      error "Échec de la mise à jour du dépôt" "Vérifie ta connexion ou les permissions"
+      ask_continue
+    fi
+else
+    if run_with_progress "Clonage du dépôt" "git clone $REPO_URL $INSTALL_DIR"; then
+      log "Dépôt cloné dans $INSTALL_DIR"
+    else
+      error "Échec du clonage du dépôt GitHub" "Vérifie que $REPO_URL est accessible"
+      ask_continue
+    fi
 fi
 
 # Supprimer les fichiers inutiles en production
-rm -rf /opt/asset-manager/.devcontainer
-log ".devcontainer supprimé (inutile en production)"
-
-groupadd -f asset-manager
-usermod -aG asset-manager "$SUDO_USER_NAME" 2>/dev/null || \
-  warn_tip "Impossible d'ajouter $SUDO_USER_NAME au groupe asset-manager." \
-           "Fais-le manuellement : sudo usermod -aG asset-manager $SUDO_USER_NAME"
-chown -R :asset-manager /opt/asset-manager
-chmod -R 775 /opt/asset-manager
+rm -rf "$INSTALL_DIR/.devcontainer"
+log ".devcontainer supprimé"
 
 # Créer les dossiers nécessaires
-mkdir -p /opt/asset-manager/logs /opt/asset-manager/data \
-         /opt/asset-manager/documents
+mkdir -p "$INSTALL_DIR/logs" "$INSTALL_DIR/data" "$INSTALL_DIR/documents"
+log "Dossiers créés"
 
-log "Groupe et permissions configurés"
-step_ok "Repo cloné et permissions configurées"
+ask_continue
 
 # =============================================================================
-header "3/7 — Configuration du .env"
+# ÉTAPE 3: CONFIGURATION DES VARIABLES D'ENVIRONNEMENT
 # =============================================================================
+step_header 3 5 "Configuration des variables d'environnement"
+
 echo ""
-echo "  Remplis les informations suivantes pour configurer le système."
-echo "  Appuie sur Entrée pour garder la valeur par défaut indiquée entre []."
+echo "Nous allons maintenant configurer les variables nécessaires."
 echo ""
 
-# --- Validation IP ---
-validate_ip() {
-  local ip=$1
-  if [[ $ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-    IFS='.' read -r -a parts <<< "$ip"
-    for part in "${parts[@]}"; do
-      [ "$part" -gt 255 ] && return 1
-    done
-    return 0
+# Demander NVD_API_KEY (optionnel)
+while true; do
+  read -rp "Entrez votre clé API NVD (laisser vide si vous n'en avez pas) : " NVD_API_KEY
+  if [ -z "$NVD_API_KEY" ]; then
+    echo "  → Aucune clé NVD fournie (optionnel)"
+    break
   fi
-  return 1
-}
-
-while true; do
-  ask "Adresse IP du serveur [10.100.0.20] :"
-  read -rp "  > " SERVER_IP; SERVER_IP="${SERVER_IP:-10.100.0.20}"
-  validate_ip "$SERVER_IP" && break
-  echo -e "  ${RED}IP invalide : '$SERVER_IP'. Exemple valide : 192.168.1.100${NC}"
+  break
 done
 
-# --- Clé NVD ---
+# Demander MISTRAL_API_KEY (optionnel)
 while true; do
-  ask "Clé API NVD (https://nvd.nist.gov/developers/request-an-api-key) :"
-  read -rp "  > " NVD_API_KEY
-  [ -n "$NVD_API_KEY" ] && break
-  echo -e "  ${RED}La clé NVD ne peut pas être vide.${NC}"
-done
-
-# --- Clé Mistral ---
-while true; do
-  ask "Clé API Mistral (https://console.mistral.ai/api-keys) :"
-  read -rp "  > " MISTRAL_API_KEY
-  [ -n "$MISTRAL_API_KEY" ] && break
-  echo -e "  ${RED}La clé Mistral ne peut pas être vide.${NC}"
-done
-
-ask "Modèle Mistral [mistral-large-latest] :"
-read -rp "  > " MISTRAL_MODEL; MISTRAL_MODEL="${MISTRAL_MODEL:-mistral-large-latest}"
-
-# --- Nom utilisateur MariaDB ---
-while true; do
-  ask "Nom d'utilisateur MariaDB de gestion [avea] :"
-  read -rp "  > " DB_USER; DB_USER="${DB_USER:-avea}"
-  [[ "$DB_USER" =~ ^[a-zA-Z0-9_]+$ ]] && break
-  echo -e "  ${RED}Nom invalide. Utilise uniquement lettres, chiffres et underscores.${NC}"
-done
-
-# --- Mot de passe avec confirmation ---
-while true; do
-  ask "Mot de passe pour l'utilisateur '${DB_USER}' :"
-  read -rsp "  > " DB_PASSWORD; echo ""
-  if [ -z "$DB_PASSWORD" ]; then
-    echo -e "  ${RED}Le mot de passe ne peut pas être vide.${NC}"
-    continue
+  read -rp "Entrez votre clé API Mistral (laisser vide si vous n'en avez pas) : " MISTRAL_API_KEY
+  if [ -z "$MISTRAL_API_KEY" ]; then
+    echo "  → Aucune clé Mistral fournie (optionnel)"
+    break
   fi
-  ask "Confirme le mot de passe :"
-  read -rsp "  > " DB_PASSWORD_CONFIRM; echo ""
-  [ "$DB_PASSWORD" = "$DB_PASSWORD_CONFIRM" ] && break
-  echo -e "  ${RED}Les mots de passe ne correspondent pas. Réessaie.${NC}"
+  break
 done
 
-# --- Nom de la base ---
-ask "Nom de la base de données [asset_vuln_manager] :"
-read -rp "  > " DB_NAME; DB_NAME="${DB_NAME:-asset_vuln_manager}"
+# Demander DB_USER (obligatoire)
+while true; do
+  read -rp "Entrez le nom d'utilisateur pour la base de données (obligatoire) : " DB_USER
+  if [ -n "$DB_USER" ]; then
+    break
+  fi
+  echo "  → Le nom d'utilisateur est obligatoire !"
+done
 
-# Écriture du .env
-cat > /opt/asset-manager/.env << EOF
-# SERVER INFOS
-SERVER_IP=${SERVER_IP}
+# Générer DB_PASSWORD automatiquement
+DB_PASSWORD=$(generate_password)
+echo "  → Mot de passe généré automatiquement pour $DB_USER"
 
-# API Keys
-NVD_API_KEY=${NVD_API_KEY}
-MISTRAL_API_KEY=${MISTRAL_API_KEY}
-MISTRAL_MODEL=${MISTRAL_MODEL}
+# Définir les valeurs par défaut
+SERVER_IP=$(hostname -I | awk '{print $1}')
+MISTRAL_MODEL="mistral-large-latest"
+DB_HOST="127.0.0.1"
+DB_PORT="3306"
+DB_NAME="asset_vuln_manager"
 
-# Database Infos
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USER=${DB_USER}
-DB_PASSWORD=${DB_PASSWORD}
-DB_NAME=${DB_NAME}
-EOF
+echo ""
+echo "========================================"
+echo "  RÉSUMÉ DE LA CONFIGURATION"
+echo "========================================"
+echo ""
+echo "  SERVER_IP       : $SERVER_IP"
+echo "  DB_HOST         : $DB_HOST"
+echo "  DB_PORT         : $DB_PORT"
+echo "  DB_NAME         : $DB_NAME"
+echo "  DB_USER         : $DB_USER"
+echo "  DB_PASSWORD     : $DB_PASSWORD"
+echo "  NVD_API_KEY     : ${NVD_API_KEY:-non configurée}"
+echo "  MISTRAL_API_KEY : ${MISTRAL_API_KEY:-non configurée}"
+echo "  MISTRAL_MODEL   : $MISTRAL_MODEL"
+echo ""
 
-chown :asset-manager /opt/asset-manager/.env
-chmod 660 /opt/asset-manager/.env
-log ".env configuré"
-step_ok ".env généré"
-
-# =============================================================================
-header "4/7 — Virtualenv Python et dépendances"
-# =============================================================================
-info "Création du virtualenv Python..."
-python3 -m venv /opt/asset-manager/venv || \
-  error "Échec de la création du virtualenv." \
-        "Vérifie que python3-venv est bien installé : apt install python3-venv"
-
-info "Mise à jour de pip..."
-/opt/asset-manager/venv/bin/pip install --upgrade pip -q
-
-if [ -f /opt/asset-manager/requirements.txt ]; then
-  info "Installation des dépendances depuis requirements.txt..."
-  /opt/asset-manager/venv/bin/pip install -r /opt/asset-manager/requirements.txt -q || \
-    error "Échec de l'installation des dépendances Python." \
-          "Vérifie le fichier requirements.txt ou ta connexion internet."
-  log "Dépendances Python installées"
-else
-  warn_tip "Pas de requirements.txt trouvé — installation des paquets de base." \
-           "Ajoute un requirements.txt au repo pour un install reproductible."
-  /opt/asset-manager/venv/bin/pip install fastapi uvicorn python-dotenv sqlalchemy pymysql typer mistralai -q
+read -rp "Confirmez-vous cette configuration ? (o/N) : " CONFIRM
+if [[ ! "$CONFIRM" =~ ^[oOyY]$ ]]; then
+  echo ""
+  error "Installation annulée par l'utilisateur" "Modifiez les valeurs et relancez le script"
+  exit 0
 fi
 
-step_ok "Virtualenv Python et dépendances installés"
+# Créer le fichier .env
+info "Création du fichier .env..."
+cat > "$ENV_FILE" << EOF
+# =============================================================================
+# Généré automatiquement par install_user_friendly.sh
+# Date: $(date '+%Y-%m-%d %H:%M:%S')
+# =============================================================================
+
+# --- SERVER ---
+SERVER_IP=$SERVER_IP
+SERVER_PORT=8000
+
+# --- DATABASE ---
+DB_HOST=$DB_HOST
+DB_PORT=$DB_PORT
+DB_NAME=$DB_NAME
+DB_USER=$DB_USER
+DB_PASSWORD=$DB_PASSWORD
+
+# --- API KEYS ---
+NVD_API_KEY=${NVD_API_KEY:-}
+MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
+MISTRAL_MODEL=$MISTRAL_MODEL
+
+# --- LOGGING ---
+LOG_LEVEL=info
+EOF
+
+chmod 600 "$ENV_FILE"
+
+# Sauvegarde du .env
+cp "$ENV_FILE" "$ENV_FILE.backup-$(date +%Y%m%d-%H%M%S)"
+log "Fichier .env créé et sauvegardé"
+
+ask_continue
 
 # =============================================================================
-header "5/7 — MariaDB from scratch"
+# ÉTAPE 4: INSTALLATION DE LA BASE DE DONNÉES, FASTAPI ET SERVICES
 # =============================================================================
-info "Démarrage de MariaDB..."
-systemctl start mariadb || \
-  error "Impossible de démarrer MariaDB." \
-        "Vérifie les logs : journalctl -u mariadb -n 30"
-systemctl enable mariadb -q
+step_header 4 5 "Installation de la base de données et de l'application"
 
-info "Attente que MariaDB soit prêt..."
+# Configuration de MariaDB
+info "Configuration de MariaDB..."
+
+if run_with_progress "Démarrage de MariaDB" "systemctl start mariadb"; then
+  log "MariaDB démarré"
+else
+  error "Impossible de démarrer MariaDB" "Vérifie les logs : journalctl -u mariadb -n 30"
+  ask_continue
+fi
+
+if run_with_progress "Activation de MariaDB au démarrage" "systemctl enable mariadb"; then
+  log "MariaDB activé au démarrage"
+else
+  error "Impossible d'activer MariaDB au démarrage" "Vérifie systemctl"
+  ask_continue
+fi
+
+# Attendre que MariaDB soit prêt
+info "Attente que MariaDB soit opérationnel..."
 RETRIES=0
-until mariadb -u root -e "SELECT 1" &>/dev/null; do
+until mariadb -u root -e "SELECT 1" > /dev/null 2>&1; do
   RETRIES=$((RETRIES+1))
-  [ "$RETRIES" -ge 15 ] && \
-    error "MariaDB ne répond pas après 30 secondes." \
-          "Vérifie les logs : journalctl -u mariadb -n 30"
+  if [ "$RETRIES" -ge 15 ]; then
+    error "MariaDB ne répond pas après 30 secondes" "Vérifie les logs : journalctl -u mariadb -n 30"
+    ask_continue
+    break
+  fi
   sleep 2
+  echo -n "."
 done
-log "MariaDB opérationnel"
+if [ "$RETRIES" -lt 15 ]; then
+  echo ""
+  log "MariaDB opérationnel"
+fi
 
-# Sécurisation
+# Sécurisation de base
 info "Sécurisation de MariaDB..."
-mariadb -u root << 'EOF'
+if mariadb -u root << 'EOF' > /dev/null 2>&1
 DELETE FROM mysql.user WHERE User='';
 DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
 DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
 FLUSH PRIVILEGES;
 EOF
-log "MariaDB sécurisé (users anonymes et base test supprimés)"
-
-# Création base et utilisateur
-info "Création de la base et de l'utilisateur..."
-mariadb -u root << EOF
-CREATE DATABASE IF NOT EXISTS ${DB_NAME}
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
-CREATE USER IF NOT EXISTS '${DB_USER}'@'%'         IDENTIFIED BY '${DB_PASSWORD}';
-GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost' WITH GRANT OPTION;
-GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'%'         WITH GRANT OPTION;
-FLUSH PRIVILEGES;
-EOF
-log "Base '${DB_NAME}' et utilisateur '${DB_USER}' créés"
-
-# Import schéma
-if [ -f /opt/asset-manager/sql/schema.sql ]; then
-  info "Import du schéma SQL..."
-  mariadb -u root "${DB_NAME}" < /opt/asset-manager/sql/schema.sql || \
-    error "Échec de l'import du schéma SQL." \
-          "Vérifie le fichier sql/schema.sql et relance."
-  log "Schéma SQL importé"
+then
+  log "MariaDB sécurisé"
 else
-  error "sql/schema.sql introuvable." \
-        "Assure-toi que le repo est bien cloné et contient sql/schema.sql."
+  error "Échec de la sécurisation de MariaDB" "Vérifie les permissions root"
+  ask_continue
 fi
 
-# Création vue
-info "Création de la vue v_vulnerabilites_tableau..."
-mariadb -u root "${DB_NAME}" << 'EOF'
-CREATE OR REPLACE VIEW v_vulnerabilites_tableau AS
-SELECT
-    co.id                                                       AS correlation_id,
-    cl.nom                                                      AS client,
-    s.nom                                                       AS site,
-    a.nom_interne                                               AS asset,
-    a.type_equipement,
-    a.niveau_criticite,
-    co.cve_id,
-    cv.cvss_v3_score,
-    cv.cvss_v3_severity,
-    co.score_contextuel,
-    co.priorite,
-    co.statut,
-    co.type_correlation,
-    co.override_utilisateur,
-    COALESCE(co.override_utilisateur, co.type_correlation)      AS decision_patch,
-    co.exploitable_air_gap,
-    co.analyse_mistral,
-    co.risque_reel,
-    co.date_detection,
-    co.date_analyse,
-    cv.description                                              AS cve_description,
-    cv.cvss_v3_vector
-FROM correlations co
-JOIN assets a           ON a.id      = co.asset_id
-JOIN cve cv             ON cv.cve_id = co.cve_id
-JOIN sites s            ON s.id      = a.site_id
-JOIN clients cl         ON cl.id     = s.client_id
-JOIN product_vendors pv ON pv.id     = a.vendor_id
-WHERE co.statut NOT IN ('faux_positif')
-ORDER BY
-    FIELD(co.priorite, 'critique', 'haute', 'moyenne', 'basse'),
-    cv.cvss_v3_score DESC;
+# Création de la base et import du schéma
+info "Création de la base de données '$DB_NAME'..."
+if mariadb -u root << EOF > /dev/null 2>&1
+CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
+CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD';
+GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
 EOF
-log "Vue v_vulnerabilites_tableau créée"
-step_ok "MariaDB configuré (base, utilisateur, schéma, vue)"
+then
+  log "Base et utilisateur créés"
+else
+  error "Échec de la création de la base ou de l'utilisateur" "Vérifie les permissions MariaDB"
+  ask_continue
+fi
 
-# =============================================================================
-header "6/7 — Service systemd"
-# =============================================================================
-info "Création du service systemd..."
-cat > /etc/systemd/system/asset-manager.service << EOF
+# Import du schéma
+SCHEMA_FILE="$INSTALL_DIR/sql/schema.sql"
+info "Import du schéma SQL..."
+if run_with_progress "Import du schéma" "mariadb -u root $DB_NAME < $SCHEMA_FILE"; then
+  log "Schéma importé"
+else
+  error "Échec de l'import du schéma SQL" "Vérifie le fichier sql/schema.sql"
+  ask_continue
+fi
+
+# Création du virtualenv Python
+info "Création de l'environnement virtuel Python..."
+if run_with_progress "Création du virtualenv" "python3 -m venv $INSTALL_DIR/venv"; then
+  log "Virtualenv créé"
+else
+  error "Échec de la création du virtualenv" "Vérifie que python3-venv est bien installé"
+  ask_continue
+fi
+
+# Installation des dépendances Python
+info "Installation des dépendances Python..."
+if run_with_progress "Mise à jour de pip" "$INSTALL_DIR/venv/bin/pip install --upgrade pip -q"; then
+  log "pip mis à jour"
+else
+  error "Échec de la mise à jour de pip" "Vérifie l'environnement virtuel"
+  ask_continue
+fi
+
+if run_with_progress "Installation des packages Python" "$INSTALL_DIR/venv/bin/pip install -r $INSTALL_DIR/requirements.txt -q"; then
+  log "Dépendances installées"
+else
+  error "Échec de l'installation des dépendances Python" "Vérifie le fichier requirements.txt ou ta connexion internet"
+  ask_continue
+fi
+
+# Configuration du service systemd
+info "Configuration du service systemd..."
+SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME.service"
+cat > "$SERVICE_FILE" << EOF
 [Unit]
-Description=Asset & Vulnerability Manager — FastAPI
 After=network.target mariadb.service
 Wants=mariadb.service
 
 [Service]
 Type=simple
-User=${SUDO_USER_NAME}
-WorkingDirectory=/opt/asset-manager
-EnvironmentFile=/opt/asset-manager/.env
-ExecStart=/opt/asset-manager/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --log-level info
+User=root
+WorkingDirectory=$INSTALL_DIR
+EnvironmentFile=$ENV_FILE
+ExecStart=$INSTALL_DIR/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --log-level info
 Restart=on-failure
 RestartSec=5
-StandardOutput=append:/opt/asset-manager/logs/FastAPI.log
-StandardError=append:/opt/asset-manager/logs/FastAPI.log
+StandardOutput=append:$INSTALL_DIR/logs/FastAPI.log
+StandardError=append:$INSTALL_DIR/logs/FastAPI.log
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reload
-systemctl enable asset-manager -q
-info "Démarrage du service..."
-systemctl start asset-manager
-
-# Vérification avec retry
-RETRIES=0
-until systemctl is-active --quiet asset-manager; do
-  RETRIES=$((RETRIES+1))
-  [ "$RETRIES" -ge 6 ] && {
-    step_warn "Service asset-manager démarré mais statut incertain"
-    warn_tip "Le service n'est pas encore actif." \
-             "Vérifie : journalctl -u asset-manager -n 30"
-    break
-  }
-  sleep 2
-done
-systemctl is-active --quiet asset-manager && {
-  log "Service asset-manager démarré avec succès"
-  step_ok "Service systemd actif sur le port 8000"
-}
-
-# =============================================================================
-header "7/7 — Installation et configuration de Grafana"
-# =============================================================================
-info "Ajout du dépôt Grafana..."
-wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
-echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | tee /etc/apt/sources.list.d/grafana.list
-apt-get update -q && apt-get install -y grafana -q || \
-  error "Échec de l'installation de Grafana." \
-        "Vérifie ta connexion ou les sources APT."
-log "Grafana installé"
-
-info "Configuration de la datasource MariaDB..."
-mkdir -p /etc/grafana/provisioning/datasources
-cat > /etc/grafana/provisioning/datasources/mariadb.yml << EOF
-apiVersion: 1
-datasources:
-  - name: MariaDB
-    type: mysql
-    url: localhost:3306
-    user: ${DB_USER}
-    secureJsonData:
-      password: ${DB_PASSWORD}
-    jsonData:
-      database: ${DB_NAME}
-      maxOpenConns: 10
-      maxIdleConns: 10
-      connMaxLifetime: 14400
-      tlsAuth: false
-      tlsAuthWithCACert: false
-    isDefault: true
-    editable: true
-EOF
-log "Datasource MariaDB provisionnée"
-
-info "Démarrage du service Grafana..."
-systemctl daemon-reload
-systemctl enable grafana-server -q
-systemctl start grafana-server
-
-info "Attente que Grafana réponde sur le port 3000..."
-RETRIES=0
-until curl -sf http://localhost:3000/api/health &>/dev/null; do
-  RETRIES=$((RETRIES+1))
-  [ "$RETRIES" -ge 15 ] && {
-    step_warn "Grafana ne répond pas après 30 secondes"
-    warn_tip "Grafana n'est pas encore disponible." \
-             "Vérifie : journalctl -u grafana-server -n 30"
-    break
-  }
-  sleep 2
-done
-curl -sf http://localhost:3000/api/health &>/dev/null && {
-  log "Grafana opérationnel sur le port 3000"
-  step_ok "Grafana installé et démarré (port 3000)"
-}
-
-# =============================================================================
-# CONFIGURATION RÉSEAU OPTIONNELLE
-# =============================================================================
-echo ""
-echo -e "${YELLOW}Veux-tu configurer une IP statique ? (o/N)${NC}"
-read -rp "  > " CONFIGURE_IP
-
-if [[ "${CONFIGURE_IP}" =~ ^[oO]$ ]]; then
-  header "Bonus — Configuration réseau (IP statique)"
-
-  while true; do
-    ask "Adresse IP (ex: 192.168.1.100) :"
-    read -rp "  > " NET_IP
-    validate_ip "$NET_IP" && break
-    echo -e "  ${RED}IP invalide. Exemple : 192.168.1.100${NC}"
-  done
-
-  while true; do
-    ask "Masque CIDR (ex: 24) :"
-    read -rp "  > " NET_MASK
-    [[ "$NET_MASK" =~ ^([0-9]|[1-2][0-9]|3[0-2])$ ]] && break
-    echo -e "  ${RED}Masque invalide. Entrer un nombre entre 0 et 32.${NC}"
-  done
-
-  while true; do
-    ask "Passerelle (ex: 192.168.1.1) :"
-    read -rp "  > " NET_GW
-    validate_ip "$NET_GW" && break
-    echo -e "  ${RED}IP passerelle invalide.${NC}"
-  done
-
-  while true; do
-    ask "DNS primaire (ex: 192.168.1.1) :"
-    read -rp "  > " NET_DNS1
-    validate_ip "$NET_DNS1" && break
-    echo -e "  ${RED}IP DNS invalide.${NC}"
-  done
-
-  ask "DNS secondaire (optionnel, Entrée pour ignorer) :"
-  read -rp "  > " NET_DNS2
-
-  NET_IFACE=$(ip route | grep default | awk '{print $5}' | head -1)
-  NET_IFACE="${NET_IFACE:-eth0}"
-  info "Interface réseau détectée : $NET_IFACE"
-
-  NETPLAN_FILE=$(ls /etc/netplan/*.yaml 2>/dev/null | head -1)
-  NETPLAN_FILE="${NETPLAN_FILE:-/etc/netplan/50-cloud-init.yaml}"
-
-  cat > "$NETPLAN_FILE" << EOF
-network:
-  version: 2
-  ethernets:
-    ${NET_IFACE}:
-      dhcp4: false
-      addresses:
-        - ${NET_IP}/${NET_MASK}
-      routes:
-        - to: default
-          via: ${NET_GW}
-      nameservers:
-        addresses:
-          - ${NET_DNS1}
-$([ -n "$NET_DNS2" ] && echo "          - ${NET_DNS2}")
-EOF
-
-  netplan apply 2>/dev/null || \
-    warn_tip "netplan apply a échoué." \
-             "Vérifie la config : cat $NETPLAN_FILE"
-
-  log "IP statique configurée : ${NET_IP}/${NET_MASK} via ${NET_GW}"
-  step_ok "IP statique configurée : ${NET_IP}/${NET_MASK}"
-  SERVER_IP="${NET_IP}"
+if run_with_progress "Rechargement de systemd" "systemctl daemon-reload"; then
+  log "systemd rechargé"
+else
+  error "Échec du rechargement de systemd" "Vérifie les permissions"
+  ask_continue
 fi
 
+if run_with_progress "Activation du service" "systemctl enable $SERVICE_NAME"; then
+  log "Service activé"
+else
+  error "Échec de l'activation du service" "Vérifie le fichier de service"
+  ask_continue
+fi
+
+info "Démarrage du service..."
+if run_with_progress "Démarrage de $SERVICE_NAME" "systemctl start $SERVICE_NAME"; then
+  log "Service démarré"
+else
+  error "Échec du démarrage du service" "Vérifie : journalctl -u $SERVICE_NAME -n 30"
+  ask_continue
+fi
+
+# Attendre que le service soit prêt
+RETRIES=0
+until curl -sf http://localhost:8000/health > /dev/null 2>&1; do
+  RETRIES=$((RETRIES+1))
+  if [ "$RETRIES" -ge 15 ]; then
+    error "Service FastAPI ne répond pas après 30 secondes" "Vérifie les logs : journalctl -u $SERVICE_NAME -n 30"
+    ask_continue
+    break
+  fi
+  sleep 2
+  echo -n "."
+done
+if [ "$RETRIES" -lt 15 ]; then
+  echo ""
+  log "Service FastAPI opérationnel"
+fi
+
+# Ajout au PATH
+info "Ajout de asset-manager au PATH..."
+cat > "$PATH_FILE" << 'EOF'
+#!/bin/bash
+export PATH="$PATH:/opt/asset-manager/scripts"
+EOF
+
+chmod +x "$PATH_FILE"
+chmod +x "$SCRIPTS_DIR/asset-manager.sh"
+export PATH="$PATH:$SCRIPTS_DIR"
+log "asset-manager ajouté au PATH"
+
+ask_continue
+
 # =============================================================================
-# RÉSUMÉ FINAL
+# ÉTAPE 5: VÉRIFICATIONS FINALES
 # =============================================================================
+step_header 5 5 "Vérifications finales"
+
+info "Exécution des commandes de vérification..."
+echo "" >> "$LOG_FILE"
+echo "========================================" >> "$LOG_FILE"
+echo "VÉRIFICATIONS FINALES" >> "$LOG_FILE"
+echo "========================================" >> "$LOG_FILE"
+
+# Créer un tableau pour stocker les résultats
+VERIFICATION_RESULTS=()
+
+# Fonction pour exécuter une commande de vérification et stocker le résultat
+run_verification() {
+  local cmd_name="$1"
+  local cmd="$2"
+  
+  echo -n "  → Vérification: $cmd_name..."
+  if eval "$cmd" >> "$LOG_FILE" 2>&1; then
+    echo -e " ${GREEN}✓${NC}"
+    VERIFICATION_RESULTS+=("✓ $cmd_name")
+    return 0
+  else
+    echo -e " ${RED}✗${NC}"
+    error "Échec de $cmd_name" "Vérifie les services"
+    VERIFICATION_RESULTS+=("✗ $cmd_name")
+    return 1
+  fi
+}
+
+# Exécuter toutes les commandes de vérification
+run_verification "asset-manager status" "bash \"$SCRIPTS_DIR/asset-manager.sh\" status"
+run_verification "asset-manager sys ports" "bash \"$SCRIPTS_DIR/asset-manager.sh\" sys ports"
+run_verification "asset-manager sys check-db" "bash \"$SCRIPTS_DIR/asset-manager.sh\" sys check-db"
+run_verification "asset-manager sys check-env" "bash \"$SCRIPTS_DIR/asset-manager.sh\" sys check-env"
+run_verification "asset-manager db check" "bash \"$SCRIPTS_DIR/asset-manager.sh\" db check"
+
+ask_continue
+
+# =============================================================================
+# CRÉATION DU FICHIER INSTALL_INFO.TXT
+# =============================================================================
+info "Création du fichier d'informations d'installation..."
+
+END_TIME=$(date +%s)
+ELAPSED=$((END_TIME - START_TIME))
+ELAPSED_MIN=$((ELAPSED / 60))
+ELAPSED_SEC=$((ELAPSED % 60))
+
+cat > "$INSTALL_DIR/INSTALL_INFO.txt" << EOF
+=================================================================
+INFORMATIONS D'INSTALLATION - $(date '+%Y-%m-%d %H:%M:%S')
+=================================================================
+
+FastAPI URL: http://$SERVER_IP:8000
+API Docs:    http://$SERVER_IP:8000/docs
+
+MariaDB:
+  Host: $DB_HOST
+  Port: $DB_PORT
+  Base: $DB_NAME
+  User: $DB_USER
+  Pass: $DB_PASSWORD
+
+Fichier .env: $ENV_FILE
+Logs:        $INSTALL_DIR/logs/
+Install log: $LOG_FILE
+
+Temps d'exécution: ${ELAPSED_MIN} minute(s) et ${ELAPSED_SEC} seconde(s)
+
+Commandes utiles:
+  systemctl status $SERVICE_NAME
+  journalctl -u $SERVICE_NAME -f
+  asset-manager status
+  asset-manager help
+  tail -f $LOG_FILE
+
+=================================================================
+EOF
+
+log "Fichier INSTALL_INFO.txt créé dans $INSTALL_DIR"
+
+# =============================================================================
+# RÉCAPITULATIF FINAL
+# =============================================================================
+header "Récapitulatif de l'installation"
+
 echo ""
-echo -e "${GREEN}${BOLD}╔═══════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}${BOLD}║        Installation terminée avec succès !        ║${NC}"
-echo -e "${GREEN}${BOLD}╚═══════════════════════════════════════════════════╝${NC}"
+echo "📊 État de l'installation :"
+
+# Compter les succès et échecs
+SUCCESS_COUNT=0
+FAIL_COUNT=0
+for result in "${VERIFICATION_RESULTS[@]}"; do
+  if [[ "$result" == ✓* ]]; then
+    SUCCESS_COUNT=$((SUCCESS_COUNT+1))
+  else
+    FAIL_COUNT=$((FAIL_COUNT+1))
+  fi
+done
+
+if [ $ERRORS -eq 0 ] && [ $FAIL_COUNT -eq 0 ]; then
+  echo -e "${GREEN}${BOLD}✅ Installation réussie !${NC}"
+  echo ""
+  echo "Toutes les étapes et vérifications se sont déroulées avec succès."
+elif [ $ERRORS -gt 0 ] || [ $FAIL_COUNT -gt 0 ]; then
+  echo -e "${YELLOW}${BOLD}⚠️  Installation terminée avec des problèmes${NC}"
+  echo ""
+  if [ $ERRORS -gt 0 ]; then
+    echo "  - $ERRORS erreur(s) pendant l'installation"
+  fi
+  if [ $FAIL_COUNT -gt 0 ]; then
+    echo "  - $FAIL_COUNT vérification(s) échouée(s)"
+  fi
+else
+  echo -e "${RED}${BOLD}❌ Installation incomplète${NC}"
+  echo ""
+fi
+
 echo ""
-echo -e "  ${BOLD}FastAPI${NC}  : http://${SERVER_IP}:8000"
-echo -e "  ${BOLD}Docs API${NC} : http://${SERVER_IP}:8000/docs"
-echo -e "  ${BOLD}MariaDB${NC}  : localhost:3306 — base : ${DB_NAME}"
-echo "  Grafana  : http://${SERVER_IP}:3000 (admin/admin)"
-echo -e "  ${BOLD}Logs${NC}     : /opt/asset-manager/logs/FastAPI.log"
+echo "📋 Résultats des vérifications :"
+for result in "${VERIFICATION_RESULTS[@]}"; do
+  echo "  $result"
+done
+
 echo ""
-echo -e "${YELLOW}${BOLD}Actions manuelles restantes :${NC}"
-echo "  1. Vérifier le service : systemctl status asset-manager"
-echo "  2. Suivre les logs     : tail -f /opt/asset-manager/logs/FastAPI.log"
-echo "  3. Se reconnecter SSH  : pour activer le groupe asset-manager"
-echo "  4. Connexion MariaDB   : sudo mariadb"
+echo "📁 Configuration :"
+echo "  FastAPI      : http://$SERVER_IP:8000"
+echo "  API Docs     : http://$SERVER_IP:8000/docs"
+echo "  MariaDB      : localhost:3306 (base: $DB_NAME)"
 echo ""
+echo "🔑 Identifiants MariaDB :"
+echo "  Utilisateur : $DB_USER"
+echo "  Mot de passe : $DB_PASSWORD"
+echo ""
+echo "📁 Dossiers :"
+echo "  Application : $INSTALL_DIR"
+echo "  Logs        : $INSTALL_DIR/logs/"
+echo "  installation.log : $LOG_FILE"
+echo "  .env        : $ENV_FILE"
+echo "  INSTALL_INFO.txt : $INSTALL_DIR/INSTALL_INFO.txt"
+echo ""
+echo "⏱️  Temps d'exécution total : ${ELAPSED_MIN} minute(s) et ${ELAPSED_SEC} seconde(s)"
+echo ""
+echo "📝 Commandes de vérification exécutées et loggées dans $LOG_FILE"
+echo ""
+echo "⚠️  Actions manuelles requises :"
+echo "  1. Se déconnecter et se reconnecter pour activer le PATH"
+echo "     (ou exécuter : source $PATH_FILE)"
+if [ -z "$NVD_API_KEY" ]; then
+  echo "  2. Ajouter NVD_API_KEY dans $ENV_FILE pour activer les fonctionnalités NVD"
+fi
+if [ -z "$MISTRAL_API_KEY" ]; then
+  echo "  3. Ajouter MISTRAL_API_KEY dans $ENV_FILE pour activer l'IA Mistral"
+fi
+echo ""
+echo "🎯 Commandes utiles :"
+echo "  systemctl status $SERVICE_NAME"
+echo "  journalctl -u $SERVICE_NAME -f"
+echo "  mariadb -u root"
+echo "  tail -f $LOG_FILE"
+echo "  asset-manager help"
+echo "  cat $INSTALL_DIR/INSTALL_INFO.txt"
+echo ""
+echo "📄 Fichier de log complet : $LOG_FILE"
+
+header "Fin de l'installation - $(date '+%Y-%m-%d %H:%M:%S')"

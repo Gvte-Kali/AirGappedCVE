@@ -250,8 +250,14 @@ check_systemd() {
 cmd_fastapi_start() {
     clear
     if ! check_systemd; then
-        echo "❌ Impossible de démarrer le service (systemd requis)."
-        exit 1
+        echo "⚠️  systemd non disponible. Utilisation du script de fallback..."
+        if [ -f "$PROJECT_DIR/scripts/fastapi/start.sh" ]; then
+            bash "$PROJECT_DIR/scripts/fastapi/start.sh"
+        else
+            echo "❌ Impossible de démarrer FastAPI : ni systemd ni script de fallback trouvé."
+            exit 1
+        fi
+        return
     fi
     echo "🚀 Démarrage du service FastAPI ($SERVICE_NAME)..."
     sudo systemctl start "$SERVICE_NAME"
@@ -261,8 +267,14 @@ cmd_fastapi_start() {
 cmd_fastapi_stop() {
     clear
     if ! check_systemd; then
-        echo "❌ Impossible d'arrêter le service (systemd requis)."
-        exit 1
+        echo "⚠️  systemd non disponible. Utilisation du script de fallback..."
+        if [ -f "$PROJECT_DIR/scripts/fastapi/stop.sh" ]; then
+            bash "$PROJECT_DIR/scripts/fastapi/stop.sh"
+        else
+            echo "❌ Impossible d'arrêter FastAPI : ni systemd ni script de fallback trouvé."
+            exit 1
+        fi
+        return
     fi
     echo "🛑 Arrêt du service FastAPI ($SERVICE_NAME)..."
     sudo systemctl stop "$SERVICE_NAME"
@@ -272,8 +284,14 @@ cmd_fastapi_stop() {
 cmd_fastapi_restart() {
     clear
     if ! check_systemd; then
-        echo "❌ Impossible de redémarrer le service (systemd requis)."
-        exit 1
+        echo "⚠️  systemd non disponible. Utilisation du script de fallback..."
+        if [ -f "$PROJECT_DIR/scripts/fastapi/reload.sh" ]; then
+            bash "$PROJECT_DIR/scripts/fastapi/reload.sh"
+        else
+            echo "❌ Impossible de redémarrer FastAPI : ni systemd ni script de fallback trouvé."
+            exit 1
+        fi
+        return
     fi
     echo "🔄 Redémarrage du service FastAPI ($SERVICE_NAME)..."
     sudo systemctl restart "$SERVICE_NAME"
@@ -283,13 +301,18 @@ cmd_fastapi_restart() {
 cmd_fastapi_status() {
     clear
     if ! check_systemd; then
-        echo "⚠️  systemd non disponible. Vérification manuelle..."
-        if pgrep -f "uvicorn.*main:app" >/dev/null; then
-            PID=$(pgrep -f "uvicorn.*main:app")
-            PORT=$(grep -oP 'port=\K[0-9]+' "$PROJECT_DIR/main.py" || echo "8000")
-            echo "✅ FastAPI est en cours d'exécution (PID: $PID, Port: $PORT)"
+        echo "⚠️  systemd non disponible. Utilisation du script de fallback..."
+        if [ -f "$PROJECT_DIR/scripts/fastapi/status.sh" ]; then
+            bash "$PROJECT_DIR/scripts/fastapi/status.sh"
         else
-            echo "❌ FastAPI n'est pas en cours d'exécution."
+            echo "⚠️  Aucun script de fallback trouvé. Vérification manuelle..."
+            if pgrep -f "uvicorn.*main:app" >/dev/null; then
+                PID=$(pgrep -f "uvicorn.*main:app")
+                PORT=$(grep -oP 'port=\K[0-9]+' "$PROJECT_DIR/main.py" || echo "8000")
+                echo "✅ FastAPI est en cours d'exécution (PID: $PID, Port: $PORT)"
+            else
+                echo "❌ FastAPI n'est pas en cours d'exécution."
+            fi
         fi
         return
     fi
