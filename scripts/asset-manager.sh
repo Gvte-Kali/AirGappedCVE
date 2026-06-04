@@ -238,8 +238,11 @@ check_mariadb() {
 
 # Vérifier si systemd est disponible
 check_systemd() {
+    # Vérifie si systemctl existe ET si systemd est le PID 1 (pour éviter les faux positifs dans Docker)
     if ! command_exists systemctl; then
-        echo "⚠️  systemctl n'est pas disponible (environnement non-systemd ?)."
+        return 1
+    fi
+    if [ "$(ps -p 1 -o comm= 2>/dev/null)" != "systemd" ]; then
         return 1
     fi
     return 0
