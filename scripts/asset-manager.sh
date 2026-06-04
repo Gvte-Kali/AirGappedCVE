@@ -4,8 +4,8 @@
 # asset-manager — CLI de maintenance pour AirGappedCVE
 # Auteur : Gvte-Kali / Vibe Code
 # Version : 1.1.0
-# Description : Outil CLI tout-en-un pour gérer le service, la BDD, les logs,
-#               les corrélations, et les documents.
+# Description : Outil tout-en-un pour gérer le service, la BDD, les logs,
+#               les corrélations, les documents, et les audits.
 # =============================================================================
 # --- CHEMIN RELATIF (fonctionne en dev et prod) ---
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -50,11 +50,12 @@ NVD_API_KEY="${NVD_API_KEY:-}"
 # --- CATÉGORIES ET COMMANDES ---
 declare -A CATEGORIES=(
     ["fastapi"]="Gestion du service FastAPI (start/stop/restart/status)"
-    ["logs"]="Affichage des logs"
-    ["db"]="Gestion de la base de données (connect, backup, schema, size, vacuum, check, import)"
-    ["corr"]="Gestion des corrélations (correlate, clear, show)"
+    ["logs"]="Affichage et filtrage des logs (logs, logs-err, logs-corr)"
+    ["db"]="Gestion de la base de données (connect, backup, schema, size, vacuum, check)"
+    ["corr"]="Gestion des corrélations (correlate, stats, clear, rejects, top)"
     ["docs"]="Gestion des documents PDF (list, clear, size)"
     ["cve"]="Statistiques et dernières CVE (stats, last)"
+    ["audit"]="Audit des données (assets, os, orphans)"
     ["sys"]="Informations système (info, ports, services, env, disk, deps, version)"
 )
 
@@ -66,21 +67,26 @@ declare -A COMMANDS=(
     ["fastapi:status"]="cmd_fastapi_status"
 
     # Logs
-    ["logs:show"]="cmd_logs"
+    ["logs:logs"]="cmd_logs"
+    ["logs:err"]="cmd_logs_err"          # <-- "logs:err" au lieu de "logs:logs-err"
+    ["logs:corr"]="cmd_logs_corr"        # <-- "logs:corr" au lieu de "logs:logs-corr"
 
     # Base de données
     ["db:connect"]="cmd_db_connect"      # <-- "db:connect" au lieu de "db:db-connect"
     ["db:backup"]="cmd_db_backup"
     ["db:schema"]="cmd_db_schema"
-    ["db:import"]="cmd_db_import"
     ["db:size"]="cmd_db_size"
     ["db:vacuum"]="cmd_db_vacuum"
     ["db:check"]="cmd_db_check"
 
     # Corrélations
     ["corr:correlate"]="cmd_correlate"
-    ["corr:clear"]="cmd_corr_clear"       
-    ["corr:show"]="cmd_corr_show"
+    ["corr:clear"]="cmd_corr_clear"       # <-- "corr:clear" au lieu de "corr:corr-clear"
+    ["corr:clear-asset"]="cmd_corr_clear_asset"
+    ["corr:stats"]="cmd_corr_stats"       # <-- "corr:stats" au lieu de "corr:corr-stats"
+    ["corr:rejects"]="cmd_corr_rejects"   # <-- "corr:rejects" au lieu de "corr:corr-rejects"
+    ["corr:clear-rejects"]="cmd_corr_clear_rejects"
+    ["corr:top"]="cmd_corr_top"           # <-- "corr:top" au lieu de "corr:corr-top"
 
     # Documents
     ["docs:list"]="cmd_docs_list"        # <-- "docs:list" au lieu de "docs:docs-list"
@@ -90,6 +96,11 @@ declare -A COMMANDS=(
     # CVE
     ["cve:stats"]="cmd_cve_stats"        # <-- "cve:stats" au lieu de "cve:cve-stats"
     ["cve:last"]="cmd_cve_last"           # <-- "cve:last" au lieu de "cve:cve-last"
+
+    # Audit
+    ["audit:assets"]="cmd_audit_assets"
+    ["audit:os"]="cmd_audit_os"
+    ["audit:orphans"]="cmd_audit_orphans"
 
     # Système
     ["sys:info"]="cmd_sys_info"           # <-- "sys:info" au lieu de "sys:sys-info"
@@ -135,6 +146,10 @@ EOF
    $0 logs logs-err        # Filtre les erreurs dans les logs
    $0 db db-backup         # Effectue une sauvegarde de la BDD
 
+📌 ALIAS RECOMMANDÉ :
+   Ajoutez ceci à votre ~/.bashrc ou ~/.zshrc :
+   alias asset-manager="$SCRIPT_DIR/asset-manager.sh"
+
 EOF
 }
 
@@ -164,6 +179,8 @@ show_category_help() {
                 "cmd_fastapi_restart") desc="Redémarre le service FastAPI" ;;
                 "cmd_fastapi_status") desc="Affiche le statut du service FastAPI" ;;
                 "cmd_logs") desc="Affiche les 50 dernières lignes de FastAPI.log" ;;
+                "cmd_logs_err") desc="Filtre les lignes contenant ERROR/EXCEPTION/Traceback" ;;
+                "cmd_logs_corr") desc="Filtre les lignes de corrélation" ;;
                 "cmd_db") desc="Affiche la commande MySQL pour se connecter" ;;
                 "cmd_db_connect") desc="Se connecte directement à MariaDB" ;;
                 "cmd_db_backup") desc="Effectue un dump complet de la BDD" ;;
@@ -173,12 +190,19 @@ show_category_help() {
                 "cmd_db_check") desc="Vérifie l'intégrité des tables" ;;
                 "cmd_correlate") desc="Lance le pipeline de corrélation + analyse" ;;
                 "cmd_corr_clear") desc="Supprime TOUTES les corrélations (avec confirmation)" ;;
-                "cmd_corr_show") desc="Affiche toutes les corrélations" ;;
+                "cmd_corr_clear_asset") desc="Supprime les corrélations d'un asset (id interactif)" ;;
+                "cmd_corr_stats") desc="Affiche le COUNT des corrélations par statut" ;;
+                "cmd_corr_rejects") desc="Affiche les 20 derniers rejets de corrélation" ;;
+                "cmd_corr_clear_rejects") desc="Supprime tous les rejets de corrélation" ;;
+                "cmd_corr_top") desc="Affiche le top 10 des assets par nombre de corrélations" ;;
                 "cmd_docs_list") desc="Liste les PDFs avec taille et date" ;;
                 "cmd_docs_clear") desc="Supprime TOUS les PDFs (avec confirmation)" ;;
                 "cmd_docs_size") desc="Affiche la taille totale du dossier documents" ;;
                 "cmd_cve_stats") desc="Affiche le COUNT des CVE par vendor" ;;
                 "cmd_cve_last") desc="Affiche les 10 dernières CVE importées" ;;
+                "cmd_audit_assets") desc="Affiche les assets sans vendor NVD (jamais corrélés)" ;;
+                "cmd_audit_os") desc="Affiche les assets sans OS normalisé" ;;
+                "cmd_audit_orphans") desc="Affiche les corrélations sans asset ou CVE valide" ;;
                 "cmd_sys_info") desc="Affiche RAM, CPU, température, uptime" ;;
                 "cmd_sys_ports") desc="Vérifie les ports 3000 (Grafana) et 8000 (FastAPI)" ;;
                 "cmd_sys_services") desc="Affiche le statut de FastAPI, MariaDB, Grafana" ;;
@@ -200,7 +224,6 @@ command_exists() {
 
 # Vérifier si MariaDB est accessible
 check_mariadb() {
-    clear
     if ! command_exists mysql; then
         echo "❌ ERREUR : mysql (client MariaDB) n'est pas installé."
         return 1
@@ -215,9 +238,8 @@ check_mariadb() {
 
 # Vérifier si systemd est disponible
 check_systemd() {
-    # Vérifie si systemd est le PID 1 (méthode fiable pour les conteneurs)
-    if [ "$(ps -p 1 -o comm= 2>/dev/null)" != "systemd" ]; then
-        echo "⚠️  systemd n'est pas actif (PID 1 n'est pas systemd)."
+    if ! command_exists systemctl; then
+        echo "⚠️  systemctl n'est pas disponible (environnement non-systemd ?)."
         return 1
     fi
     return 0
@@ -228,14 +250,8 @@ check_systemd() {
 cmd_fastapi_start() {
     clear
     if ! check_systemd; then
-        echo "⚠️  systemd non disponible. Utilisation du script de fallback..."
-        if [ -f "$PROJECT_DIR/scripts/fastapi/start.sh" ]; then
-            bash "$PROJECT_DIR/scripts/fastapi/start.sh"
-        else
-            echo "❌ Impossible de démarrer FastAPI : ni systemd ni script de fallback trouvé."
-            exit 1
-        fi
-        return
+        echo "❌ Impossible de démarrer le service (systemd requis)."
+        exit 1
     fi
     echo "🚀 Démarrage du service FastAPI ($SERVICE_NAME)..."
     sudo systemctl start "$SERVICE_NAME"
@@ -245,14 +261,8 @@ cmd_fastapi_start() {
 cmd_fastapi_stop() {
     clear
     if ! check_systemd; then
-        echo "⚠️  systemd non disponible. Utilisation du script de fallback..."
-        if [ -f "$PROJECT_DIR/scripts/fastapi/stop.sh" ]; then
-            bash "$PROJECT_DIR/scripts/fastapi/stop.sh"
-        else
-            echo "❌ Impossible d'arrêter FastAPI : ni systemd ni script de fallback trouvé."
-            exit 1
-        fi
-        return
+        echo "❌ Impossible d'arrêter le service (systemd requis)."
+        exit 1
     fi
     echo "🛑 Arrêt du service FastAPI ($SERVICE_NAME)..."
     sudo systemctl stop "$SERVICE_NAME"
@@ -262,14 +272,8 @@ cmd_fastapi_stop() {
 cmd_fastapi_restart() {
     clear
     if ! check_systemd; then
-        echo "⚠️  systemd non disponible. Utilisation du script de fallback..."
-        if [ -f "$PROJECT_DIR/scripts/fastapi/reload.sh" ]; then
-            bash "$PROJECT_DIR/scripts/fastapi/reload.sh"
-        else
-            echo "❌ Impossible de redémarrer FastAPI : ni systemd ni script de fallback trouvé."
-            exit 1
-        fi
-        return
+        echo "❌ Impossible de redémarrer le service (systemd requis)."
+        exit 1
     fi
     echo "🔄 Redémarrage du service FastAPI ($SERVICE_NAME)..."
     sudo systemctl restart "$SERVICE_NAME"
@@ -279,18 +283,13 @@ cmd_fastapi_restart() {
 cmd_fastapi_status() {
     clear
     if ! check_systemd; then
-        echo "⚠️  systemd non disponible. Utilisation du script de fallback..."
-        if [ -f "$PROJECT_DIR/scripts/fastapi/status.sh" ]; then
-            bash "$PROJECT_DIR/scripts/fastapi/status.sh"
+        echo "⚠️  systemd non disponible. Vérification manuelle..."
+        if pgrep -f "uvicorn.*main:app" >/dev/null; then
+            PID=$(pgrep -f "uvicorn.*main:app")
+            PORT=$(grep -oP 'port=\K[0-9]+' "$PROJECT_DIR/main.py" || echo "8000")
+            echo "✅ FastAPI est en cours d'exécution (PID: $PID, Port: $PORT)"
         else
-            echo "⚠️  Aucun script de fallback trouvé. Vérification manuelle..."
-            if pgrep -f "uvicorn.*main:app" >/dev/null; then
-                PID=$(pgrep -f "uvicorn.*main:app")
-                PORT=$(grep -oP 'port=\K[0-9]+' "$PROJECT_DIR/main.py" || echo "8000")
-                echo "✅ FastAPI est en cours d'exécution (PID: $PID, Port: $PORT)"
-            else
-                echo "❌ FastAPI n'est pas en cours d'exécution."
-            fi
+            echo "❌ FastAPI n'est pas en cours d'exécution."
         fi
         return
     fi
@@ -307,13 +306,30 @@ cmd_fastapi_status() {
 
 cmd_logs() {
     clear
+    local filter="$1"
+    local tail_lines=50
     if [ ! -f "$LOG_FILE" ]; then
         echo "❌ Fichier de log introuvable : $LOG_FILE"
         echo "   Vérifiez LOG_FILE dans .env ou l'emplacement du projet."
         exit 1
     fi
-    echo "📜 Suivi en temps réel de $LOG_FILE (appuyez sur Ctrl+C pour quitter) :"
-    tail -f "$LOG_FILE"
+    if [ -n "$filter" ]; then
+        echo "🔍 Filtre appliqué : '$filter' (50 dernières lignes)"
+        tail -n "$tail_lines" "$LOG_FILE" | grep -i --color=always "$filter"
+    else
+        echo "📜 Dernières lignes de $LOG_FILE :"
+        tail -n "$tail_lines" "$LOG_FILE"
+    fi
+}
+
+cmd_logs_err() {
+    clear
+    cmd_logs "ERROR\|EXCEPTION\|Traceback"
+}
+
+cmd_logs_corr() {
+    clear
+    cmd_logs "correlate\|CVE\|correlation"
 }
 
 # --- COMMANDES BASE DE DONNÉES ---
@@ -340,8 +356,8 @@ cmd_db_backup() {
     fi
     local backup_file="$BACKUP_DIR/am_backup_$(date +%Y%m%d).sql"
     echo "💾 Sauvegarde de $DB_NAME vers $backup_file..."
-    mysqldump --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" \
-              --skip-ssl --single-transaction --routines --triggers --events "$DB_NAME" > "$backup_file"
+    mysqldump --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
+              --single-transaction --routines --triggers --events "$DB_NAME" > "$backup_file"
     if [ $? -eq 0 ]; then
         echo "✅ Sauvegarde terminée : $backup_file"
         ls -lh "$backup_file"
@@ -358,8 +374,8 @@ cmd_db_schema() {
     fi
     local schema_file="$PROJECT_DIR/sql/schema.sql"
     echo "📄 Génération du schéma vers $schema_file..."
-    mysqldump --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" \
-              --skip-ssl --no-data --routines --triggers "$DB_NAME" > "$schema_file"
+    mysqldump --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
+              --no-data --routines --triggers "$DB_NAME" > "$schema_file"
     if [ $? -eq 0 ]; then
         echo "✅ Schéma généré : $schema_file"
     else
@@ -404,31 +420,6 @@ cmd_db_check() {
     echo "✅ Vérification terminée."
 }
 
-cmd_db_import() {
-    clear
-    if ! check_mariadb; then
-        exit 1
-    fi
-    if [ $# -eq 0 ]; then
-        echo "❌ Erreur : Spécifiez un fichier SQL à importer."
-        echo "   Exemple : $0 db import /chemin/vers/dump.sql"
-        exit 1
-    fi
-    local sql_file="$1"
-    if [ ! -f "$sql_file" ]; then
-        echo "❌ Erreur : Fichier introuvable : $sql_file"
-        exit 1
-    fi
-    echo "📥 Import du fichier $sql_file vers $DB_NAME..."
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" "$DB_NAME" < "$sql_file"
-    if [ $? -eq 0 ]; then
-        echo "✅ Import terminé avec succès."
-    else
-        echo "❌ Échec de l'import."
-        exit 1
-    fi
-}
-
 # --- COMMANDES CORRÉLATIONS ---
 
 cmd_correlate() {
@@ -436,9 +427,9 @@ cmd_correlate() {
     echo "🔄 Lancement du pipeline de corrélation + analyse..."
     cd "$PROJECT_DIR" || exit 1
     if [ -f "$VENV_PYTHON" ]; then
-        "$VENV_PYTHON" "$PROJECT_DIR/scripts/correlate_and_analyze.py"
+        "$VENV_PYTHON" "$PROJECT_DIR/scripts/correlate_and_analyze.py" --verbose
     else
-        python3 "$PROJECT_DIR/scripts/correlate_and_analyze.py"
+        python3 "$PROJECT_DIR/scripts/correlate_and_analyze.py" --verbose
     fi
 }
 
@@ -454,22 +445,89 @@ cmd_corr_clear() {
         exit 1
     fi
     echo "🗑️  Suppression de toutes les corrélations..."
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" \
+    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
           -e "TRUNCATE TABLE correlations;" "$DB_NAME"
     echo "✅ Toutes les corrélations ont été supprimées."
 }
 
-cmd_corr_show() {
+cmd_corr_clear_asset() {
     clear
     if ! check_mariadb; then
         exit 1
     fi
-    echo "📊 Nombre de corrélations par statut :"
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" \
+    read -p "🔢 Entrez l'ID de l'asset à nettoyer : " asset_id
+    if [ -z "$asset_id" ]; then
+        echo "❌ Aucun ID fourni."
+        exit 1
+    fi
+    read -p "⚠️  Êtes-vous sûr de vouloir supprimer les corrélations de l'asset $asset_id ? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "❌ Annulé."
+        exit 0
+    fi
+    echo "🗑️  Suppression des corrélations pour l'asset $asset_id..."
+    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
+          -e "DELETE FROM correlations WHERE asset_id = $asset_id;" "$DB_NAME"
+    echo "✅ Corrélations supprimées pour l'asset $asset_id."
+}
+
+cmd_corr_stats() {
+    clear
+    if ! check_mariadb; then
+        exit 1
+    fi
+    echo "📊 Statistiques des corrélations :"
+    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
           -e "SELECT statut, COUNT(*) AS 'Nombre'
               FROM correlations
               GROUP BY statut
               ORDER BY COUNT(*) DESC;" "$DB_NAME"
+}
+
+cmd_corr_rejects() {
+    clear
+    if ! check_mariadb; then
+        exit 1
+    fi
+    echo "🚫 20 derniers rejets de corrélation :"
+    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
+          -e "SELECT id, asset_id, cve_id, raison, created_at
+              FROM correlation_rejects
+              ORDER BY created_at DESC
+              LIMIT 20;" "$DB_NAME"
+}
+
+cmd_corr_clear_rejects() {
+    clear
+    read -p "⚠️  Êtes-vous sûr de vouloir vider la table correlation_rejects ? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "❌ Annulé."
+        exit 0
+    fi
+    if ! check_mariadb; then
+        exit 1
+    fi
+    echo "🗑️  Vidage de la table correlation_rejects..."
+    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
+          -e "TRUNCATE TABLE correlation_rejects;" "$DB_NAME"
+    echo "✅ Table correlation_rejects vidée."
+}
+
+cmd_corr_top() {
+    clear
+    if ! check_mariadb; then
+        exit 1
+    fi
+    echo "🏆 Top 10 des assets par nombre de corrélations :"
+    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
+          -e "SELECT a.id, a.nom, COUNT(c.id) AS 'Nombre de corrélations'
+              FROM assets a
+              LEFT JOIN correlations c ON a.id = c.asset_id
+              GROUP BY a.id, a.nom
+              ORDER BY COUNT(c.id) DESC
+              LIMIT 10;" "$DB_NAME"
 }
 
 # --- COMMANDES DOCUMENTS ---
@@ -518,11 +576,11 @@ cmd_cve_stats() {
     if ! check_mariadb; then
         exit 1
     fi
-    echo "📊 Statistiques des CVE par fabricant :"
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" \
-          -e "SELECT fabricant, COUNT(*) AS 'Nombre de CVE'
+    echo "📊 Statistiques des CVE par vendor :"
+    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
+          -e "SELECT vendor, COUNT(*) AS 'Nombre de CVE'
               FROM cve
-              GROUP BY fabricant
+              GROUP BY vendor
               ORDER BY COUNT(*) DESC
               LIMIT 20;" "$DB_NAME"
 }
@@ -533,11 +591,52 @@ cmd_cve_last() {
         exit 1
     fi
     echo "🆕 10 dernières CVE importées :"
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" \
-          -e "SELECT id, cve_id, cvss_v3_score, date_publication
+    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
+          -e "SELECT id, cve_id, cvss_v3_score, published_date
               FROM cve
-              ORDER BY date_publication DESC
+              ORDER BY published_date DESC
               LIMIT 10;" "$DB_NAME"
+}
+
+# --- COMMANDES AUDIT ---
+
+cmd_audit_assets() {
+    clear
+    if ! check_mariadb; then
+        exit 1
+    fi
+    echo "🔍 Assets sans vendor NVD (jamais corrélés) :"
+    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
+          -e "SELECT a.id, a.nom, a.vendor, a.produit
+              FROM assets a
+              LEFT JOIN product_vendors pv ON a.vendor = pv.vendor_name
+              WHERE pv.id IS NULL AND a.vendor IS NOT NULL;" "$DB_NAME"
+}
+
+cmd_audit_os() {
+    clear
+    if ! check_mariadb; then
+        exit 1
+    fi
+    echo "🔍 Assets sans OS normalisé :"
+    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
+          -e "SELECT a.id, a.nom, a.os, a.os_version
+              FROM assets a
+              WHERE a.os IS NULL OR a.os = '';" "$DB_NAME"
+}
+
+cmd_audit_orphans() {
+    clear
+    if ! check_mariadb; then
+        exit 1
+    fi
+    echo "🔍 Corrélations orphelines (sans asset ou CVE valide) :"
+    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
+          -e "SELECT c.id, c.asset_id, c.cve_id
+              FROM correlations c
+              LEFT JOIN assets a ON c.asset_id = a.id
+              LEFT JOIN cve cv ON c.cve_id = cv.id
+              WHERE a.id IS NULL OR cv.id IS NULL;" "$DB_NAME"
 }
 
 # --- COMMANDES SYSTÈME ---
@@ -623,7 +722,7 @@ cmd_check_db() {
     echo "🔍 Vérification de la base de données :"
     local tables=("clients" "sites" "assets" "cve" "correlations" "equipment_types" "product_vendors")
     for table in "${tables[@]}"; do
-        count=$(mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" \
+        count=$(mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
                      -e "SELECT COUNT(*) FROM $table;" "$DB_NAME" | tail -n 1)
         echo "   $table : $count entrées"
     done

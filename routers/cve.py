@@ -7,7 +7,7 @@ router = APIRouter(prefix="/api/cve", tags=["CVE"])
 
 @router.get("/")
 def list_cve(
-    limit: int = Query(50, ge=1),
+    limit: int = Query(10, ge=1),
     skip: int = Query(0, ge=0),
     cve_id: Optional[str] = None,
     fabricant: Optional[str] = None,
@@ -30,32 +30,53 @@ def list_cve(
                 where_clauses.append("cve.fabricant LIKE %s")
                 params.append(f"%{fabricant}%")
 
-            if type_vulnerabilite:
-                where_clauses.append("co.type_attaque = %s")
-                params.append(type_vulnerabilite)
-
             where_sql = "WHERE " + " AND ".join(where_clauses) if where_clauses else ""
 
-            # Compter le total (DISTINCT pour éviter les doublons)
+            # 1. Compter le total SANS jointure (ultra-rapide)
             cur.execute(f"""
-                SELECT COUNT(DISTINCT cve.id) as total
+                SELECT COUNT(*) as total
                 FROM cve
-                LEFT JOIN correlations co ON cve.cve_id = co.cve_id
                 {where_sql}
             """, params)
             total = cur.fetchone()["total"]
 
-            # Récupérer les données avec jointure pour type_attaque
-            cur.execute(f"""
-                SELECT DISTINCT
-                    cve.id, cve.cve_id, cve.description, cve.cvss_v3_score, cve.cvss_v3_severity,
-                    cve.fabricant, cve.produit, co.type_attaque, cve.date_publication
-                FROM cve
-                LEFT JOIN correlations co ON cve.cve_id = co.cve_id
-                {where_sql}
-                ORDER BY cve.date_publication DESC
-                LIMIT %s OFFSET %s
-            """, params + [limit, skip])
+            # 2. Récupérer les données avec sous-requête pour type_attaque (pas de DISTINCT)
+            #    Si type_vulnerabilite est fourni, ajoute le filtre dans la sous-requête
+            if type_vulnerabilite:
+                where_sql_with_type = f"{where_sql} AND EXISTS (SELECT 1 FROM correlations co WHERE co.cve_id = cve.cve_id AND co.type_attaque = %s)"
+                params_with_type = params + [type_vulnerabilite]
+                cur.execute(f"""
+                    SELECT
+                        cve.id, cve.cve_id, cve.description, cve.cvss_v3_score, cve.cvss_v3_severity,
+                        cve.fabricant, cve.produit, cve.date_publication,
+                        (
+                            SELECT co.type_attaque
+                            FROM correlations co
+                            WHERE co.cve_id = cve.cve_id
+                            AND co.type_attaque = %s
+                            LIMIT 1
+                        ) as type_attaque
+                    FROM cve
+                    {where_sql_with_type}
+                    ORDER BY cve.date_publication DESC
+                    LIMIT %s OFFSET %s
+                """, params_with_type + [limit, skip])
+            else:
+                cur.execute(f"""
+                    SELECT
+                        cve.id, cve.cve_id, cve.description, cve.cvss_v3_score, cve.cvss_v3_severity,
+                        cve.fabricant, cve.produit, cve.date_publication,
+                        (
+                            SELECT co.type_attaque
+                            FROM correlations co
+                            WHERE co.cve_id = cve.cve_id
+                            LIMIT 1
+                        ) as type_attaque
+                    FROM cve
+                    {where_sql}
+                    ORDER BY cve.date_publication DESC
+                    LIMIT %s OFFSET %s
+                """, params + [limit, skip])
 
             return {
                 "total": total,
