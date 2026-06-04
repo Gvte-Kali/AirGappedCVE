@@ -51,7 +51,7 @@ declare -A CATEGORIES=(
     ["fastapi"]="Gestion du service FastAPI (start/stop/restart/status)"
     ["logs"]="Affichage des logs (show)"
     ["db"]="Gestion de la base de données (connect, backup, schema, size, vacuum, check)"
-    ["corr"]="Gestion des corrélations (correlate, stats, clear, rejects, top)"
+    ["corr"]="Gestion des corrélations (launch)"
     ["docs"]="Gestion des documents PDF (list, clear, size)"
     ["cve"]="Statistiques et dernières CVE (show)"
     ["sys"]="Informations système (info, ports, services, env, disk, deps, version)"
@@ -76,13 +76,8 @@ declare -A COMMANDS=(
     ["db:check"]="cmd_db_check"
 
     # Corrélations
-    ["corr:correlate"]="cmd_correlate"
-    ["corr:clear"]="cmd_corr_clear"       # <-- "corr:clear" au lieu de "corr:corr-clear"
-    ["corr:clear-asset"]="cmd_corr_clear_asset"
-    ["corr:stats"]="cmd_corr_stats"       # <-- "corr:stats" au lieu de "corr:corr-stats"
-    ["corr:rejects"]="cmd_corr_rejects"   # <-- "corr:rejects" au lieu de "corr:corr-rejects"
-    ["corr:clear-rejects"]="cmd_corr_clear_rejects"
-    ["corr:top"]="cmd_corr_top"           # <-- "corr:top" au lieu de "corr:corr-top"
+    ["corr:launch"]="cmd_correlate"
+    ["corr:clean"]="cmd_correlate_clean"
 
     # Documents
     ["docs:list"]="cmd_docs_list"        # <-- "docs:list" au lieu de "docs:docs-list"
@@ -177,12 +172,7 @@ show_category_help() {
                 "cmd_db_vacuum") desc="Optimise les tables corrélations et cve" ;;
                 "cmd_db_check") desc="Vérifie l'intégrité des tables" ;;
                 "cmd_correlate") desc="Lance le pipeline de corrélation + analyse" ;;
-                "cmd_corr_clear") desc="Supprime TOUTES les corrélations (avec confirmation)" ;;
-                "cmd_corr_clear_asset") desc="Supprime les corrélations d'un asset (id interactif)" ;;
-                "cmd_corr_stats") desc="Affiche le COUNT des corrélations par statut" ;;
-                "cmd_corr_rejects") desc="Affiche les 20 derniers rejets de corrélation" ;;
-                "cmd_corr_clear_rejects") desc="Supprime tous les rejets de corrélation" ;;
-                "cmd_corr_top") desc="Affiche le top 10 des assets par nombre de corrélations" ;;
+                "cmd_correlate_clean") desc="Supprime toutes les corrélations CVEs pour repartir à zéro" ;;
                 "cmd_docs_list") desc="Liste les PDFs avec taille et date" ;;
                 "cmd_docs_clear") desc="Supprime TOUS les PDFs (avec confirmation)" ;;
                 "cmd_docs_size") desc="Affiche la taille totale du dossier documents" ;;
@@ -422,107 +412,72 @@ cmd_correlate() {
     echo "🔄 Lancement du pipeline de corrélation + analyse..."
     cd "$PROJECT_DIR" || exit 1
     if [ -f "$VENV_PYTHON" ]; then
-        "$VENV_PYTHON" "$PROJECT_DIR/scripts/correlate_and_analyze.py" --verbose
+        "$VENV_PYTHON" "$PROJECT_DIR/scripts/correlate_and_analyze.py"
     else
-        python3 "$PROJECT_DIR/scripts/correlate_and_analyze.py" --verbose
+        python3 "$PROJECT_DIR/scripts/correlate_and_analyze.py"
     fi
 }
 
-cmd_corr_clear() {
+cmd_correlate_clean() {
     clear
-    read -p "⚠️  Êtes-vous sûr de vouloir SUPPRIMER TOUTES les corrélations ? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "❌ Annulé."
-        exit 0
-    fi
-    if ! check_mariadb; then
-        exit 1
-    fi
-    echo "🗑️  Suppression de toutes les corrélations..."
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
-          -e "TRUNCATE TABLE correlations;" "$DB_NAME"
-    echo "✅ Toutes les corrélations ont été supprimées."
-}
+    echo -e "${RED}${BOLD}⚠️  ATTENTION : Cette opération va SUPPRIMER toutes les corrélations existantes !${NC}"
+    echo ""
+    echo "Cette action est IRRÉVERSIBLE et va :"
+    echo "  - Supprimer toutes les entrées de la table 'correlations'"
+    echo "  - Supprimer toutes les entrées de la table 'correlation_rejects'"
+    echo "  - Vous devrez relancer une analyse complète après cette opération"
+    echo ""
 
-cmd_corr_clear_asset() {
-    clear
-    if ! check_mariadb; then
-        exit 1
+    # Première confirmation
+    read -rp "Voulez-vous vraiment supprimer toutes les corrélations ? ([N]on/[O]ui) : " CONFIRM1
+    if [[ ! "$CONFIRM1" =~ ^[OoYy]$ ]]; then
+        echo -e "${YELLOW}Opération annulée.${NC}"
+        return 0
     fi
-    read -p "🔢 Entrez l'ID de l'asset à nettoyer : " asset_id
-    if [ -z "$asset_id" ]; then
-        echo "❌ Aucun ID fourni."
-        exit 1
-    fi
-    read -p "⚠️  Êtes-vous sûr de vouloir supprimer les corrélations de l'asset $asset_id ? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "❌ Annulé."
-        exit 0
-    fi
-    echo "🗑️  Suppression des corrélations pour l'asset $asset_id..."
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
-          -e "DELETE FROM correlations WHERE asset_id = $asset_id;" "$DB_NAME"
-    echo "✅ Corrélations supprimées pour l'asset $asset_id."
-}
 
-cmd_corr_stats() {
-    clear
-    if ! check_mariadb; then
-        exit 1
+    # Deuxième confirmation avec le mot exact
+    read -rp "Tapez 'SUPPRIMER' pour confirmer définitivement : " CONFIRM2
+    if [[ "$CONFIRM2" != "SUPPRIMER" ]]; then
+        echo -e "${YELLOW}Opération annulée.${NC}"
+        return 0
     fi
-    echo "📊 Statistiques des corrélations :"
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
-          -e "SELECT statut, COUNT(*) AS 'Nombre'
-              FROM correlations
-              GROUP BY statut
-              ORDER BY COUNT(*) DESC;" "$DB_NAME"
-}
 
-cmd_corr_rejects() {
-    clear
+    # Vérification de la connexion à la base
     if ! check_mariadb; then
-        exit 1
+        return 1
     fi
-    echo "🚫 20 derniers rejets de corrélation :"
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
-          -e "SELECT id, asset_id, cve_id, raison, created_at
-              FROM correlation_rejects
-              ORDER BY created_at DESC
-              LIMIT 20;" "$DB_NAME"
-}
 
-cmd_corr_clear_rejects() {
-    clear
-    read -p "⚠️  Êtes-vous sûr de vouloir vider la table correlation_rejects ? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "❌ Annulé."
-        exit 0
-    fi
-    if ! check_mariadb; then
-        exit 1
-    fi
-    echo "🗑️  Vidage de la table correlation_rejects..."
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
-          -e "TRUNCATE TABLE correlation_rejects;" "$DB_NAME"
-    echo "✅ Table correlation_rejects vidée."
-}
+    echo -e "${CYAN}Suppression des corrélations en cours...${NC}"
 
-cmd_corr_top() {
-    clear
-    if ! check_mariadb; then
-        exit 1
+    # Suppression des corrélations
+    if mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" -e "DELETE FROM correlations;" "$DB_NAME" 2>/dev/null; then
+        echo -e "${GREEN}✓ Table 'correlations' vidée${NC}"
+    else
+        echo -e "${RED}✗ Erreur lors de la suppression des corrélations${NC}"
+        return 1
     fi
-    echo "🏆 Top 10 des assets par nombre de corrélations :"
-    mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
-          -e "SELECT a.id, a.nom, COUNT(c.id) AS 'Nombre de corrélations'
-              FROM assets a
-              LEFT JOIN correlations c ON a.id = c.asset_id
-              GROUP BY a.id, a.nom
-              ORDER BY COUNT(c.id) DESC
-              LIMIT 10;" "$DB_NAME"
+
+    # Suppression des rejets de corrélation
+    if mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" -e "DELETE FROM correlation_rejects;" "$DB_NAME" 2>/dev/null; then
+        echo -e "${GREEN}✓ Table 'correlation_rejects' vidée${NC}"
+    else
+        echo -e "${RED}✗ Erreur lors de la suppression des rejets${NC}"
+        return 1
+    fi
+
+    # Compter pour vérifier
+    COUNT=$(mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" -e "SELECT COUNT(*) as cnt FROM correlations;" "$DB_NAME" 2>/dev/null | awk 'NR==2 {print $1}')
+
+    if [[ "$COUNT" == "0" ]]; then
+        echo ""
+        echo -e "${GREEN}${BOLD}✅ Toutes les corrélations ont été supprimées avec succès !${NC}"
+        echo ""
+        echo "Vous pouvez maintenant relancer une analyse complète avec :"
+        echo "  asset-manager corr launch"
+    else
+        echo -e "${RED}✗ Il reste encore $COUNT corrélations${NC}"
+        return 1
+    fi
 }
 
 # --- COMMANDES DOCUMENTS ---

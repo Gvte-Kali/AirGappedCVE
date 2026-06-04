@@ -752,7 +752,7 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
                 f"    [vendor_match] SKIP — 0 CVE en cache pour {vendor_cve}")
         return
 
-    # ── Filtre produit (pré-filtrage avant la boucle) ─────────────────
+    # Filtre produit (pré-filtrage avant la boucle)
     eq_type_id = asset.get("equipment_type_id")
     eq_cfg = EQUIPMENT_CONFIG.get(eq_type_id) if eq_type_id else None
 
@@ -800,7 +800,7 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
         candidates += 1
         cve_produit = cve.get("produit") or ""
 
-        # ── Match exact FK (os_version_id / fw_version_id / bios_version_id) ──
+        # Match exact FK (os_version_id / fw_version_id / bios_version_id)
         if has_fk and cve_produit in exact_products:
             try:
                 versions_data = json.loads(cve.get("versions_affectees") or "[]")
@@ -845,7 +845,7 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
             fk_matches += 1
             continue
 
-        # ── Match version fuzzy (fallback) ────────────────────────────
+        # Match version fuzzy (fallback)
         cve_tokens = get_cve_version_tokens(cve)
 
         version_matched = False
@@ -877,7 +877,7 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
             )
             continue
 
-        # ── Match produit (bonus) ──────────────────────────────────────
+        # Match produit (bonus)
         product_score = 0
         if product_bonus:
             for field in [asset.get("nvd_product"), asset.get("systeme_exploitation"),
@@ -887,7 +887,7 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
                     if s > product_score:
                         product_score = s
 
-        # ── Vérification range CVE (version exacte) ───────────────────
+        # Vérification range CVE (version exacte)
         try:
             versions_data = json.loads(cve.get("versions_affectees") or "[]")
         except Exception:
@@ -921,7 +921,7 @@ def correlate_pass_vendor_match(cur, asset, stats, cve_cache, verbose=False):
                 rejetees_version += 1
                 continue
 
-        # ── Type de corrélation ────────────────────────────────────────
+        # Type de corrélation
         if version_matched and has_version_info and best_version_score >= version_min_chars:
             type_corr = "affirme"
             version_match_type = "affirme"
@@ -1030,42 +1030,56 @@ def correlate(
         conn.close()
         raise typer.Exit()
 
-    print(f"Assets à analyser : {len(assets)}")
+    # Affichage conditionnel selon verbose
+    if verbose:
+        print("\n[ASSETS] État normalisation OS :")
+        for asset in assets:
+            os_info = asset.get("os_nvd_product") or "⚠️  non normalisé"
+            fw_info = asset.get("fw_nvd_product") or "—"
+            print(
+                f"  {asset['nom_interne']:20s} | OS: {os_info:30s} | FW: {fw_info}")
+        print()
 
-    print("\n[ASSETS] État normalisation OS :")
-    for asset in assets:
-        os_info = asset.get("os_nvd_product") or "⚠️  non normalisé"
-        fw_info = asset.get("fw_nvd_product") or "—"
+        print("\n[STRATÉGIE PAR ASSET]")
+        vendors_uniques = set()
+        for asset in assets:
+            vendor_cve, raison = get_correlation_vendor(asset)
+            nom = asset["nom_interne"] or ""
+            type_eq = asset["type_equipement"] or ""
+            print(f"  {nom:25s} ({type_eq:15s}) → {raison}")
+            if vendor_cve:
+                vendors_uniques.add(vendor_cve)
+        vendors_uniques = list(vendors_uniques)
         print(
-            f"  {asset['nom_interne']:20s} | OS: {os_info:30s} | FW: {fw_info}")
-    print()
+            f"\nVendors CVE distincts : {len(vendors_uniques)} → {', '.join(vendors_uniques)}\n")
 
-    print("\n[STRATÉGIE PAR ASSET]")
-    vendors_uniques = set()
-    for asset in assets:
-        vendor_cve, raison = get_correlation_vendor(asset)
-        nom = asset["nom_interne"] or ""
-        type_eq = asset["type_equipement"] or ""
-        print(f"  {nom:25s} ({type_eq:15s}) → {raison}")
-        if vendor_cve:
-            vendors_uniques.add(vendor_cve)
-    vendors_uniques = list(vendors_uniques)
-    print(
-        f"\nVendors CVE distincts : {len(vendors_uniques)} → {', '.join(vendors_uniques)}\n")
-
-    print("[VÉRIFICATION] CVE disponibles par vendor :")
-    for vendor in vendors_uniques:
-        cur.execute(
-            "SELECT COUNT(*) as nb FROM cve WHERE fabricant = %s", (vendor,))
-        nb = cur.fetchone()["nb"]
-        flag = "⚠️  AUCUNE CVE" if nb == 0 else f"{nb:>6} CVE totales"
-        print(f"  {vendor:30s} → {flag}")
-    print()
+        print("[VÉRIFICATION] CVE disponibles par vendor :")
+        for vendor in vendors_uniques:
+            cur.execute(
+                "SELECT COUNT(*) as nb FROM cve WHERE fabricant = %s", (vendor,))
+            nb = cur.fetchone()["nb"]
+            flag = "⚠️  AUCUNE CVE" if nb == 0 else f"{nb:>6} CVE totales"
+            print(f"  {vendor:30s} → {flag}")
+        print()
+    else:
+        # Mode non-verbose : juste les compteurs
+        vendors_uniques = set()
+        for asset in assets:
+            vendor_cve, _ = get_correlation_vendor(asset)
+            if vendor_cve:
+                vendors_uniques.add(vendor_cve)
+        print(f"[INFO] {len(assets)} assets à analyser, {len(vendors_uniques)} vendors uniques\n")
 
     print("[CACHE] Chargement des CVE par vendor...")
     t_cache_start = time.time()
     cve_cache = build_cve_cache(cur, vendors_uniques)
-    print(f"[CACHE] ✅ Chargé en {time.time() - t_cache_start:.1f}s\n")
+
+    # Compter le nombre total de CVE chargées
+    total_cves = sum(len(cves) for cves in cve_cache.values())
+    print(f"[CACHE] ✅ {total_cves} CVE chargées en {time.time() - t_cache_start:.1f}s\n")
+
+    if not verbose:
+        print(f"[INFO] Détection des corrélations en cours...\n")
 
     print(f"Passe : vendor_match (vendor obligatoire + version scoring)\n")
     if dry_run:
@@ -1079,13 +1093,15 @@ def correlate(
         vendor_cve, _ = get_correlation_vendor(asset)
         nb_cves_cache = len(cve_cache.get(vendor_cve, [])) if vendor_cve else 0
 
-        label_vendor = vendor_cve or "?"
-        print(f"\n[Asset {i}/{len(assets)}] {asset_name} ({label_vendor})"
-              f" — {nb_cves_cache} CVE en cache")
+        if verbose:
+            label_vendor = vendor_cve or "?"
+            print(f"\n[Asset {i}/{len(assets)}] {asset_name} ({label_vendor})"
+                  f" — {nb_cves_cache} CVE en cache")
 
         if nb_cves_cache == 0:
-            print(
-                f"  ⚠️  Aucune CVE en cache pour {label_vendor} — asset ignoré")
+            if verbose:
+                print(
+                    f"  ⚠️  Aucune CVE en cache pour {vendor_cve} — asset ignoré")
             continue
 
         local_stats = {"inserted": 0, "updated": 0, "skipped": 0}
@@ -1099,11 +1115,12 @@ def correlate(
         else:
             conn.rollback()
 
-        t_asset = time.time() - t_asset_start
-        print(f"  ✅ +{local_stats['inserted']} nouvelles | "
-              f"~{local_stats['updated']} mises à jour | "
-              f"={local_stats['skipped']} skippées | "
-              f"⏱ {t_asset:.1f}s")
+        if verbose:
+            t_asset = time.time() - t_asset_start
+            print(f"  ✅ +{local_stats['inserted']} nouvelles | "
+                  f"~{local_stats['updated']} mises à jour | "
+                  f"={local_stats['skipped']} skippées | "
+                  f"⏱ {t_asset:.1f}s")
 
         for k in global_stats:
             global_stats[k] += local_stats.get(k, 0)
@@ -1450,19 +1467,33 @@ def run_all(
     batch_max: int = typer.Option(cfg_mistral("batch_max", 0), "--batch-max"),
     verbose: bool = typer.Option(
         cfg_corr("verbose", False), "--verbose/--no-verbose", "-v"),
+    force: bool = typer.Option(cfg_mistral("force", False), "--force"),
+    dry_run: bool = typer.Option(cfg_corr("dry_run", False), "--dry-run"),
 ):
     """Pipeline complet : corrélation → analyse Mistral."""
     print("\n" + "=" * 70)
     print("  PIPELINE COMPLET : CORRÉLATION → ANALYSE")
     print("=" * 70)
 
-    correlate(dry_run=False, verbose=verbose)
-    analyze(batch_max=batch_max, asset_id=None, force=False)
+    # Résumé des paramètres
+    print("\n[PARAMÈTRES UTILISÉS]")
+    print(f"  Mode force réanalyse      : {'OUI' if force else 'non'}")
+    print(f"  Mode dry-run             : {'OUI' if dry_run else 'non'}")
+    print(f"  CVSS minimum             : {cfg_corr('cvss_min', 4.0)}")
+    print(f"  CVSS réseau minimum      : {cfg_corr('cvss_network_min', 7.0)}")
+    print(f"  Date CVE minimum          : {cfg_corr('date_min', '2015-01-01')}")
+    print(f"  Limite CVE par vendor    : {cfg_corr('vendor_cve_limit', 0) if cfg_corr('vendor_cve_limit', 0) > 0 else 'illimité'}")
+    print(f"  Batch Mistral max        : {batch_max if batch_max > 0 else 'illimité'}")
+    print(f"  Verbose                  : {'OUI' if verbose else 'non'}")
+    print()
+
+    # Lancement du pipeline
+    correlate(dry_run=dry_run, verbose=verbose)
+    analyze(batch_max=batch_max, asset_id=None, force=force)
 
     print("=" * 70)
     print("  ✅ PIPELINE TERMINÉ")
     print("=" * 70 + "\n")
-
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
