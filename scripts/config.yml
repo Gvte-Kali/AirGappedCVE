@@ -27,7 +27,7 @@ mistral:
   max_retries: 3
   batch_max: 0
   max_tokens: 512
-  force: true
+  force: false
   system_prompt: 'Tu es un expert PATCH MANAGEMENT pour environnements air-gapped
     (isolés d''Internet).
 

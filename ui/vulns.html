@@ -28,6 +28,7 @@
             background-color: rgba(88, 166, 255, 0.08);
         }
 
+        /* Badges pour les statuts et priorités */
         .badge-critique {
             background-color: #f85149;
         }
@@ -46,10 +47,6 @@
 
         .badge-confirme {
             background-color: #f85149;
-        }
-
-        .badge-mitige {
-            background-color: #f0883e;
         }
 
         .badge-nouveau {
@@ -75,6 +72,101 @@
 
         .badge-informatif {
             background-color: #6e7681;
+        }
+
+        /* Styles pour la vue hiérarchique */
+        .client-card {
+            margin-bottom: 20px;
+            border-left: 4px solid #58a6ff;
+            background-color: #161b22;
+            border-radius: 6px;
+        }
+
+        .site-card {
+            margin-bottom: 15px;
+            border-left: 4px solid #f0883e;
+            background-color: #0d1117;
+            border-radius: 6px;
+            margin-left: 15px;
+        }
+
+        .asset-card {
+            margin-bottom: 10px;
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            margin-left: 15px;
+        }
+
+        .asset-header {
+            padding: 10px 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 6px;
+        }
+
+        .asset-header:hover {
+            background-color: #1f262d;
+        }
+
+        .vuln-list {
+            padding: 15px;
+            display: none;
+            background-color: #0d1117;
+            border-top: 1px solid #30363d;
+        }
+
+        .vuln-list.show {
+            display: block;
+        }
+
+        .vuln-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background-color: #161b22;
+            border-radius: 4px;
+            border-left: 3px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .vuln-item:hover {
+            background-color: #1f262d;
+        }
+
+        .chevron {
+            transition: transform 0.2s;
+            font-size: 1.2rem;
+        }
+
+        .chevron.rotate {
+            transform: rotate(90deg);
+        }
+
+        .stats-badge {
+            font-size: 0.8rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+
+        .filter-tag {
+            display: inline-block;
+            background-color: #30363d;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+        }
+
+        .filter-tag .remove {
+            cursor: pointer;
+            margin-left: 8px;
+            color: #f85149;
         }
 
         td .btn-sm {
@@ -107,11 +199,39 @@
             background-color: #0d1117;
             box-shadow: 0 1px 0 #30363d;
         }
+
+        /* Style pour les filtres actifs */
+        .active-filters-container {
+            margin-top: 10px;
+        }
+
+        /* Style pour les cartes de statistiques */
+        .stat-label {
+            color: #8b949e;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #c9d1d9;
+        }
+
+        /* Style pour les boutons d'action dans les vulnérabilités */
+        .vuln-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .vuln-actions .btn {
+            padding: 2px 6px;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 
 <body>
-
     <!-- ─── NAVBAR ─────────────────────────────────────────── -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
@@ -121,7 +241,6 @@
             </button>
             <div class="collapse navbar-collapse" id="nav">
                 <div class="d-flex ms-auto align-items-center gap-2">
-
                     <!-- Recherche globale -->
                     <div class="position-relative am-search" data-am-search-root>
                         <input class="form-control form-control-sm" type="search"
@@ -130,7 +249,6 @@
                     </div>
 
                     <ul class="navbar-nav ms-2 align-items-center gap-1">
-
                         <!-- Accueil -->
                         <li class="nav-item">
                             <a class="nav-link" href="/">Accueil</a>
@@ -193,48 +311,44 @@
                                     <h6 class="dropdown-header"
                                         style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CVE</h6>
                                 </li>
+                                <li><a class="dropdown-item" href="/ui/cve">❌ Liste des CVEs</a></li>
+                            </ul>
                         </li>
-                        <li><a class="dropdown-item" href="/ui/cve">❌ Liste des CVEs</a></li>
-                        <li>
-                    </ul>
-                    </li>
 
-                    <!-- Outils -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            Outils
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-                            <li>
-                                <h6 class="dropdown-header"
-                                    style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CONFIGURATION</h6>
-                            </li>
-                            <li><a class="dropdown-item" href="/ui/parametres">🔧 Paramètres corrélation</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li>
-                                <h6 class="dropdown-header"
-                                    style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">EXÉCUTION</h6>
-                            </li>
-                            <li><a class="dropdown-item" href="/scripts/console">🖥️ Console</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li>
-                                <h6 class="dropdown-header"
-                                    style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">DÉVELOPPEUR</h6>
-                            </li>
-                            <li><a class="dropdown-item" href="/docs">📖 API Docs</a></li>
-                        </ul>
-                    </li>
-
+                        <!-- Outils -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Outils
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">CONFIGURATION</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/ui/parametres">🔧 Paramètres corrélation</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">EXÉCUTION</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/scripts/console">🖥️ Console</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header"
+                                        style="color:#58a6ff;font-size:0.7rem;letter-spacing:0.1em;">DÉVELOPPEUR</h6>
+                                </li>
+                                <li><a class="dropdown-item" href="/docs">📖 API Docs</a></li>
+                            </ul>
+                        </li>
                     </ul>
                 </div>
             </div>
         </div>
     </nav>
-
 
     <!-- ─── CONTENU ────────────────────────────────────────── -->
     <div class="container py-5">
@@ -250,31 +364,20 @@
                         <div class="dropdown-menu p-3" style="width:380px;background:#161b22;border-color:#30363d;">
                             <h6 class="fw-bold mb-3" style="color:#c9d1d9;">🛡️ Vulnérabilités — Guide</h6>
                             <p class="small text-muted mb-3">Cette page liste toutes les corrélations CVE détectées sur
-                                vos assets. Le moteur de corrélation tourne en 3 phases : détection brute, pré-triage
-                                déterministe, puis validation Mistral.</p>
+                                vos assets, organisées par client et site.</p>
                             <hr style="border-color:#30363d;">
                             <p class="small fw-bold mb-1" style="color:#c9d1d9;">Statuts</p>
                             <ul class="small text-muted mb-3 ps-3">
                                 <li class="mb-1"><strong style="color:#58a6ff;">Nouveau</strong> — Détecté, en attente
                                     de revue opérateur.</li>
-                                <li class="mb-1"><strong style="color:#58a6ff;">En analyse</strong> — En cours d'analyse
+                                <li class="mb-1"><strong style="color:#d29922;">En analyse</strong> — En cours d'analyse
                                     par Mistral.</li>
-                                <li class="mb-1"><strong style="color:#58a6ff;">Confirmé</strong> — Vulnérabilité
+                                <li class="mb-1"><strong style="color:#f85149;">Confirmé</strong> — Vulnérabilité
                                     confirmée, patch nécessaire.</li>
-                                <li class="mb-1"><strong style="color:#58a6ff;">Mitigé</strong> — Risque atténué par une
-                                    mesure compensatoire.</li>
-                                <li class="mb-1"><strong style="color:#58a6ff;">Faux positif</strong> — Ne s'applique
+                                <li class="mb-1"><strong style="color:#6e7681;">Faux positif</strong> — Ne s'applique
                                     pas à cet asset.</li>
-                                <li class="mb-1"><strong style="color:#58a6ff;">Patché</strong> — Vulnérabilité
+                                <li class="mb-1"><strong style="color:#3fb950;">Patché</strong> — Vulnérabilité
                                     corrigée.</li>
-                            </ul>
-                            <hr style="border-color:#30363d;">
-                            <p class="small fw-bold mb-1" style="color:#c9d1d9;">Actions rapides</p>
-                            <ul class="small text-muted mb-0 ps-3">
-                                <li class="mb-1">🔍 Détails — Voir l'analyse complète et modifier le statut.</li>
-                                <li class="mb-1">✖ Faux positif — Marquer directement sans ouvrir le détail.</li>
-                                <li class="mb-1">✅ Confirmer — Marquer comme vulnérabilité confirmée.</li>
-                                <li class="mb-1">🩹 Patché — Marquer comme corrigée.</li>
                             </ul>
                         </div>
                     </div>
@@ -317,8 +420,7 @@
             </div>
         </div>
 
-
-        <!-- Filtres Redesign -->
+        <!-- Filtres -->
         <div class="card mb-5">
             <div class="p-4" style="cursor:pointer" onclick="toggleFiltres()">
                 <div class="d-flex justify-content-between align-items-center">
@@ -326,11 +428,11 @@
                     <span id="filtreChevron" style="font-size:1.2rem; transition: transform .2s">▼</span>
                 </div>
                 <div id="filtreResume" class="text-muted small mt-1" style="font-size:0.8rem"></div>
+                <div id="activeFilters" class="active-filters-container mt-2"></div>
             </div>
             <div id="filtrePanneau" style="display:none; border-top: 1px solid #30363d;">
                 <div class="p-4">
                     <div class="row g-3">
-
                         <!-- Client -->
                         <div class="col-md-3">
                             <label class="form-label stat-label">Client</label>
@@ -342,7 +444,7 @@
                             </div>
                         </div>
 
-                        <!-- Site (indépendant du client) -->
+                        <!-- Site -->
                         <div class="col-md-3">
                             <label class="form-label stat-label">Site</label>
                             <div class="position-relative">
@@ -375,63 +477,8 @@
                             </div>
                         </div>
 
-                        <!-- Modèle -->
-                        <div class="col-md-3">
-                            <label class="form-label stat-label">Modèle</label>
-                            <div class="position-relative">
-                                <input type="text" class="form-control" id="filtreModeleSearch"
-                                    placeholder="Tous les modèles…" autocomplete="off">
-                                <input type="hidden" id="filtreModeleId">
-                                <div class="suggestion-box" id="filtreModeleSuggestions"></div>
-                            </div>
-                        </div>
-
-                        <!-- OS -->
-                        <div class="col-md-3">
-                            <label class="form-label stat-label">Système d'exploitation</label>
-                            <div class="position-relative">
-                                <input type="text" class="form-control" id="filtreOsSearch" placeholder="Tous les OS…"
-                                    autocomplete="off">
-                                <input type="hidden" id="filtreOsId">
-                                <div class="suggestion-box" id="filtreOsSuggestions"></div>
-                            </div>
-                        </div>
-
-                        <!-- Version OS -->
-                        <div class="col-md-3">
-                            <label class="form-label stat-label">Version OS</label>
-                            <div class="position-relative">
-                                <input type="text" class="form-control" id="filtreVersionOs"
-                                    placeholder="ex: 7.1.1, 2022…" autocomplete="off">
-                                <div class="suggestion-box" id="filtreVersionOsSuggestions"></div>
-                            </div>
-                        </div>
-
-                        <!-- Firmware -->
-                        <div class="col-md-3">
-                            <label class="form-label stat-label">Firmware</label>
-                            <div class="position-relative">
-                                <input type="text" class="form-control" id="filtreFirmwareSearch"
-                                    placeholder="Tous les firmwares…" autocomplete="off">
-                                <input type="hidden" id="filtreFirmwareId">
-                                <div class="suggestion-box" id="filtreFirmwareSuggestions"></div>
-                            </div>
-                        </div>
-
-                        <!-- Nom d'asset -->
-                        <div class="col-md-3">
-                            <label class="form-label stat-label">Nom d'asset</label>
-                            <input type="text" class="form-control" id="filtreAsset" placeholder="Filtrer par nom…">
-                        </div>
-
-                        <!-- CVE -->
-                        <div class="col-md-3">
-                            <label class="form-label stat-label">Identifiant CVE</label>
-                            <input type="text" class="form-control" id="filtreCVE" placeholder="ex: CVE-2024-...">
-                        </div>
-
                         <!-- Statut (multiselect) -->
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label stat-label">Statut</label>
                             <div class="card p-2" style="background:#0d1117; border-color:#30363d">
                                 <div class="d-flex justify-content-between mb-1">
@@ -440,7 +487,7 @@
                                         <a href="#" onclick="toutDecocher('statut'); return false;">Aucun</a>
                                     </small>
                                 </div>
-                                <div class="d-flex flex-column gap-1">
+                                <div class="d-flex flex-wrap gap-1">
                                     <label class="d-flex align-items-center gap-2 m-0"
                                         style="font-size:0.82rem; cursor:pointer">
                                         <input type="checkbox" class="filtre-statut" value="nouveau" checked> Nouveau
@@ -456,18 +503,19 @@
                                     </label>
                                     <label class="d-flex align-items-center gap-2 m-0"
                                         style="font-size:0.82rem; cursor:pointer">
-                                        <input type="checkbox" class="filtre-statut" value="faux_positif"> Faux positif
+                                        <input type="checkbox" class="filtre-statut" value="faux_positif" checked> Faux
+                                        positif
                                     </label>
                                     <label class="d-flex align-items-center gap-2 m-0"
                                         style="font-size:0.82rem; cursor:pointer">
-                                        <input type="checkbox" class="filtre-statut" value="patche"> Patché
+                                        <input type="checkbox" class="filtre-statut" value="patche" checked> Patché
                                     </label>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Priorité (multiselect) -->
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label stat-label">Priorité</label>
                             <div class="card p-2" style="background:#0d1117; border-color:#30363d">
                                 <div class="d-flex justify-content-between mb-1">
@@ -476,7 +524,7 @@
                                         <a href="#" onclick="toutDecocher('priorite'); return false;">Aucun</a>
                                     </small>
                                 </div>
-                                <div class="d-flex flex-column gap-1">
+                                <div class="d-flex flex-wrap gap-1">
                                     <label class="d-flex align-items-center gap-2 m-0"
                                         style="font-size:0.82rem; cursor:pointer">
                                         <input type="checkbox" class="filtre-priorite" value="critique" checked>
@@ -498,11 +546,16 @@
                             </div>
                         </div>
 
+                        <!-- CVE -->
+                        <div class="col-md-4">
+                            <label class="form-label stat-label">Identifiant CVE</label>
+                            <input type="text" class="form-control" id="filtreCVE" placeholder="ex: CVE-2024-...">
+                        </div>
                     </div>
 
                     <!-- Boutons -->
                     <div class="d-flex gap-2 mt-4">
-                        <button class="btn btn-primary" onclick="chargerVulnerabilites()">🔍 Rechercher</button>
+                        <button class="btn btn-primary" onclick="appliquerFiltres()">🔍 Appliquer les filtres</button>
                         <button class="btn btn-outline-secondary" onclick="reinitialiserFiltres()">🔄
                             Réinitialiser</button>
                     </div>
@@ -510,34 +563,14 @@
             </div>
         </div>
 
-        <!-- Main Data Table Container -->
-        <div class="card mb-5">
-            <div class="table-responsive" style="overflow: visible;">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="sticky-header" style="position: sticky; top: 56px; z-index: 10;">
-                        <tr>
-                            <th class="ps-4">CVE</th>
-                            <th>Asset / IP</th>
-                            <th>Localisation</th>
-                            <th>Statut</th>
-                            <th>Priorité</th>
-                            <th>Score CVSS</th>
-                            <th>Confirmé IA</th>
-                            <th>Vérifié le</th>
-                            <th class="pe-4">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="border-top-0">
-                        <!-- Data rows -->
-                    </tbody>
-                </table>
-            </div>
+        <!-- Conteneur principal pour la vue hiérarchique -->
+        <div id="hierarchicalView" class="mb-5">
+            <!-- Les données seront chargées ici -->
         </div>
 
         <nav id="paginationContainer">
             <ul class="pagination justify-content-center" id="pagination"></ul>
         </nav>
-    </div>
     </div>
 
     <!-- ─── MODAL DÉTAILS ─────────────────────────────────── -->
@@ -560,676 +593,7 @@
         </div>
     </div>
 
-    <script src="/static/bootstrap.bundle.min.js"></script>
-    <script src="/static/app-search.js"></script>
-    <script>
-        let pageActuelle = 1;
-        const itemsParPage = 50;
-        let correlationEnCours = null;
-
-        // ═══════════════════════════════════════════════════════════
-        //  UTILITAIRES SUGGESTION BOX
-        // ═══════════════════════════════════════════════════════════
-        function showSuggestionBox(box) { box.style.display = 'block'; }
-        function hideSuggestionBox(box) { box.style.display = 'none'; }
-
-        function renderSuggestions(box, items, labelKey, idKey, onSelect) {
-            box.innerHTML = '';
-            if (items.length === 0) {
-                box.innerHTML = '<div class="suggestion-item text-secondary">Aucun résultat</div>';
-                showSuggestionBox(box);
-                return;
-            }
-            items.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'suggestion-item';
-                div.textContent = item[labelKey];
-                div.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
-                    onSelect(item);
-                    hideSuggestionBox(box);
-                });
-                box.appendChild(div);
-            });
-            showSuggestionBox(box);
-        }
-
-        // Fermer les suggestions quand on clique ailleurs
-        document.addEventListener('click', () => {
-            document.querySelectorAll('.suggestion-box').forEach(b => hideSuggestionBox(b));
-        });
-
-        // ═══════════════════════════════════════════════════════════════
-        //  PANNEAU FILTRES
-        // ═══════════════════════════════════════════════════════════════
-        let filtrePanneauOuvert = false;
-
-        function toggleFiltres() {
-            filtrePanneauOuvert = !filtrePanneauOuvert;
-            document.getElementById('filtrePanneau').style.display = filtrePanneauOuvert ? 'block' : 'none';
-            document.getElementById('filtreChevron').style.transform = filtrePanneauOuvert ? 'rotate(180deg)' : '';
-        }
-
-        function toutCocher(groupe) {
-            document.querySelectorAll(`.filtre-${groupe}`).forEach(cb => cb.checked = true);
-        }
-
-        function toutDecocher(groupe) {
-            document.querySelectorAll(`.filtre-${groupe}`).forEach(cb => cb.checked = false);
-        }
-
-        function getFiltresStatut() {
-            return [...document.querySelectorAll('.filtre-statut:checked')].map(cb => cb.value);
-        }
-
-        function getFiltresPriorite() {
-            return [...document.querySelectorAll('.filtre-priorite:checked')].map(cb => cb.value);
-        }
-
-        function mettreAJourResume() {
-            const parts = [];
-            const client = document.getElementById('filtreClientSearch').value;
-            const site = document.getElementById('filtreSiteSearch').value;
-            const type = document.getElementById('filtreTypeSearch').value;
-            const fabricant = document.getElementById('filtreFabricantSearch').value;
-            const os = document.getElementById('filtreOsSearch').value;
-            const asset = document.getElementById('filtreAsset').value;
-            const cve = document.getElementById('filtreCVE').value;
-            const statuts = getFiltresStatut();
-            const priorites = getFiltresPriorite();
-            if (client) parts.push(`Client: ${client}`);
-            if (site) parts.push(`Site: ${site}`);
-            if (type) parts.push(`Type: ${type}`);
-            if (fabricant) parts.push(`Fabricant: ${fabricant}`);
-            if (os) parts.push(`OS: ${os}`);
-            if (asset) parts.push(`Asset: ${asset}`);
-            if (cve) parts.push(`CVE: ${cve}`);
-            if (statuts.length < 6) parts.push(`Statuts: ${statuts.join(', ')}`);
-            if (priorites.length < 4) parts.push(`Priorités: ${priorites.join(', ')}`);
-            document.getElementById('filtreResume').textContent = parts.length ? parts.join(' · ') : 'Aucun filtre actif';
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        //  SUGGESTION BOX GÉNÉRIQUE
-        // ═══════════════════════════════════════════════════════════════
-        function makeSuggestionBox(inputId, hiddenId, boxId, fetcher, labelFn, onSelect) {
-            const input = document.getElementById(inputId);
-            const hidden = hiddenId ? document.getElementById(hiddenId) : null;
-            const box = document.getElementById(boxId);
-            let debounce;
-
-            async function doSearch() {
-                clearTimeout(debounce);
-                debounce = setTimeout(async () => {
-                    const q = input.value.trim();
-                    try {
-                        const items = await fetcher(q);
-                        box.innerHTML = '';
-                        if (!items.length) {
-                            box.innerHTML = '<div class="suggestion-item text-secondary">Aucun résultat</div>';
-                            box.style.display = 'block';
-                            return;
-                        }
-                        items.slice(0, 20).forEach(item => {
-                            const div = document.createElement('div');
-                            div.className = 'suggestion-item';
-                            div.textContent = labelFn(item);
-                            div.addEventListener('mousedown', e => {
-                                e.preventDefault();
-                                input.value = labelFn(item);
-                                if (hidden) hidden.value = item.id || item.value || labelFn(item);
-                                box.style.display = 'none';
-                                onSelect && onSelect(item);
-                            });
-                            box.appendChild(div);
-                        });
-                        box.style.display = 'block';
-                    } catch (e) { console.error(e); }
-                }, 150);
-            }
-
-            input.addEventListener('focus', doSearch);
-            input.addEventListener('input', () => {
-                if (hidden) hidden.value = '';
-                doSearch();
-            });
-            input.addEventListener('blur', () => setTimeout(() => box.style.display = 'none', 200));
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        //  INIT TYPEAHEADS FILTRES
-        // ═══════════════════════════════════════════════════════════════
-        function initFiltresTypeaheads() {
-            // Client
-            makeSuggestionBox('filtreClientSearch', 'filtreClientId', 'filtreClientSuggestions',
-                q => fetch(`/api/clients/?search=${encodeURIComponent(q)}&limit=20`).then(r => r.json()),
-                i => i.nom
-            );
-
-            // Site (indépendant du client)
-            makeSuggestionBox('filtreSiteSearch', 'filtreSiteId', 'filtreSiteSuggestions',
-                q => fetch(`/api/sites/?search=${encodeURIComponent(q)}&limit=20`).then(r => r.json()),
-                i => i.nom
-            );
-
-            // Type d'équipement
-            makeSuggestionBox('filtreTypeSearch', 'filtreTypeId', 'filtreTypeSuggestions',
-                async q => {
-                    const r = await fetch('/api/equipment-types');
-                    const all = await r.json();
-                    return all.filter(t => !q || t.label.toLowerCase().includes(q.toLowerCase())).slice(0, 20);
-                },
-                i => i.label
-            );
-
-            // Fabricant
-            makeSuggestionBox('filtreFabricantSearch', 'filtreFabricantId', 'filtreFabricantSuggestions',
-                async q => {
-                    const r = await fetch(`/api/vendors?search=${encodeURIComponent(q)}&limit=20`);
-                    const data = await r.json();
-                    return data.vendors || data || [];
-                },
-                i => i.nom
-            );
-
-            // Modèle
-            makeSuggestionBox('filtreModeleSearch', 'filtreModeleId', 'filtreModeleSuggestions',
-                async q => {
-                    const fabricantId = document.getElementById('filtreFabricantId').value;
-                    const params = new URLSearchParams({ limit: 20 });
-                    if (q) params.append('search', q);
-                    if (fabricantId) params.append('vendor_id', fabricantId);
-                    const r = await fetch(`/api/models?${params}`);
-                    const data = await r.json();
-                    return data.models || data || [];
-                },
-                i => i.nom
-            );
-
-            // OS
-            makeSuggestionBox('filtreOsSearch', 'filtreOsId', 'filtreOsSuggestions',
-                async q => {
-                    const params = new URLSearchParams({ limit: 20 });
-                    if (q) params.append('search', q);
-                    const r = await fetch(`/api/os-versions?${params}`);
-                    const data = await r.json();
-                    const noms = [...new Set(data.map(d => d.os_nom))];
-                    return noms.map(n => ({ id: n, nom: n }));
-                },
-                i => i.nom
-            );
-
-            // Version OS (texte libre avec suggestions)
-            makeSuggestionBox('filtreVersionOs', null, 'filtreVersionOsSuggestions',
-                async q => {
-                    const params = new URLSearchParams({ limit: 20 });
-                    if (q) params.append('search', q);
-                    const r = await fetch(`/api/os-versions?${params}`);
-                    const data = await r.json();
-                    return data.filter(d => d.version).map(d => ({ id: d.version, nom: d.version }));
-                },
-                i => i.nom
-            );
-
-            // Firmware
-            makeSuggestionBox('filtreFirmwareSearch', 'filtreFirmwareId', 'filtreFirmwareSuggestions',
-                async q => {
-                    const params = new URLSearchParams({ limit: 20, type_produit: 'firmware' });
-                    if (q) params.append('search', q);
-                    const r = await fetch(`/api/os-versions?${params}`);
-                    const data = await r.json();
-                    return data.map(d => ({ id: d.id, nom: d.version ? `${d.os_nom} ${d.version}` : d.os_nom }));
-                },
-                i => i.nom
-            );
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        //  RÉINITIALISER
-        // ═══════════════════════════════════════════════════════════════
-        function reinitialiserFiltres() {
-            ['filtreClientSearch', 'filtreSiteSearch', 'filtreTypeSearch', 'filtreFabricantSearch',
-                'filtreModeleSearch', 'filtreOsSearch', 'filtreVersionOs', 'filtreFirmwareSearch',
-                'filtreAsset', 'filtreCVE'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = '';
-                });
-            ['filtreClientId', 'filtreSiteId', 'filtreTypeId', 'filtreFabricantId',
-                'filtreModeleId', 'filtreOsId', 'filtreFirmwareId'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = '';
-                });
-            toutCocher('statut');
-            toutCocher('priorite');
-            mettreAJourResume();
-            chargerVulnerabilites();
-        }
-
-        async function chargerVulnerabilites(page = 1) {
-            pageActuelle = page;
-            const skip = (page - 1) * itemsParPage;
-
-            const params = new URLSearchParams({ limit: itemsParPage, skip });
-
-            const clientId = document.getElementById('filtreClientId').value;
-            const siteId = document.getElementById('filtreSiteId').value;
-            const typeId = document.getElementById('filtreTypeId').value;
-            const fabricantId = document.getElementById('filtreFabricantId').value;
-            const modeleId = document.getElementById('filtreModeleId').value;
-            const osNom = document.getElementById('filtreOsSearch').value;
-            const versionOs = document.getElementById('filtreVersionOs').value;
-            const firmware = document.getElementById('filtreFirmwareSearch').value;
-            const asset = document.getElementById('filtreAsset').value;
-            const cve = document.getElementById('filtreCVE').value;
-            const statuts = getFiltresStatut();
-            const priorites = getFiltresPriorite();
-
-            if (clientId) params.append('client_id', clientId);
-            if (siteId) params.append('site_id', siteId);
-            if (typeId) params.append('equipment_type_id', typeId);
-            if (fabricantId) params.append('vendor_id', fabricantId);
-            if (modeleId) params.append('model_id', modeleId);
-            if (osNom) params.append('os_nom', osNom);
-            if (versionOs) params.append('version_os', versionOs);
-            if (firmware) params.append('firmware', firmware);
-            if (asset) params.append('asset_nom', asset);
-            if (cve) params.append('cve_id', cve);
-            statuts.forEach(s => params.append('statut', s));
-            priorites.forEach(p => params.append('priorite', p));
-
-            try {
-                const response = await fetch(`/api/correlations/?${params}`);
-                const data = await response.json();
-                const total = parseInt(response.headers.get('X-Total-Count') || '0');
-                afficherTableau(data);
-                afficherPagination(total);
-                chargerStats();
-                mettreAJourResume();
-            } catch (e) {
-                console.error('Erreur:', e);
-                document.getElementById('tableBody').innerHTML =
-                    '<tr><td colspan="9" class="text-center text-danger">Erreur de chargement</td></tr>';
-            }
-        }
-
-        // Initialisation
-        document.addEventListener('DOMContentLoaded', () => {
-            initFiltresTypeaheads();
-            mettreAJourResume();
-            chargerVulnerabilites();
-        });
-
-        async function chargerStats() {
-            try {
-                const response = await fetch('/api/correlations/stats');
-                const stats = await response.json();
-
-                document.getElementById('stat-total').textContent = stats.total || 0;
-                document.getElementById('stat-critique').textContent = stats.critique || 0;
-                document.getElementById('stat-haute').textContent = stats.haute || 0;
-            } catch (e) {
-                console.error('Erreur stats:', e);
-            }
-        }
-
-        function afficherTableau(data) {
-            const tbody = document.getElementById('tableBody');
-
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" class="text-center">Aucune vulnérabilité trouvée</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = data.map(v => `
-        <tr>
-            <td><code>${v.cve_id || 'N/A'}</code></td>
-            <td>
-                <strong>${v.asset_nom || 'N/A'}</strong><br>
-                <small class="text-muted">${v.type_equipement || ''}</small>
-            </td>
-            <td>
-                <small>
-                    ${v.client_nom || 'N/A'}<br>
-                    📍 ${v.site_nom || 'N/A'}
-                </small>
-            </td>
-            <td><span class="badge badge-${v.statut || 'nouveau'}">${formatStatut(v.statut)}</span></td>
-            <td><span class="badge badge-${v.priorite || 'basse'}">${(v.priorite || 'N/A').toUpperCase()}</span></td>
-            <td>
-                <span class="cvss-wrap" title="${v.cve_description || 'Description non disponible'}">
-                    <span class="badge bg-secondary">${v.cvss_v3_score || 'N/A'}</span>
-                    <small>${v.cvss_v3_severity || ''}</small>
-                </span>
-            </td>
-            <td>
-                ${v.type_correlation === 'affirme'
-                    ? '<span class="text-success">✓ Oui</span>'
-                    : '<span class="text-muted">— Non</span>'}
-            </td>
-            <td>
-                <small>
-                    ${formatDate(v.date_detection)}
-                    ${formatHeure(v.date_detection)}
-                </small>
-            </td>
-            <td>
-                <div class="d-flex gap-1">
-                    <button class="btn btn-sm btn-outline-info" onclick="afficherDetails(${v.id})" title="Détails">
-                        🔍
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="changerStatut(${v.id}, 'faux_positif')" title="Faux positif">
-                        ✖
-                    </button>
-                    <button class="btn btn-sm btn-outline-success" onclick="changerStatut(${v.id}, 'confirme')" title="Confirmer">
-                        ✅
-                    </button>
-                    <button class="btn btn-sm btn-outline-warning" onclick="changerStatut(${v.id}, 'patche')" title="Patcher">
-                        🩹
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
-        }
-
-        function formatStatut(statut) {
-            const labels = {
-                'nouveau': 'Nouveau',
-                'en_analyse': 'En analyse',
-                'confirme': 'Confirmé',
-                'faux_positif': 'Faux positif',
-                'patche': 'Patché'
-            };
-            return labels[statut] || statut || 'N/A';
-        }
-
-        function formatTypeCorrelation(type) {
-            const labels = {
-                'affirme': 'Affirmé',
-                'informatif': 'Informatif'
-            };
-            return labels[type] || type || 'N/A';
-        }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return 'N/A';
-            const d = new Date(dateStr);
-            return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        }
-
-        function formatHeure(dateStr) {
-            if (!dateStr) return '';
-            const d = new Date(dateStr);
-            return `<br><span class="text-muted" style="font-size:0.75em">${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>`;
-        }
-
-        function afficherPagination(total) {
-            const nbPages = Math.ceil(total / itemsParPage);
-            const pagination = document.getElementById('pagination');
-
-            if (nbPages <= 1) {
-                pagination.innerHTML = '';
-                return;
-            }
-
-            let html = '';
-
-            // Bouton précédent
-            html += `<li class="page-item ${pageActuelle === 1 ? 'disabled' : ''}">
-                        <a class="page-link" href="#" onclick="chargerVulnerabilites(${pageActuelle - 1}); return false;">‹</a>
-                     </li>`;
-
-            // Pages
-            const debut = Math.max(1, pageActuelle - 2);
-            const fin = Math.min(nbPages, pageActuelle + 2);
-
-            for (let i = debut; i <= fin; i++) {
-                html += `<li class="page-item ${i === pageActuelle ? 'active' : ''}">
-                            <a class="page-link" href="#" onclick="chargerVulnerabilites(${i}); return false;">${i}</a>
-                         </li>`;
-            }
-
-            // Bouton suivant
-            html += `<li class="page-item ${pageActuelle === nbPages ? 'disabled' : ''}">
-                        <a class="page-link" href="#" onclick="chargerVulnerabilites(${pageActuelle + 1}); return false;">›</a>
-                     </li>`;
-
-            pagination.innerHTML = html;
-        }
-
-        async function afficherDetails(id) {
-            try {
-                const response = await fetch(`/api/correlations/${id}`);
-                const v = await response.json();
-                correlationEnCours = v;
-
-                const modal = new bootstrap.Modal(document.getElementById('modalDetails'));
-                document.getElementById('modalTitle').textContent = `${v.cve_id} — ${v.asset_nom}`;
-
-                document.getElementById('modalBody').innerHTML = `
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h6 class="text-primary">Asset</h6>
-                            <p>
-                                <strong>${v.asset_nom}</strong><br>
-                                Type: ${v.type_equipement || 'N/A'}<br>
-                                OS: ${v.systeme_exploitation || 'N/A'} ${v.version_os || ''}<br>
-                                Firmware: ${v.version_firmware || 'N/A'}<br>
-                                Criticité: ${v.niveau_criticite || 'N/A'}
-                            </p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-primary">Localisation</h6>
-                            <p>
-                                Client: ${v.client_nom || 'N/A'}<br>
-                                Site: ${v.site_nom || 'N/A'}
-                            </p>
-                        </div>
-                    </div>
-
-                    <h6 class="text-primary">CVE ${v.cve_id}</h6>
-                    <p><small>${v.cve_description || 'N/A'}</small></p>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <strong>CVSS v3:</strong> ${v.cvss_v3_score || 'N/A'} (${v.cvss_v3_severity || 'N/A'})<br>
-                            <strong>Vecteur:</strong> <code>${v.cvss_v3_vector || 'N/A'}</code><br>
-                            <strong>Fabricant:</strong> ${v.fabricant || 'N/A'}<br>
-                            <strong>Produit:</strong> ${v.produit || 'N/A'}
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Score contextuel:</strong> ${v.score_contextuel || 'N/A'}<br>
-                            <strong>Air-gap:</strong> ${v.exploitable_air_gap === 1 ? '⚠️ Exploitable' : v.exploitable_air_gap === 0 ? '✓ Non exploitable' : '?'}<br>
-                            <strong>Type:</strong> <span class="badge badge-${v.type_correlation}">${formatTypeCorrelation(v.type_correlation)}</span>
-                        </div>
-                    </div>
-
-                    <h6 class="text-primary">Analyse Mistral</h6>
-                    <div class="card bg-dark p-3 mb-3">
-                        <small>${v.analyse_mistral ? v.analyse_mistral.replace(/\n/g, '<br>') : 'Non disponible'}</small>
-                    </div>
-
-                    <h6 class="text-primary">Risque réel</h6>
-                    <p><small>${v.risque_reel || 'N/A'}</small></p>
-
-                    <hr>
-
-                    <div class="row">
-                        <div class="col-md-4">
-                            <label class="form-label">Statut</label>
-                            <select class="form-select" id="editStatut">
-                                <option value="nouveau" ${v.statut === 'nouveau' ? 'selected' : ''}>Nouveau</option>
-                                <option value="en_analyse" ${v.statut === 'en_analyse' ? 'selected' : ''}>En analyse</option>
-                                <option value="confirme" ${v.statut === 'confirme' ? 'selected' : ''} selected>Confirmé</option>
-                                <option value="faux_positif" ${v.statut === 'faux_positif' ? 'selected' : ''}>Faux positif</option>
-                                <option value="patche" ${v.statut === 'patche' ? 'selected' : ''}>Patché</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Priorité</label>
-                            <select class="form-select" id="editPriorite">
-                                <option value="critique" ${v.priorite === 'critique' ? 'selected' : ''}>Critique</option>
-                                <option value="haute" ${v.priorite === 'haute' ? 'selected' : ''}>Haute</option>
-                                <option value="moyenne" ${v.priorite === 'moyenne' ? 'selected' : ''}>Moyenne</option>
-                                <option value="basse" ${v.priorite === 'basse' ? 'selected' : ''}>Basse</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Override utilisateur</label>
-                            <select class="form-select" id="editOverride">
-                                <option value="">Aucun</option>
-                                <option value="a_patcher" ${v.override_utilisateur === 'a_patcher' ? 'selected' : ''}>À patcher</option>
-                                <option value="informatif" ${v.override_utilisateur === 'informatif' ? 'selected' : ''}>Informatif</option>
-                                <option value="faux_positif" ${v.override_utilisateur === 'faux_positif' ? 'selected' : ''}>Faux positif</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="mt-3">
-                        <label class="form-label">Notes</label>
-                        <textarea class="form-control" id="editNotes" rows="3">${v.notes || ''}</textarea>
-                    </div>
-                `;
-
-                modal.show();
-            } catch (e) {
-                console.error('Erreur:', e);
-                alert('Erreur lors du chargement des détails');
-            }
-        }
-
-        async function sauvegarderModification() {
-            if (!correlationEnCours) return;
-
-            const data = {
-                statut: document.getElementById('editStatut').value,
-                priorite: document.getElementById('editPriorite').value,
-                override_utilisateur: document.getElementById('editOverride').value || null,
-                notes: document.getElementById('editNotes').value
-            };
-
-            try {
-                const response = await fetch(`/api/correlations/${correlationEnCours.id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-                if (response.ok) {
-                    bootstrap.Modal.getInstance(document.getElementById('modalDetails')).hide();
-                    chargerVulnerabilites(pageActuelle);
-                } else {
-                    alert('Erreur lors de la sauvegarde');
-                }
-            } catch (e) {
-                console.error('Erreur:', e);
-                alert('Erreur lors de la sauvegarde');
-            }
-        }
-
-        async function changerStatut(id, nouveauStatut) {
-            try {
-                const response = await fetch(`/api/correlations/${id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ statut: nouveauStatut })
-                });
-
-                if (response.ok) {
-                    chargerVulnerabilites(pageActuelle);
-                } else {
-                    alert('Erreur lors du changement de statut');
-                }
-            } catch (e) {
-                console.error('Erreur:', e);
-                alert('Erreur lors du changement de statut');
-            }
-        }
-
-
-        function ouvrirModalPDF() {
-            document.getElementById('pdfFiltresResume').textContent =
-                document.getElementById('filtreResume').textContent || 'Aucun filtre actif';
-            document.getElementById('pdfResultat').classList.add('d-none');
-            document.getElementById('pdfErreur').classList.add('d-none');
-            document.getElementById('btnGenererPDF').disabled = false;
-            document.getElementById('btnGenererPDF').textContent = '📄 Générer le PDF';
-
-            const now = new Date();
-            const pad = n => String(n).padStart(2, '0');
-            const nomDefaut = `rapport_vuln_${now.getFullYear()}_${pad(now.getMonth() + 1)}_${pad(now.getDate())}_${pad(now.getHours())}_${pad(now.getMinutes())}`;
-            document.getElementById('pdfNomChoisi').value = nomDefaut;
-
-            new bootstrap.Modal(document.getElementById('modalPDF')).show();
-        }
-
-        async function genererPDF() {
-            const champs = [...document.querySelectorAll('.pdf-champ:checked')].map(c => c.value);
-            if (!champs.length) { alert('Sélectionnez au moins un champ.'); return; }
-
-            const btn = document.getElementById('btnGenererPDF');
-            btn.disabled = true;
-            btn.textContent = '⏳ Génération en cours…';
-            document.getElementById('pdfResultat').classList.add('d-none');
-            document.getElementById('pdfErreur').classList.add('d-none');
-
-            const nomChoisi = document.getElementById('pdfNomChoisi').value.trim();
-
-            const payload = {
-                champs,
-                statut: getFiltresStatut(),
-                priorite: getFiltresPriorite(),
-                filename: nomChoisi || null,
-            };
-
-            const clientId = document.getElementById('filtreClientId')?.value;
-            const siteId = document.getElementById('filtreSiteId')?.value;
-            const typeId = document.getElementById('filtreTypeId')?.value;
-            const fabricantId = document.getElementById('filtreFabricantId')?.value;
-            const modeleId = document.getElementById('filtreModeleId')?.value;
-            const osNom = document.getElementById('filtreOsSearch')?.value;
-            const versionOs = document.getElementById('filtreVersionOs')?.value;
-            const firmware = document.getElementById('filtreFirmwareSearch')?.value;
-            const asset = document.getElementById('filtreAsset')?.value;
-            const cve = document.getElementById('filtreCVE')?.value;
-
-            if (clientId) payload.client_id = parseInt(clientId);
-            if (siteId) payload.site_id = parseInt(siteId);
-            if (typeId) payload.equipment_type_id = parseInt(typeId);
-            if (fabricantId) payload.vendor_id = parseInt(fabricantId);
-            if (modeleId) payload.model_id = parseInt(modeleId);
-            if (osNom) payload.os_nom = osNom;
-            if (versionOs) payload.version_os = versionOs;
-            if (firmware) payload.firmware = firmware;
-            if (asset) payload.asset_nom = asset;
-            if (cve) payload.cve_id = cve;
-
-            try {
-                const r = await fetch('/api/rapport/generer', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-                if (!r.ok) {
-                    const err = await r.json();
-                    throw new Error(err.detail || `HTTP ${r.status}`);
-                }
-                const data = await r.json();
-                document.getElementById('pdfNomFichier').textContent = data.filename;
-                document.getElementById('pdfNbVulns').textContent = data.total;
-                document.getElementById('pdfLienTelechargement').href = data.url;
-                document.getElementById('pdfResultat').classList.remove('d-none');
-            } catch (e) {
-                document.getElementById('pdfErreur').textContent = 'Erreur : ' + e.message;
-                document.getElementById('pdfErreur').classList.remove('d-none');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '📄 Générer le PDF';
-            }
-        }
-
-    </script>
-
+    <!-- Modal PDF -->
     <div class="modal fade" id="modalPDF" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content" style="background:#161b22; border-color:#30363d;">
@@ -1318,6 +682,711 @@
             </div>
         </div>
     </div>
+
+    <script src="/static/bootstrap.bundle.min.js"></script>
+    <script src="/static/app-search.js"></script>
+    <script>
+        // ============================================================
+        // DONNÉES GLOBALES
+        // ============================================================
+        let toutesLesVulnerabilites = []; // Stock toutes les vulnérabilités chargées
+        let filtrePanneauOuvert = false;
+        let correlationEnCours = null;
+
+        // ============================================================
+        // FONCTIONS UTILITAIRES
+        // ============================================================
+        function showSuggestionBox(box) { box.style.display = 'block'; }
+        function hideSuggestionBox(box) { box.style.display = 'none'; }
+
+        function formatStatut(statut) {
+            const labels = {
+                'nouveau': 'Nouveau',
+                'en_analyse': 'En analyse',
+                'confirme': 'Confirmé',
+                'faux_positif': 'Faux positif',
+                'patche': 'Patché'
+            };
+            return labels[statut] || statut || 'N/A';
+        }
+
+        function formatTypeCorrelation(type) {
+            const labels = {
+                'affirme': 'Affirmé',
+                'informatif': 'Informatif'
+            };
+            return labels[type] || type || 'N/A';
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function formatHeure(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            return `<br><span class="text-muted" style="font-size:0.75em">${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>`;
+        }
+
+        // ============================================================
+        // GESTION DES FILTRES
+        // ============================================================
+        function toggleFiltres() {
+            filtrePanneauOuvert = !filtrePanneauOuvert;
+            document.getElementById('filtrePanneau').style.display = filtrePanneauOuvert ? 'block' : 'none';
+            document.getElementById('filtreChevron').style.transform = filtrePanneauOuvert ? 'rotate(180deg)' : '';
+        }
+
+        function toutCocher(groupe) {
+            document.querySelectorAll(`.filtre-${groupe}`).forEach(cb => cb.checked = true);
+            updateActiveFilters();
+        }
+
+        function toutDecocher(groupe) {
+            document.querySelectorAll(`.filtre-${groupe}`).forEach(cb => cb.checked = false);
+            updateActiveFilters();
+        }
+
+        function getFiltresStatut() {
+            return [...document.querySelectorAll('.filtre-statut:checked')].map(cb => cb.value);
+        }
+
+        function getFiltresPriorite() {
+            return [...document.querySelectorAll('.filtre-priorite:checked')].map(cb => cb.value);
+        }
+
+        function clearFilter(inputId, hiddenId = null) {
+            document.getElementById(inputId).value = '';
+            if (hiddenId) document.getElementById(hiddenId).value = '';
+            updateActiveFilters();
+            appliquerFiltres();
+        }
+
+        function updateActiveFilters() {
+            const activeFilters = [];
+            const client = document.getElementById('filtreClientSearch').value;
+            const site = document.getElementById('filtreSiteSearch').value;
+            const type = document.getElementById('filtreTypeSearch').value;
+            const fabricant = document.getElementById('filtreFabricantSearch').value;
+            const cve = document.getElementById('filtreCVE').value;
+
+            if (client) activeFilters.push(`Client: ${client} <span class="remove" onclick="clearFilter('filtreClientSearch', 'filtreClientId')">✕</span>`);
+            if (site) activeFilters.push(`Site: ${site} <span class="remove" onclick="clearFilter('filtreSiteSearch', 'filtreSiteId')">✕</span>`);
+            if (type) activeFilters.push(`Type: ${type} <span class="remove" onclick="clearFilter('filtreTypeSearch', 'filtreTypeId')">✕</span>`);
+            if (fabricant) activeFilters.push(`Fabricant: ${fabricant} <span class="remove" onclick="clearFilter('filtreFabricantSearch', 'filtreFabricantId')">✕</span>`);
+            if (cve) activeFilters.push(`CVE: ${cve} <span class="remove" onclick="clearFilter('filtreCVE')">✕</span>`);
+
+            const statuts = getFiltresStatut();
+            if (statuts.length < 5) {
+                activeFilters.push(`Statuts: ${statuts.join(', ')} <span class="remove" onclick="toutCocher('statut')">✕</span>`);
+            }
+
+            const priorites = getFiltresPriorite();
+            if (priorites.length < 4) {
+                activeFilters.push(`Priorités: ${priorites.join(', ')} <span class="remove" onclick="toutCocher('priorite')">✕</span>`);
+            }
+
+            const container = document.getElementById('activeFilters');
+            if (activeFilters.length > 0) {
+                container.innerHTML = activeFilters.map(f => `<span class="filter-tag">${f}</span>`).join('');
+            } else {
+                container.innerHTML = '';
+            }
+
+            mettreAJourResume();
+        }
+
+        function mettreAJourResume() {
+            const parts = [];
+            const client = document.getElementById('filtreClientSearch').value;
+            const site = document.getElementById('filtreSiteSearch').value;
+            const type = document.getElementById('filtreTypeSearch').value;
+            const fabricant = document.getElementById('filtreFabricantSearch').value;
+            const cve = document.getElementById('filtreCVE').value;
+            const statuts = getFiltresStatut();
+            const priorites = getFiltresPriorite();
+
+            if (client) parts.push(`Client: ${client}`);
+            if (site) parts.push(`Site: ${site}`);
+            if (type) parts.push(`Type: ${type}`);
+            if (fabricant) parts.push(`Fabricant: ${fabricant}`);
+            if (cve) parts.push(`CVE: ${cve}`);
+            if (statuts.length < 5) parts.push(`Statuts: ${statuts.join(', ')}`);
+            if (priorites.length < 4) parts.push(`Priorités: ${priorites.join(', ')}`);
+
+            document.getElementById('filtreResume').textContent = parts.length ? parts.join(' · ') : 'Aucun filtre actif';
+        }
+
+        function reinitialiserFiltres() {
+            ['filtreClientSearch', 'filtreSiteSearch', 'filtreTypeSearch', 'filtreFabricantSearch', 'filtreCVE'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            ['filtreClientId', 'filtreSiteId', 'filtreTypeId', 'filtreFabricantId'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            toutCocher('statut');
+            toutCocher('priorite');
+            updateActiveFilters();
+            afficherVulnerabilites(toutesLesVulnerabilites);
+        }
+
+        // ============================================================
+        // FILTRAGE CÔTÉ CLIENT
+        // ============================================================
+        function appliquerFiltres() {
+            const clientId = document.getElementById('filtreClientId').value;
+            const clientNom = document.getElementById('filtreClientSearch').value.toLowerCase();
+            const siteId = document.getElementById('filtreSiteId').value;
+            const siteNom = document.getElementById('filtreSiteSearch').value.toLowerCase();
+            const typeId = document.getElementById('filtreTypeId').value;
+            const typeNom = document.getElementById('filtreTypeSearch').value.toLowerCase();
+            const fabricantId = document.getElementById('filtreFabricantId').value;
+            const fabricantNom = document.getElementById('filtreFabricantSearch').value.toLowerCase();
+            const cve = document.getElementById('filtreCVE').value.toLowerCase();
+            const statuts = getFiltresStatut();
+            const priorites = getFiltresPriorite();
+
+            const vulnsFiltrees = toutesLesVulnerabilites.filter(v => {
+                // Filtre par client (ID ou nom)
+                if (clientId && v.client_id != clientId) return false;
+                if (clientNom && !v.client_nom.toLowerCase().includes(clientNom)) return false;
+
+                // Filtre par site (ID ou nom)
+                if (siteId && v.site_id != siteId) return false;
+                if (siteNom && !v.site_nom.toLowerCase().includes(siteNom)) return false;
+
+                // Filtre par type d'équipement (ID ou nom)
+                if (typeId && v.type_equipement_id != typeId) return false;
+                if (typeNom && !v.type_equipement.toLowerCase().includes(typeNom)) return false;
+
+                // Filtre par fabricant (ID ou nom)
+                if (fabricantId && v.vendor_id != fabricantId) return false;
+                if (fabricantNom && !v.fabricant.toLowerCase().includes(fabricantNom)) return false;
+
+                // Filtre par CVE
+                if (cve && !v.cve_id.toLowerCase().includes(cve)) return false;
+
+                // Filtre par statut
+                if (statuts.length > 0 && !statuts.includes(v.statut)) return false;
+
+                // Filtre par priorité
+                if (priorites.length > 0 && !priorites.includes(v.priorite)) return false;
+
+                return true;
+            });
+
+            afficherVulnerabilites(vulnsFiltrees);
+            updateActiveFilters();
+        }
+
+        // ============================================================
+        // AFFICHAGE HIÉRARCHIQUE
+        // ============================================================
+        function afficherVulnerabilites(vulns) {
+            // Mise à jour des statistiques
+            chargerStats(vulns);
+
+            // Regrouper les vulnérabilités par client, puis par site, puis par asset
+            const parClient = {};
+            vulns.forEach(v => {
+                const clientKey = v.client_id || 'sans_client';
+                const siteKey = v.site_id || 'sans_site';
+                const assetKey = v.asset_id || 'sans_asset';
+
+                if (!parClient[clientKey]) {
+                    parClient[clientKey] = {
+                        client: v.client_nom || 'Client inconnu',
+                        client_id: v.client_id,
+                        sites: {}
+                    };
+                }
+
+                if (!parClient[clientKey].sites[siteKey]) {
+                    parClient[clientKey].sites[siteKey] = {
+                        site: v.site_nom || 'Site inconnu',
+                        site_id: v.site_id,
+                        assets: {}
+                    };
+                }
+
+                if (!parClient[clientKey].sites[siteKey].assets[assetKey]) {
+                    parClient[clientKey].sites[siteKey].assets[assetKey] = {
+                        asset: v.asset_nom || 'Asset inconnu',
+                        asset_id: v.asset_id,
+                        type: v.type_equipement || 'N/A',
+                        ip: v.asset_ip || 'N/A',
+                        vulns: []
+                    };
+                }
+
+                parClient[clientKey].sites[siteKey].assets[assetKey].vulns.push(v);
+            });
+
+            // Générer le HTML
+            let html = '';
+            for (const clientKey in parClient) {
+                const client = parClient[clientKey];
+                html += `
+                    <div class="client-card p-3 mb-4">
+                        <h4 class="d-flex align-items-center">
+                            <span>👥 ${client.client}</span>
+                            <span class="badge bg-secondary ms-2">${Object.values(client.sites).reduce((acc, site) => acc + Object.values(site.assets).reduce((acc2, asset) => acc2 + asset.vulns.length, 0), 0)} vulnérabilités</span>
+                        </h4>
+                `;
+
+                for (const siteKey in client.sites) {
+                    const site = client.sites[siteKey];
+                    html += `
+                        <div class="site-card p-3 mt-3">
+                            <h5 class="d-flex align-items-center">
+                                <span>🏢 ${site.site}</span>
+                                <span class="badge bg-secondary ms-2">${Object.values(site.assets).reduce((acc, asset) => acc + asset.vulns.length, 0)} vulnérabilités</span>
+                            </h5>
+                    `;
+
+                    for (const assetKey in site.assets) {
+                        const asset = site.assets[assetKey];
+                        const assetVulnsCount = asset.vulns.length;
+                        const critCount = asset.vulns.filter(v => v.priorite === 'critique').length;
+                        const highCount = asset.vulns.filter(v => v.priorite === 'haute').length;
+                        const medCount = asset.vulns.filter(v => v.priorite === 'moyenne').length;
+                        const lowCount = asset.vulns.filter(v => v.priorite === 'basse').length;
+
+                        html += `
+                            <div class="asset-card mt-2">
+                                <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
+                                    <div class="d-flex align-items-center">
+                                        <span>💻 ${asset.asset}</span>
+                                        <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
+                                        <div class="ms-3">
+                                            ${critCount > 0 ? `<span class="badge badge-critique">${critCount} Critique</span>` : ''}
+                                            ${highCount > 0 ? `<span class="badge badge-haute">${highCount} Haute</span>` : ''}
+                                            ${medCount > 0 ? `<span class="badge badge-moyenne">${medCount} Moyenne</span>` : ''}
+                                            ${lowCount > 0 ? `<span class="badge badge-basse">${lowCount} Basse</span>` : ''}
+                                            ${assetVulnsCount > 0 ? `<span class="badge bg-secondary">${assetVulnsCount} total</span>` : ''}
+                                        </div>
+                                    </div>
+                                    <span class="chevron" id="chevron-${clientKey}-${siteKey}-${assetKey}">▼</span>
+                                </div>
+                                <div class="vuln-list" id="vuln-list-${clientKey}-${siteKey}-${assetKey}">
+                        `;
+
+                        // Trier les vulnérabilités par priorité (critique > haute > moyenne > basse)
+                        const sortedVulns = asset.vulns.sort((a, b) => {
+                            const priorityOrder = { critique: 0, haute: 1, moyenne: 2, basse: 3 };
+                            return (priorityOrder[a.priorite] || 4) - (priorityOrder[b.priorite] || 4);
+                        });
+
+                        sortedVulns.forEach(v => {
+                            html += `
+                                <div class="vuln-item">
+                                    <div class="d-flex flex-column">
+                                        <div>
+                                            <code class="me-2">${v.cve_id || 'N/A'}</code>
+                                            <span class="badge badge-${v.priorite}">${(v.priorite || 'N/A').charAt(0).toUpperCase() + (v.priorite || 'N/A').slice(1)}</span>
+                                            <span class="badge badge-${v.statut} ms-1">${formatStatut(v.statut)}</span>
+                                            ${v.cvss_v3_score ? `<span class="badge bg-secondary ms-1">CVSS: ${v.cvss_v3_score}</span>` : ''}
+                                        </div>
+                                        <small class="text-muted mt-1">${v.cve_description ? v.cve_description.substring(0, 100) + (v.cve_description.length > 100 ? '...' : '') : 'N/A'}</small>
+                                    </div>
+                                    <div class="vuln-actions">
+                                        <button class="btn btn-sm btn-outline-info" onclick="afficherDetails(${v.id})" title="Détails">🔍</button>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="changerStatut(${v.id}, 'faux_positif')" title="Faux positif">✖</button>
+                                        <button class="btn btn-sm btn-outline-success" onclick="changerStatut(${v.id}, 'confirme')" title="Confirmer">✅</button>
+                                        <button class="btn btn-sm btn-outline-warning" onclick="changerStatut(${v.id}, 'patche')" title="Patcher">🩹</button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    html += `</div>`;
+                }
+
+                html += `</div>`;
+            }
+
+            if (!html) {
+                html = '<div class="text-center text-muted py-5">Aucune vulnérabilité trouvée avec les filtres actuels.</div>';
+            }
+
+            document.getElementById('hierarchicalView').innerHTML = html;
+        }
+
+        function toggleAssetVulns(assetId) {
+            const list = document.getElementById(`vuln-list-${assetId}`);
+            const chevron = document.getElementById(`chevron-${assetId}`);
+
+            if (list.classList.contains('show')) {
+                list.classList.remove('show');
+                chevron.classList.remove('rotate');
+            } else {
+                list.classList.add('show');
+                chevron.classList.add('rotate');
+            }
+        }
+
+        // ============================================================
+        // CHARGEMENT DES DONNÉES
+        // ============================================================
+        async function chargerToutesLesVulnerabilites() {
+            try {
+                const response = await fetch('/api/correlations/');
+                const data = await response.json();
+                toutesLesVulnerabilites = data;
+                afficherVulnerabilites(toutesLesVulnerabilites);
+            } catch (e) {
+                console.error('Erreur:', e);
+                document.getElementById('hierarchicalView').innerHTML =
+                    '<div class="text-center text-danger py-5">Erreur de chargement des vulnérabilités</div>';
+            }
+        }
+
+        async function chargerStats(vulns) {
+            const stats = {
+                total: vulns.length,
+                critique: vulns.filter(v => v.priorite === 'critique').length,
+                haute: vulns.filter(v => v.priorite === 'haute').length
+            };
+
+            document.getElementById('stat-total').textContent = stats.total || 0;
+            document.getElementById('stat-critique').textContent = stats.critique || 0;
+            document.getElementById('stat-haute').textContent = stats.haute || 0;
+        }
+
+        // ============================================================
+        // TYPEAHEADS POUR LES FILTRES
+        // ============================================================
+        function makeSuggestionBox(inputId, hiddenId, boxId, fetcher, labelFn, onSelect) {
+            const input = document.getElementById(inputId);
+            const hidden = hiddenId ? document.getElementById(hiddenId) : null;
+            const box = document.getElementById(boxId);
+            let debounce;
+
+            async function doSearch() {
+                clearTimeout(debounce);
+                debounce = setTimeout(async () => {
+                    const q = input.value.trim();
+                    try {
+                        const items = await fetcher(q);
+                        box.innerHTML = '';
+                        if (!items.length) {
+                            box.innerHTML = '<div class="suggestion-item text-secondary">Aucun résultat</div>';
+                            box.style.display = 'block';
+                            return;
+                        }
+                        items.slice(0, 20).forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'suggestion-item';
+                            div.textContent = labelFn(item);
+                            div.addEventListener('mousedown', e => {
+                                e.preventDefault();
+                                input.value = labelFn(item);
+                                if (hidden) hidden.value = item.id || item.value || labelFn(item);
+                                box.style.display = 'none';
+                                onSelect && onSelect(item);
+                                updateActiveFilters();
+                            });
+                            box.appendChild(div);
+                        });
+                        box.style.display = 'block';
+                    } catch (e) { console.error(e); }
+                }, 150);
+            }
+
+            input.addEventListener('focus', doSearch);
+            input.addEventListener('input', () => {
+                if (hidden) hidden.value = '';
+                doSearch();
+            });
+            input.addEventListener('blur', () => setTimeout(() => box.style.display = 'none', 200));
+        }
+
+        function initFiltresTypeaheads() {
+            // Client
+            makeSuggestionBox('filtreClientSearch', 'filtreClientId', 'filtreClientSuggestions',
+                q => fetch(`/api/clients/?search=${encodeURIComponent(q)}&limit=20`).then(r => r.json()),
+                i => i.nom
+            );
+
+            // Site
+            makeSuggestionBox('filtreSiteSearch', 'filtreSiteId', 'filtreSiteSuggestions',
+                q => fetch(`/api/sites/?search=${encodeURIComponent(q)}&limit=20`).then(r => r.json()),
+                i => i.nom
+            );
+
+            // Type d'équipement
+            makeSuggestionBox('filtreTypeSearch', 'filtreTypeId', 'filtreTypeSuggestions',
+                async q => {
+                    const r = await fetch('/api/equipment-types');
+                    const all = await r.json();
+                    return all.filter(t => !q || t.label.toLowerCase().includes(q.toLowerCase())).slice(0, 20);
+                },
+                i => i.label
+            );
+
+            // Fabricant
+            makeSuggestionBox('filtreFabricantSearch', 'filtreFabricantId', 'filtreFabricantSuggestions',
+                async q => {
+                    const r = await fetch(`/api/vendors?search=${encodeURIComponent(q)}&limit=20`);
+                    const data = await r.json();
+                    return data.vendors || data || [];
+                },
+                i => i.nom
+            );
+        }
+
+        // Fermer les suggestions quand on clique ailleurs
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.suggestion-box').forEach(b => hideSuggestionBox(b));
+        });
+
+        // ============================================================
+        // MODAL DÉTAILS
+        // ============================================================
+        async function afficherDetails(id) {
+            try {
+                const response = await fetch(`/api/correlations/${id}`);
+                const v = await response.json();
+                correlationEnCours = v;
+
+                const modal = new bootstrap.Modal(document.getElementById('modalDetails'));
+                document.getElementById('modalTitle').textContent = `${v.cve_id} — ${v.asset_nom}`;
+
+                document.getElementById('modalBody').innerHTML = `
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Asset</h6>
+                            <p>
+                                <strong>${v.asset_nom}</strong><br>
+                                Type: ${v.type_equipement || 'N/A'}<br>
+                                OS: ${v.systeme_exploitation || 'N/A'} ${v.version_os || ''}<br>
+                                Firmware: ${v.version_firmware || 'N/A'}<br>
+                                Criticité: ${v.niveau_criticite || 'N/A'}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Localisation</h6>
+                            <p>
+                                Client: ${v.client_nom || 'N/A'}<br>
+                                Site: ${v.site_nom || 'N/A'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <h6 class="text-primary">CVE ${v.cve_id}</h6>
+                    <p><small>${v.cve_description || 'N/A'}</small></p>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>CVSS v3:</strong> ${v.cvss_v3_score || 'N/A'} (${v.cvss_v3_severity || 'N/A'})<br>
+                            <strong>Vecteur:</strong> <code>${v.cvss_v3_vector || 'N/A'}</code><br>
+                            <strong>Fabricant:</strong> ${v.fabricant || 'N/A'}<br>
+                            <strong>Produit:</strong> ${v.produit || 'N/A'}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Score contextuel:</strong> ${v.score_contextuel || 'N/A'}<br>
+                            <strong>Air-gap:</strong> ${v.exploitable_air_gap === 1 ? '⚠️ Exploitable' : v.exploitable_air_gap === 0 ? '✓ Non exploitable' : '?'}<br>
+                            <strong>Type:</strong> <span class="badge badge-${v.type_correlation}">${formatTypeCorrelation(v.type_correlation)}</span>
+                        </div>
+                    </div>
+
+                    <h6 class="text-primary">Analyse Mistral</h6>
+                    <div class="card bg-dark p-3 mb-3">
+                        <small>${v.analyse_mistral ? v.analyse_mistral.replace(/\n/g, '<br>') : 'Non disponible'}</small>
+                    </div>
+
+                    <h6 class="text-primary">Risque réel</h6>
+                    <p><small>${v.risque_reel || 'N/A'}</small></p>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Statut</label>
+                            <select class="form-select" id="editStatut">
+                                <option value="nouveau" ${v.statut === 'nouveau' ? 'selected' : ''}>Nouveau</option>
+                                <option value="en_analyse" ${v.statut === 'en_analyse' ? 'selected' : ''}>En analyse</option>
+                                <option value="confirme" ${v.statut === 'confirme' ? 'selected' : ''}>Confirmé</option>
+                                <option value="faux_positif" ${v.statut === 'faux_positif' ? 'selected' : ''}>Faux positif</option>
+                                <option value="patche" ${v.statut === 'patche' ? 'selected' : ''}>Patché</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Priorité</label>
+                            <select class="form-select" id="editPriorite">
+                                <option value="critique" ${v.priorite === 'critique' ? 'selected' : ''}>Critique</option>
+                                <option value="haute" ${v.priorite === 'haute' ? 'selected' : ''}>Haute</option>
+                                <option value="moyenne" ${v.priorite === 'moyenne' ? 'selected' : ''}>Moyenne</option>
+                                <option value="basse" ${v.priorite === 'basse' ? 'selected' : ''}>Basse</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Override utilisateur</label>
+                            <select class="form-select" id="editOverride">
+                                <option value="">Aucun</option>
+                                <option value="a_patcher" ${v.override_utilisateur === 'a_patcher' ? 'selected' : ''}>À patcher</option>
+                                <option value="informatif" ${v.override_utilisateur === 'informatif' ? 'selected' : ''}>Informatif</option>
+                                <option value="faux_positif" ${v.override_utilisateur === 'faux_positif' ? 'selected' : ''}>Faux positif</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="editNotes" rows="3">${v.notes || ''}</textarea>
+                    </div>
+                `;
+
+                modal.show();
+            } catch (e) {
+                console.error('Erreur:', e);
+                alert('Erreur lors du chargement des détails');
+            }
+        }
+
+        async function sauvegarderModification() {
+            if (!correlationEnCours) return;
+
+            const data = {
+                statut: document.getElementById('editStatut').value,
+                priorite: document.getElementById('editPriorite').value,
+                override_utilisateur: document.getElementById('editOverride').value || null,
+                notes: document.getElementById('editNotes').value
+            };
+
+            try {
+                const response = await fetch(`/api/correlations/${correlationEnCours.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('modalDetails')).hide();
+                    // Recharger les données pour mettre à jour l'affichage
+                    chargerToutesLesVulnerabilites();
+                } else {
+                    alert('Erreur lors de la sauvegarde');
+                }
+            } catch (e) {
+                console.error('Erreur:', e);
+                alert('Erreur lors de la sauvegarde');
+            }
+        }
+
+        async function changerStatut(id, nouveauStatut) {
+            try {
+                const response = await fetch(`/api/correlations/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ statut: nouveauStatut })
+                });
+
+                if (response.ok) {
+                    // Recharger les données pour mettre à jour l'affichage
+                    chargerToutesLesVulnerabilites();
+                } else {
+                    alert('Erreur lors du changement de statut');
+                }
+            } catch (e) {
+                console.error('Erreur:', e);
+                alert('Erreur lors du changement de statut');
+            }
+        }
+
+        // ============================================================
+        // MODAL PDF
+        // ============================================================
+        function ouvrirModalPDF() {
+            document.getElementById('pdfFiltresResume').textContent =
+                document.getElementById('filtreResume').textContent || 'Aucun filtre actif';
+            document.getElementById('pdfResultat').classList.add('d-none');
+            document.getElementById('pdfErreur').classList.add('d-none');
+            document.getElementById('btnGenererPDF').disabled = false;
+            document.getElementById('btnGenererPDF').textContent = '📄 Générer le PDF';
+
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const nomDefaut = `rapport_vuln_${now.getFullYear()}_${pad(now.getMonth() + 1)}_${pad(now.getDate())}_${pad(now.getHours())}_${pad(now.getMinutes())}`;
+            document.getElementById('pdfNomChoisi').value = nomDefaut;
+
+            new bootstrap.Modal(document.getElementById('modalPDF')).show();
+        }
+
+        async function genererPDF() {
+            const champs = [...document.querySelectorAll('.pdf-champ:checked')].map(c => c.value);
+            if (!champs.length) { alert('Sélectionnez au moins un champ.'); return; }
+
+            const btn = document.getElementById('btnGenererPDF');
+            btn.disabled = true;
+            btn.textContent = '⏳ Génération en cours…';
+            document.getElementById('pdfResultat').classList.add('d-none');
+            document.getElementById('pdfErreur').classList.add('d-none');
+
+            const nomChoisi = document.getElementById('pdfNomChoisi').value.trim();
+
+            const payload = {
+                champs,
+                statut: getFiltresStatut(),
+                priorite: getFiltresPriorite(),
+                filename: nomChoisi || null,
+            };
+
+            const clientId = document.getElementById('filtreClientId')?.value;
+            const siteId = document.getElementById('filtreSiteId')?.value;
+            const typeId = document.getElementById('filtreTypeId')?.value;
+            const fabricantId = document.getElementById('filtreFabricantId')?.value;
+            const cve = document.getElementById('filtreCVE')?.value;
+
+            if (clientId) payload.client_id = parseInt(clientId);
+            if (siteId) payload.site_id = parseInt(siteId);
+            if (typeId) payload.equipment_type_id = parseInt(typeId);
+            if (fabricantId) payload.vendor_id = parseInt(fabricantId);
+            if (cve) payload.cve_id = cve;
+
+            try {
+                const r = await fetch('/api/rapport/generer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                if (!r.ok) {
+                    const err = await r.json();
+                    throw new Error(err.detail || `HTTP ${r.status}`);
+                }
+                const data = await r.json();
+                document.getElementById('pdfNomFichier').textContent = data.filename;
+                document.getElementById('pdfNbVulns').textContent = data.total;
+                document.getElementById('pdfLienTelechargement').href = data.url;
+                document.getElementById('pdfResultat').classList.remove('d-none');
+            } catch (e) {
+                document.getElementById('pdfErreur').textContent = 'Erreur : ' + e.message;
+                document.getElementById('pdfErreur').classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📄 Générer le PDF';
+            }
+        }
+
+        // ============================================================
+        // INITIALISATION
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            initFiltresTypeaheads();
+            updateActiveFilters();
+            chargerToutesLesVulnerabilites();
+        });
+    </script>
 </body>
 
 </html>
