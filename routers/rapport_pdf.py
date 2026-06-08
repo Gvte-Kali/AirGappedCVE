@@ -53,6 +53,7 @@ class RapportRequest(BaseModel):
     champs: Optional[List[str]] = None
     # Nom personnalisé du fichier de sortie
     filename: Optional[str] = None
+    view_type: Optional[str] = "full"
 
 
 CHAMPS_DISPONIBLES = [

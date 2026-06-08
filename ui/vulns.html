@@ -706,7 +706,7 @@
                                 class="small text-muted">Tout décocher</a>
                         </div>
                     </div>
-                    <!-- Type de vue -->
+                    <!-- Type de rapport -->
                     <div class="mb-3">
                         <label class="form-label stat-label">Type de rapport</label>
                         <div class="d-flex gap-3">
@@ -1609,12 +1609,14 @@
             document.getElementById('pdfErreur').classList.add('d-none');
 
             const nomChoisi = document.getElementById('pdfNomChoisi').value.trim();
+            const viewType = document.querySelector('input[name="pdfViewType"]:checked').value;
 
             const payload = {
                 champs,
                 statut: getFiltresStatut(),
                 priorite: getFiltresPriorite(),
                 filename: nomChoisi || null,
+                view_type: viewType,
             };
 
             const clientId = document.getElementById('filtreClientId')?.value;
