@@ -228,6 +228,61 @@
             padding: 2px 6px;
             font-size: 0.8rem;
         }
+
+        /* ===== NOUVEAUX STYLES POUR LE PLIAGE/DEPLIAGE ===== */
+        .client-header,
+        .site-header {
+            cursor: pointer;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 6px;
+        }
+
+        .client-header:hover,
+        .site-header:hover {
+            background-color: #1f262d;
+        }
+
+        .chevron-client,
+        .chevron-site {
+            transition: transform 0.2s;
+            font-size: 1.2rem;
+        }
+
+        .chevron-client.rotate,
+        .chevron-site.rotate {
+            transform: rotate(90deg);
+        }
+
+        .client-content,
+        .site-content {
+            display: none;
+            padding: 10px;
+            border-top: 1px solid #30363d;
+            background-color: #0d1117;
+        }
+
+        .client-content.show,
+        .site-content.show {
+            display: block;
+        }
+
+        /* Boutons "Tout plier/déplier" */
+        .toggle-all-btn {
+            font-size: 0.8rem;
+            color: #58a6ff;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 2px 6px;
+            margin-left: 8px;
+        }
+
+        .toggle-all-btn:hover {
+            color: #79c0ff;
+        }
     </style>
 </head>
 
@@ -926,27 +981,68 @@
                 parClient[clientKey].sites[siteKey].assets[assetKey].vulns.push(v);
             });
 
-            // Générer le HTML
+            // Générer le HTML avec pliage/dépliage
             let html = '';
+
+            // ============================================
+            // EN-TÊTE GLOBAL POUR TOUS LES CLIENTS
+            // ============================================
+            html += `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="section-title m-0">Clients</h6>
+            <button class="toggle-all-btn" onclick="toggleAllClients()">
+                <span id="toggleAllClientsText">📁 Tout plier</span>
+            </button>
+        </div>
+    `;
+
             for (const clientKey in parClient) {
                 const client = parClient[clientKey];
+                const clientTotalVulns = Object.values(client.sites).reduce(
+                    (acc, site) => acc + Object.values(site.assets).reduce(
+                        (acc2, asset) => acc2 + asset.vulns.length, 0
+                    ), 0
+                );
+
                 html += `
-                    <div class="client-card p-3 mb-4">
-                        <h4 class="d-flex align-items-center">
-                            <span>👥 ${client.client}</span>
-                            <span class="badge bg-secondary ms-2">${Object.values(client.sites).reduce((acc, site) => acc + Object.values(site.assets).reduce((acc2, asset) => acc2 + asset.vulns.length, 0), 0)} vulnérabilités</span>
-                        </h4>
-                `;
+            <div class="client-card p-3 mb-4">
+                <div class="client-header" onclick="toggleClient('${clientKey}')">
+                    <div class="d-flex align-items-center">
+                        <span>👥 ${client.client}</span>
+                        <span class="badge bg-secondary ms-2">${clientTotalVulns} vulnérabilités</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="chevron-client" id="chevron-client-${clientKey}">▼</span>
+                        <button class="toggle-all-btn" onclick="event.stopPropagation(); toggleAllSitesInClient('${clientKey}')">
+                            <span id="toggleAllSitesText-${clientKey}">📁 Tout plier</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="client-content" id="content-client-${clientKey}">
+        `;
 
                 for (const siteKey in client.sites) {
                     const site = client.sites[siteKey];
+                    const siteTotalVulns = Object.values(site.assets).reduce(
+                        (acc, asset) => acc + asset.vulns.length, 0
+                    );
+
                     html += `
-                        <div class="site-card p-3 mt-3">
-                            <h5 class="d-flex align-items-center">
-                                <span>🏢 ${site.site}</span>
-                                <span class="badge bg-secondary ms-2">${Object.values(site.assets).reduce((acc, asset) => acc + asset.vulns.length, 0)} vulnérabilités</span>
-                            </h5>
-                    `;
+                <div class="site-card p-3 mt-3 ms-3">
+                    <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
+                        <div class="d-flex align-items-center">
+                            <span>🏢 ${site.site}</span>
+                            <span class="badge bg-secondary ms-2">${siteTotalVulns} vulnérabilités</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="chevron-site" id="chevron-site-${clientKey}-${siteKey}">▼</span>
+                            <button class="toggle-all-btn" onclick="event.stopPropagation(); toggleAllAssetsInSite('${clientKey}', '${siteKey}')">
+                                <span id="toggleAllAssetsText-${clientKey}-${siteKey}">📁 Tout plier</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="site-content" id="content-site-${clientKey}-${siteKey}">
+            `;
 
                     for (const assetKey in site.assets) {
                         const asset = site.assets[assetKey];
@@ -957,25 +1053,25 @@
                         const lowCount = asset.vulns.filter(v => v.priorite === 'basse').length;
 
                         html += `
-                            <div class="asset-card mt-2">
-                                <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
-                                    <div class="d-flex align-items-center">
-                                        <span>💻 ${asset.asset}</span>
-                                        <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
-                                        <div class="ms-3">
-                                            ${critCount > 0 ? `<span class="badge badge-critique">${critCount} Critique</span>` : ''}
-                                            ${highCount > 0 ? `<span class="badge badge-haute">${highCount} Haute</span>` : ''}
-                                            ${medCount > 0 ? `<span class="badge badge-moyenne">${medCount} Moyenne</span>` : ''}
-                                            ${lowCount > 0 ? `<span class="badge badge-basse">${lowCount} Basse</span>` : ''}
-                                            ${assetVulnsCount > 0 ? `<span class="badge bg-secondary">${assetVulnsCount} total</span>` : ''}
-                                        </div>
-                                    </div>
-                                    <span class="chevron" id="chevron-${clientKey}-${siteKey}-${assetKey}">▼</span>
+                    <div class="asset-card mt-2 ms-3">
+                        <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
+                            <div class="d-flex align-items-center">
+                                <span>💻 ${asset.asset}</span>
+                                <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
+                                <div class="ms-3">
+                                    ${critCount > 0 ? `<span class="badge badge-critique">${critCount} Critique</span>` : ''}
+                                    ${highCount > 0 ? `<span class="badge badge-haute">${highCount} Haute</span>` : ''}
+                                    ${medCount > 0 ? `<span class="badge badge-moyenne">${medCount} Moyenne</span>` : ''}
+                                    ${lowCount > 0 ? `<span class="badge badge-basse">${lowCount} Basse</span>` : ''}
+                                    ${assetVulnsCount > 0 ? `<span class="badge bg-secondary">${assetVulnsCount} total</span>` : ''}
                                 </div>
-                                <div class="vuln-list" id="vuln-list-${clientKey}-${siteKey}-${assetKey}">
-                        `;
+                            </div>
+                            <span class="chevron" id="chevron-${clientKey}-${siteKey}-${assetKey}">▼</span>
+                        </div>
+                        <div class="vuln-list" id="vuln-list-${clientKey}-${siteKey}-${assetKey}">
+                `;
 
-                        // Trier les vulnérabilités par priorité (critique > haute > moyenne > basse)
+                        // Trier les vulnérabilités par priorité
                         const sortedVulns = asset.vulns.sort((a, b) => {
                             const priorityOrder = { critique: 0, haute: 1, moyenne: 2, basse: 3 };
                             return (priorityOrder[a.priorite] || 4) - (priorityOrder[b.priorite] || 4);
@@ -983,36 +1079,36 @@
 
                         sortedVulns.forEach(v => {
                             html += `
-                                <div class="vuln-item">
-                                    <div class="d-flex flex-column">
-                                        <div>
-                                            <code class="me-2">${v.cve_id || 'N/A'}</code>
-                                            <span class="badge badge-${v.priorite}">${(v.priorite || 'N/A').charAt(0).toUpperCase() + (v.priorite || 'N/A').slice(1)}</span>
-                                            <span class="badge badge-${v.statut} ms-1">${formatStatut(v.statut)}</span>
-                                            ${v.cvss_v3_score ? `<span class="badge bg-secondary ms-1">CVSS: ${v.cvss_v3_score}</span>` : ''}
-                                        </div>
-                                        <small class="text-muted mt-1">${v.cve_description ? v.cve_description.substring(0, 100) + (v.cve_description.length > 100 ? '...' : '') : 'N/A'}</small>
-                                    </div>
-                                    <div class="vuln-actions">
-                                        <button class="btn btn-sm btn-outline-info" onclick="afficherDetails(${v.id})" title="Détails">🔍</button>
-                                        <button class="btn btn-sm btn-outline-secondary" onclick="changerStatut(${v.id}, 'faux_positif')" title="Faux positif">✖</button>
-                                        <button class="btn btn-sm btn-outline-success" onclick="changerStatut(${v.id}, 'confirme')" title="Confirmer">✅</button>
-                                        <button class="btn btn-sm btn-outline-warning" onclick="changerStatut(${v.id}, 'patche')" title="Patcher">🩹</button>
-                                    </div>
+                        <div class="vuln-item">
+                            <div class="d-flex flex-column">
+                                <div>
+                                    <code class="me-2">${v.cve_id || 'N/A'}</code>
+                                    <span class="badge badge-${v.priorite}">${(v.priorite || 'N/A').charAt(0).toUpperCase() + (v.priorite || 'N/A').slice(1)}</span>
+                                    <span class="badge badge-${v.statut} ms-1">${formatStatut(v.statut)}</span>
+                                    ${v.cvss_v3_score ? `<span class="badge bg-secondary ms-1">CVSS: ${v.cvss_v3_score}</span>` : ''}
                                 </div>
-                            `;
+                                <small class="text-muted mt-1">${v.cve_description ? v.cve_description.substring(0, 100) + (v.cve_description.length > 100 ? '...' : '') : 'N/A'}</small>
+                            </div>
+                            <div class="vuln-actions">
+                                <button class="btn btn-sm btn-outline-info" onclick="afficherDetails(${v.id})" title="Détails">🔍</button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="changerStatut(${v.id}, 'faux_positif')" title="Faux positif">✖</button>
+                                <button class="btn btn-sm btn-outline-success" onclick="changerStatut(${v.id}, 'confirme')" title="Confirmer">✅</button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="changerStatut(${v.id}, 'patche')" title="Patcher">🩹</button>
+                            </div>
+                        </div>
+                    `;
                         });
 
                         html += `
-                                </div>
-                            </div>
-                        `;
+                        </div>
+                    </div>
+                `;
                     }
 
-                    html += `</div>`;
+                    html += `</div></div>`;
                 }
 
-                html += `</div>`;
+                html += `</div></div>`;
             }
 
             if (!html) {
@@ -1020,6 +1116,132 @@
             }
 
             document.getElementById('hierarchicalView').innerHTML = html;
+
+            // ============================================
+            // TOUT PLIER PAR DÉFAUT (après application des filtres)
+            // ============================================
+            document.querySelectorAll('.client-content, .site-content, .vuln-list').forEach(el => {
+                el.classList.remove('show');
+                const id = el.id.replace('content-', '').replace('vuln-list-', '');
+                const chevron = document.getElementById(`chevron-${id}`);
+                if (chevron) chevron.classList.remove('rotate');
+            });
+        }
+
+        function addToggleAllButtons() {
+            // Bouton "Tout plier/déplier" pour les CLIENTS
+            const clientsContainer = document.getElementById('hierarchicalView');
+            if (clientsContainer) {
+                const clientsHeader = document.createElement('div');
+                clientsHeader.className = 'd-flex justify-content-between align-items-center mb-2';
+                clientsHeader.innerHTML = `
+            <h6 class="section-title m-0">Clients</h6>
+            <button class="toggle-all-btn" onclick="toggleAllClients()">
+                <span id="toggleAllClientsText">📂 Tout déplier</span>
+            </button>
+        `;
+                clientsContainer.insertBefore(clientsHeader, clientsContainer.firstChild);
+            }
+
+            // Boutons "Tout plier/déplier" pour les SITES (dans chaque client)
+            document.querySelectorAll('.client-card').forEach(clientCard => {
+                const clientHeader = clientCard.querySelector('.client-header');
+                if (clientHeader) {
+                    const toggleAllSitesBtn = document.createElement('button');
+                    toggleAllSitesBtn.className = 'toggle-all-btn';
+                    toggleAllSitesBtn.innerHTML = '<span>📂 Tout déplier</span>';
+                    toggleAllSitesBtn.onclick = () => toggleAllSitesInClient(clientCard.id.replace('client-', ''));
+                    clientHeader.appendChild(toggleAllSitesBtn);
+                }
+            });
+
+            // Boutons "Tout plier/déplier" pour les ASSETS (dans chaque site)
+            document.querySelectorAll('.site-card').forEach(siteCard => {
+                const siteHeader = siteCard.querySelector('.site-header');
+                if (siteHeader) {
+                    const toggleAllAssetsBtn = document.createElement('button');
+                    toggleAllAssetsBtn.className = 'toggle-all-btn';
+                    toggleAllAssetsBtn.innerHTML = '<span>📂 Tout déplier</span>';
+                    const siteId = siteCard.id.replace('site-', '').split('-');
+                    toggleAllAssetsBtn.onclick = () => toggleAllAssetsInSite(siteId[0], siteId[1]);
+                    siteHeader.appendChild(toggleAllAssetsBtn);
+                }
+            });
+        }
+
+        // ============================================
+        // TOGGLE TOUS LES CLIENTS
+        // ============================================
+        function toggleAllClients() {
+            const allClients = document.querySelectorAll('.client-content');
+            const allExpanded = Array.from(allClients).every(el => el.classList.contains('show'));
+            const action = allExpanded ? 'plier' : 'déplier';
+            const text = allExpanded ? '📂 Tout déplier' : '📁 Tout plier';
+
+            allClients.forEach(el => {
+                el.classList.toggle('show', !allExpanded);
+                const id = el.id.replace('content-client-', '');
+                const chevron = document.getElementById(`chevron-client-${id}`);
+                if (chevron) chevron.classList.toggle('rotate', !allExpanded);
+            });
+
+            document.getElementById('toggleAllClientsText').textContent = text;
+
+            // Mettre à jour les boutons "Tout plier/déplier" des sites
+            document.querySelectorAll('.toggle-all-btn').forEach(btn => {
+                if (btn.onclick.toString().includes('toggleAllSitesInClient') ||
+                    btn.onclick.toString().includes('toggleAllAssetsInSite')) {
+                    btn.innerHTML = `<span>${text}</span>`;
+                }
+            });
+        }
+
+        // ============================================
+        // TOGGLE TOUS LES SITES D'UN CLIENT
+        // ============================================
+        function toggleAllSitesInClient(clientId) {
+            const clientCard = document.getElementById(`client-${clientId}`);
+            if (!clientCard) return;
+
+            const allSites = clientCard.querySelectorAll('.site-content');
+            const allExpanded = Array.from(allSites).every(el => el.classList.contains('show'));
+            const action = allExpanded ? 'plier' : 'déplier';
+            const text = allExpanded ? '📂 Tout déplier' : '📁 Tout plier';
+
+            allSites.forEach(el => {
+                el.classList.toggle('show', !allExpanded);
+                const id = el.id.replace(`content-site-${clientId}-`, '');
+                const chevron = document.getElementById(`chevron-site-${clientId}-${id}`);
+                if (chevron) chevron.classList.toggle('rotate', !allExpanded);
+            });
+
+            // Mettre à jour le texte du bouton
+            const btn = clientCard.querySelector('.toggle-all-btn');
+            if (btn) btn.innerHTML = `<span>${text}</span>`;
+        }
+
+        // ============================================
+        // TOGGLE TOUS LES ASSETS D'UN SITE
+        // ============================================
+        function toggleAllAssetsInSite(clientId, siteId) {
+            const siteCard = document.getElementById(`site-${clientId}-${siteId}`);
+            if (!siteCard) return;
+
+            const allAssets = siteCard.querySelectorAll('.vuln-list');
+            const allExpanded = Array.from(allAssets).every(el => el.classList.contains('show'));
+            const action = allExpanded ? 'plier' : 'déplier';
+            const text = allExpanded ? '📂 Tout déplier' : '📁 Tout plier';
+
+            allAssets.forEach(el => {
+                el.classList.toggle('show', !allExpanded);
+                const id = el.id.replace(`vuln-list-${clientId}-${siteId}-`, '');
+                const chevron = document.getElementById(`chevron-${clientId}-${siteId}-${id}`);
+                if (chevron) chevron.classList.toggle('rotate', !allExpanded);
+            });
+
+            // Mettre à jour le texte du bouton
+            const btn = siteCard.querySelector('.toggle-all-btn');
+            if (btn) btn.innerHTML = `<span>${text}</span>`;
         }
 
         function toggleAssetVulns(assetId) {
@@ -1035,12 +1257,33 @@
             }
         }
 
+        // Toggle pour les clients
+        function toggleClient(clientKey) {
+            const content = document.getElementById(`content-client-${clientKey}`);
+            const chevron = document.getElementById(`chevron-client-${clientKey}`);
+            if (!content || !chevron) return;
+
+            content.classList.toggle('show');
+            chevron.classList.toggle('rotate');
+        }
+
+        // Toggle pour les sites
+        function toggleSite(clientKey, siteKey) {
+            const content = document.getElementById(`content-site-${clientKey}-${siteKey}`);
+            const chevron = document.getElementById(`chevron-site-${clientKey}-${siteKey}`);
+            if (!content || !chevron) return;
+
+            content.classList.toggle('show');
+            chevron.classList.toggle('rotate');
+        }
+
         // ============================================================
         // CHARGEMENT DES DONNÉES
         // ============================================================
         async function chargerToutesLesVulnerabilites() {
             try {
-                const response = await fetch('/api/correlations/');
+                // Ajoute ?nolimit=true pour récupérer TOUTES les vulnérabilités
+                const response = await fetch('/api/correlations/?nolimit=true');
                 const data = await response.json();
                 toutesLesVulnerabilites = data;
                 afficherVulnerabilites(toutesLesVulnerabilites);

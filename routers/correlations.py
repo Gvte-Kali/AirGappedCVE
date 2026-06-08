@@ -7,6 +7,8 @@ from typing import Optional
 import subprocess
 import os
 from database import get_connection
+import pymysql
+import pymysql.cursors
 
 router = APIRouter()
 
@@ -68,22 +70,30 @@ def list_correlations(
     cve_id: Optional[str] = None,
     nolimit: bool = False
 ):
+    """
+    Liste toutes les corrélations CVE avec filtres optionnels.
+    Retourne les données groupables par client/site/asset pour l'UI hiérarchique.
+    """
     conn = get_connection()
     try:
-        with conn.cursor() as cursor:
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+            # --- Construction des conditions WHERE ---
             where_clauses = []
             params = []
 
+            # Filtres de statut
             if statut:
                 placeholders = ",".join(["%s"] * len(statut))
                 where_clauses.append(f"co.statut IN ({placeholders})")
                 params.extend(statut)
 
+            # Filtres de priorité
             if priorite:
                 placeholders = ",".join(["%s"] * len(priorite))
                 where_clauses.append(f"co.priorite IN ({placeholders})")
                 params.extend(priorite)
 
+            # Filtres par ID
             if asset_id:
                 where_clauses.append("co.asset_id = %s")
                 params.append(asset_id)
@@ -108,6 +118,7 @@ def list_correlations(
                 where_clauses.append("a.model_id = %s")
                 params.append(model_id)
 
+            # Filtres par nom (recherche LIKE)
             if os_nom:
                 where_clauses.append("ov.os_nom LIKE %s")
                 params.append(f"%{os_nom}%")
@@ -117,7 +128,7 @@ def list_correlations(
                 params.extend([f"%{version_os}%", f"%{version_os}%"])
 
             if firmware:
-                where_clauses.append("fwv.os_nom LIKE %s")
+                where_clauses.append("fwv.version LIKE %s")
                 params.append(f"%{firmware}%")
 
             if asset_nom:
@@ -128,8 +139,10 @@ def list_correlations(
                 where_clauses.append("co.cve_id LIKE %s")
                 params.append(f"%{cve_id}%")
 
+            # --- Construction de la clause WHERE ---
             where_sql = "WHERE " + " AND ".join(where_clauses) if where_clauses else ""
 
+            # --- Jointures nécessaires pour l'UI hiérarchique ---
             joins = """
                 JOIN assets a ON a.id = co.asset_id
                 JOIN sites s ON s.id = a.site_id
@@ -139,22 +152,26 @@ def list_correlations(
                 LEFT JOIN os_versions fwv ON fwv.id = a.fw_version_id
             """
 
-            cursor.execute(f"""
+            # --- Compter le total (pour la pagination) ---
+            count_query = f"""
                 SELECT COUNT(*) as total
                 FROM correlations co
                 {joins}
                 {where_sql}
-            """, params)
+            """
+            cursor.execute(count_query, params)
             total_count = cursor.fetchone()["total"]
             response.headers["X-Total-Count"] = str(total_count)
 
+            # --- Construction de la clause LIMIT ---
             limit_sql = ""
             limit_params = []
             if not nolimit:
                 limit_sql = "LIMIT %s OFFSET %s"
                 limit_params.extend([limit, skip])
 
-            cursor.execute(f"""
+            # --- Requête principale (avec TOUS les champs nécessaires) ---
+            query = f"""
                 SELECT
                     co.id,
                     co.asset_id,
@@ -165,18 +182,45 @@ def list_correlations(
                     co.score_contextuel,
                     co.risque_reel,
                     co.type_correlation,
+                    co.type_attaque,
                     co.override_utilisateur,
                     co.date_detection,
                     co.date_analyse,
                     co.date_resolution,
+                    co.passer_mistral,
+                    co.date_creation,
+                    co.date_modification,
+                    -- Champs Asset
                     a.nom_interne AS asset_nom,
                     a.type_equipement,
+                    a.equipment_type_id,
+                    a.systeme_exploitation,
                     a.version_os,
+                    a.version_firmware,
+                    a.version_bios,
+                    a.niveau_criticite,
+                    a.adresse_ip AS asset_ip,
+                    a.adresse_mac,
+                    a.hostname,
+                    -- Champs Site/Client
+                    s.id AS site_id,
                     s.nom AS site_nom,
+                    cl.id AS client_id,
                     cl.nom AS client_nom,
+                    -- Champs CVE
                     cv.cvss_v3_score,
                     cv.cvss_v3_severity,
-                    cv.description AS cve_description
+                    cv.cvss_v3_vector,
+                    cv.description AS cve_description,
+                    cv.fabricant,
+                    cv.produit,
+                    cv.date_publication,
+                    cv.cpe_affected,
+                    -- Champs OS/Firmware
+                    ov.os_nom AS os_version_nom,
+                    ov.version AS os_version,
+                    fwv.os_nom AS fw_version_nom,
+                    fwv.version AS fw_version
                 FROM correlations co
                 {joins}
                 {where_sql}
@@ -185,7 +229,8 @@ def list_correlations(
                     co.score_contextuel DESC,
                     co.date_detection DESC
                 {limit_sql}
-            """, params + limit_params)
+            """
+            cursor.execute(query, params + limit_params)
             return cursor.fetchall()
     finally:
         conn.close()
