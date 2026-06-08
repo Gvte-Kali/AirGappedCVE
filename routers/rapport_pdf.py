@@ -55,7 +55,6 @@ class RapportRequest(BaseModel):
     filename: Optional[str] = None
     view_type: Optional[str] = "full"
 
-
 CHAMPS_DISPONIBLES = [
     "localisation",
     "asset_nom",
@@ -153,14 +152,12 @@ def _fetch_correlations(req: RapportRequest):
     finally:
         conn.close()
 
-
 # ── Preview JSON ───────────────────────────────────────────────────────
 
 @router.post("/preview")
 def preview_rapport(req: RapportRequest):
     rows = _fetch_correlations(req)
     return {"total": len(rows), "rows": rows[:5]}
-
 
 # ── Génération PDF ─────────────────────────────────────────────────────
 
@@ -176,10 +173,10 @@ STATUT_LABELS = {
     "mitige": "Mitigé", "faux_positif": "Faux positif", "patche": "Patché",
 }
 
-
 def _build_pdf(rows, champs: List[str], filename: str, req: RapportRequest):
     output_path = DOCUMENTS_DIR / filename
-    PAGE = landscape(A4)
+    view_type = req.view_type or "full"
+    PAGE = A4 if view_type == "treeview" else landscape(A4)  # <-- Modification ici
     doc = SimpleDocTemplate(
         str(output_path),
         pagesize=PAGE,
@@ -189,136 +186,29 @@ def _build_pdf(rows, champs: List[str], filename: str, req: RapportRequest):
 
     styles = getSampleStyleSheet()
     style_normal = ParagraphStyle("N", parent=styles["Normal"], fontSize=7, leading=9)
-    style_small  = ParagraphStyle("S", parent=styles["Normal"], fontSize=6.5, leading=8,
+    style_small = ParagraphStyle("S", parent=styles["Normal"], fontSize=6.5, leading=8,
                                   textColor=colors.HexColor("#555555"))
-    style_bold   = ParagraphStyle("B", parent=styles["Normal"], fontSize=7.5,
-                                  fontName="Helvetica-Bold", leading=9)
-    style_h1     = ParagraphStyle("H1", parent=styles["Heading1"], fontSize=16,
-                                  textColor=colors.HexColor("#1A252F"), spaceAfter=2)
-    style_h2     = ParagraphStyle("H2", parent=styles["Heading2"], fontSize=10,
-                                  textColor=colors.HexColor("#1E3A5F"), spaceBefore=10, spaceAfter=4,
-                                  fontName="Helvetica-Bold")
-    style_meta   = ParagraphStyle("M", parent=styles["Normal"], fontSize=8,
-                                  textColor=colors.HexColor("#666666"), spaceAfter=8)
+    style_bold = ParagraphStyle("B", parent=styles["Normal"], fontSize=7.5,
+                                fontName="Helvetica-Bold", leading=9)
+    style_h1 = ParagraphStyle("H1", parent=styles["Heading1"], fontSize=16,
+                              textColor=colors.HexColor("#1A252F"), spaceAfter=2)
+    style_h2 = ParagraphStyle("H2", parent=styles["Heading2"], fontSize=10,
+                              textColor=colors.HexColor("#1E3A5F"), spaceBefore=10, spaceAfter=4,
+                              fontName="Helvetica-Bold")
+    style_h3 = ParagraphStyle("H3", parent=styles["Normal"], fontSize=9,
+                              textColor=colors.HexColor("#1E3A5F"), spaceBefore=6, spaceAfter=2,
+                              fontName="Helvetica-Bold")
+    style_meta = ParagraphStyle("M", parent=styles["Normal"], fontSize=8,
+                                textColor=colors.HexColor("#666666"), spaceAfter=8)
     style_italic = ParagraphStyle("I", parent=styles["Normal"], fontSize=6.5,
                                   textColor=colors.HexColor("#444444"), leading=8)
-
-    # Construire les colonnes selon les champs sélectionnés
-    LARGEURS_REL = {
-        "localisation":     7,
-        "asset_nom":        10,
-        "fabricant_modele": 10,
-        "cve_id":           10,
-        "description":      14,
-        "score_cvss":       5,
-        "date_detection":   6,
-        "statut":           6,
-        "risque_reel":      10,
-        "analyse_ia":       14,
-    }
-
-    page_width = landscape(A4)[0] - 3*cm
-    total_parts = sum(LARGEURS_REL[ch] for ch in champs if ch in LARGEURS_REL)
-
-    col_defs = []
-    for ch in champs:
-        if ch == "localisation":
-            label = "Localisation"
-        elif ch == "asset_nom":
-            label = "Asset"
-        elif ch == "fabricant_modele":
-            label = "Fabricant/Modèle"
-        elif ch == "cve_id":
-            label = "CVE"
-        elif ch == "description":
-            label = "Description"
-        elif ch == "score_cvss":
-            label = "Score"
-        elif ch == "date_detection":
-            label = "Détecté le"
-        elif ch == "statut":
-            label = "Statut"
-        elif ch == "risque_reel":
-            label = "Risque réel"
-        elif ch == "analyse_ia":
-            label = "Analyse IA"
-        else:
-            continue
-        part = LARGEURS_REL.get(ch, 8)
-        width = (part / total_parts) * page_width
-        col_defs.append((ch, label, width))
-
-    col_keys    = [c[0] for c in col_defs]
-    col_headers = [c[1] for c in col_defs]
-    col_widths  = [c[2] for c in col_defs]
-
-    def fmt_date(d):
-        if not d: return "N/A"
-        try:
-            dt = datetime.fromisoformat(str(d))
-            return dt.strftime("%d/%m/%Y\n%H:%M")
-        except Exception:
-            return str(d)[:10]
-
-    def fmt_analyse(text):
-        if not text: return ""
-        # Nettoyer le texte Mistral
-        text = str(text)
-        for prefix in ["[Verdict Mistral:", "[Ajustement:"]:
-            if prefix in text:
-                idx = text.find("]", text.find(prefix))
-                if idx != -1:
-                    text = text[idx+1:].strip()
-        return text[:300]
-
-    def cell(key, row):
-        if key == "localisation":
-            return Paragraph(f"{row.get('client_nom','')}\n{row.get('site_nom','')}", style_normal)
-        elif key == "asset_nom":
-            return Paragraph(f"<b>{row.get('asset_nom','')}</b>\n<font size='6'>{row.get('type_equipement','')}</font>", style_normal)
-        elif key == "fabricant_modele":
-            fab = row.get('fabricant_nom','N/A')
-            mod = row.get('modele_nom','') or row.get('version_os','') or ''
-            return Paragraph(f"{fab}\n<font size='6'>{mod}</font>", style_normal)
-        elif key == "cve_id":
-            cve = row.get('cve_id') or ''
-            style_cve = ParagraphStyle("cve", parent=style_normal,
-                textColor=colors.HexColor("#1e40af"),
-                fontSize=6.5, leading=8,
-                splitLongWords=True,
-                wordWrap='LTR')
-            return Paragraph(cve, style_cve)
-        elif key == "description":
-            desc = (row.get('description') or '')[:200]
-            return Paragraph(desc, style_small)
-        elif key == "score_cvss":
-            score = row.get('cvss_v3_score','')
-            sev   = (row.get('cvss_v3_severity','') or '').replace('CRITICAL','CRIT.').replace('MEDIUM','MED.')
-            color = "#C0392B" if float(score or 0) >= 9 else "#E67E22" if float(score or 0) >= 7 else "#555"
-            return Paragraph(f"<font color='{color}'><b>{score}</b></font><br/><font size='6'>{sev}</font>", style_normal)
-        elif key == "date_detection":
-            return Paragraph(fmt_date(row.get('date_detection')), style_small)
-        elif key == "statut":
-            s = row.get('statut','')
-            p = row.get('priorite','')
-            return Paragraph(f"{STATUT_LABELS.get(s,s)}\n<font size='6'>{p.upper() if p else ''}</font>", style_normal)
-        elif key == "risque_reel":
-            return Paragraph((row.get('risque_reel') or 'N/A')[:150], style_small)
-        elif key == "analyse_ia":
-            return Paragraph(fmt_analyse(row.get('analyse_mistral')), style_italic)
-        return Paragraph("", style_normal)
-
-    # Grouper par (client, site)
-    groupes = {}
-    for row in rows:
-        key = (row.get('client_nom',''), row.get('site_nom',''))
-        groupes.setdefault(key, []).append(row)
 
     elements = []
 
     # En-tête général
     elements.append(Paragraph("Rapport de Vulnérabilités CVE", style_h1))
-    filtres_desc = f"Généré le {datetime.now().strftime('%d/%m/%Y à %H:%M')} · {len(rows)} vulnérabilité(s)"
+    view_type_label = "Résumé (Treeview)" if (req.view_type or "full") == "treeview" else "Rapport complet"
+    filtres_desc = f"Généré le {datetime.now().strftime('%d/%m/%Y à %H:%M')} · {len(rows)} vulnérabilité(s) · {view_type_label}"
     if req.statut:
         filtres_desc += f" · Statuts : {', '.join(req.statut)}"
     if req.priorite:
@@ -326,47 +216,244 @@ def _build_pdf(rows, champs: List[str], filename: str, req: RapportRequest):
     elements.append(Paragraph(filtres_desc, style_meta))
     elements.append(Spacer(1, 0.3*cm))
 
-    header_style = TableStyle([
-        ("BACKGROUND",   (0,0), (-1,0), colors.HexColor("#E8EEF5")),
-        ("TEXTCOLOR",    (0,0), (-1,0), colors.HexColor("#374151")),
-        ("FONTNAME",     (0,0), (-1,0), "Helvetica-Bold"),
-        ("FONTSIZE",     (0,0), (-1,0), 7),
-        ("ROWBACKGROUNDS",(0,1),(-1,-1),[colors.white, colors.HexColor("#F9FAFB")]),
-        ("FONTSIZE",     (0,1), (-1,-1), 7),
-        ("VALIGN",       (0,0), (-1,-1), "TOP"),
-        ("GRID",         (0,0), (-1,-1), 0.3, colors.HexColor("#E2E8F0")),
-        ("TOPPADDING",   (0,0), (-1,-1), 4),
-        ("BOTTOMPADDING",(0,0), (-1,-1), 4),
-        ("LEFTPADDING",  (0,0), (-1,-1), 5),
-        ("RIGHTPADDING", (0,0), (-1,-1), 5),
-    ])
+    # --- Gestion des deux types de vue ---
+    view_type = req.view_type or "full"
 
-    first_group = True
-    for (client_nom, site_nom), group_rows in groupes.items():
-        if not first_group:
-            elements.append(PageBreak())
-        first_group = False
+    if view_type == "treeview":
+        # ============================================
+        # VUE TREEVIEW (hiérarchique améliorée)
+        # ============================================
+        # Définir les emojis et couleurs par niveau
+        client_emoji = "🏢"
+        site_emoji = "📍"
+        asset_emoji = "💻"
 
-        # En-tête de section
-        elements.append(Paragraph(
-            f"{client_nom} — {site_nom}  ·  {len(group_rows)} vulnérabilité(s)",
-            style_h2
-        ))
-        elements.append(Spacer(1, 0.2*cm))
+        # Couleurs pour les niveaux
+        client_color = colors.HexColor("#58A6FF")
+        site_color = colors.HexColor("#8B949E")
+        asset_color = colors.HexColor("#F85149")
 
-        # Tableau
-        table_data = [[Paragraph(h, ParagraphStyle("TH", parent=styles["Normal"],
-                        fontSize=7, fontName="Helvetica-Bold")) for h in col_headers]]
-        for row in group_rows:
-            table_data.append([cell(k, row) for k in col_keys])
+        # Style pour les emojis (taille légèrement plus grande)
+        style_emoji = ParagraphStyle(
+            "emoji",
+            parent=styles["Normal"],
+            fontSize=9,
+            leading=10,
+        )
 
-        t = Table(table_data, colWidths=col_widths, repeatRows=1)
-        t.setStyle(header_style)
-        elements.append(t)
+        # Grouper par client → site → asset
+        tree = {}
+        for row in rows:
+            client = row.get('client_nom', 'Inconnu')
+            site = row.get('site_nom', 'Inconnu')
+            asset = row.get('asset_nom', 'Inconnu')
+
+            if client not in tree:
+                tree[client] = {}
+            if site not in tree[client]:
+                tree[client][site] = {}
+            if asset not in tree[client][site]:
+                tree[client][site][asset] = 0
+            tree[client][site][asset] += 1
+
+        # Construire le PDF en mode treeview
+        for client, sites in tree.items():
+            # Ligne horizontale pour séparer les clients
+            elements.append(Paragraph(f"{client_emoji} <b>{client}</b>", style_h2))
+            elements.append(Spacer(1, 0.1 * cm))
+
+            for site, assets in sites.items():
+                # Indentation + emoji + couleur pour les sites
+                site_paragraph = Paragraph(
+                    f"  {site_emoji} <b>{site}</b>",
+                    ParagraphStyle(
+                        "site_style",
+                        parent=style_normal,
+                        textColor=site_color,
+                        fontSize=8,
+                        leading=10,
+                        leftIndent=20,
+                    )
+                )
+                elements.append(site_paragraph)
+                elements.append(Spacer(1, 0.05 * cm))
+
+                for asset_name, vuln_count in assets.items():
+                    # Indentation + emoji + couleur pour les assets
+                    asset_text = f"    {asset_emoji} {asset_name} ({vuln_count} vulnérabilité{'s' if vuln_count > 1 else ''})"
+                    asset_paragraph = Paragraph(
+                        asset_text,
+                        ParagraphStyle(
+                            "asset_style",
+                            parent=style_normal,
+                            textColor=asset_color,
+                            fontSize=7.5,
+                            leading=9,
+                            leftIndent=40,
+                        )
+                    )
+                    elements.append(asset_paragraph)
+
+            # Espace entre les sites
+            elements.append(Spacer(1, 0.1 * cm))
+
+        # Espace entre les clients
+        elements.append(Spacer(1, 0.2 * cm))
+
+    else:
+        # ============================================
+        # VUE COMPLÈTE (tableau détaillé)
+        # ============================================
+        # Construire les colonnes selon les champs sélectionnés
+        LARGEURS_REL = {
+            "localisation":     7,
+            "asset_nom":        10,
+            "fabricant_modele": 10,
+            "cve_id":           10,
+            "description":      14,
+            "score_cvss":       5,
+            "date_detection":   6,
+            "statut":           6,
+            "risque_reel":      10,
+            "analyse_ia":       14,
+        }
+
+        page_width = landscape(A4)[0] - 3*cm
+        total_parts = sum(LARGEURS_REL[ch] for ch in champs if ch in LARGEURS_REL)
+
+        col_defs = []
+        for ch in champs:
+            if ch == "localisation":
+                label = "Localisation"
+            elif ch == "asset_nom":
+                label = "Asset"
+            elif ch == "fabricant_modele":
+                label = "Fabricant/Modèle"
+            elif ch == "cve_id":
+                label = "CVE"
+            elif ch == "description":
+                label = "Description"
+            elif ch == "score_cvss":
+                label = "Score"
+            elif ch == "date_detection":
+                label = "Détecté le"
+            elif ch == "statut":
+                label = "Statut"
+            elif ch == "risque_reel":
+                label = "Risque réel"
+            elif ch == "analyse_ia":
+                label = "Analyse IA"
+            else:
+                continue
+            part = LARGEURS_REL.get(ch, 8)
+            width = (part / total_parts) * page_width
+            col_defs.append((ch, label, width))
+
+        col_keys = [c[0] for c in col_defs]
+        col_headers = [c[1] for c in col_defs]
+        col_widths = [c[2] for c in col_defs]
+
+        def fmt_date(d):
+            if not d: return "N/A"
+            try:
+                dt = datetime.fromisoformat(str(d))
+                return dt.strftime("%d/%m/%Y\n%H:%M")
+            except Exception:
+                return str(d)[:10]
+
+        def fmt_analyse(text):
+            if not text: return ""
+            text = str(text)
+            for prefix in ["[Verdict Mistral:", "[Ajustement:"]:
+                if prefix in text:
+                    idx = text.find("]", text.find(prefix))
+                    if idx != -1:
+                        text = text[idx+1:].strip()
+            return text[:300]
+
+        def cell(key, row):
+            if key == "localisation":
+                return Paragraph(f"{row.get('client_nom','')}\n{row.get('site_nom','')}", style_normal)
+            elif key == "asset_nom":
+                return Paragraph(f"<b>{row.get('asset_nom','')}</b>\n<font size='6'>{row.get('type_equipement','')}</font>", style_normal)
+            elif key == "fabricant_modele":
+                fab = row.get('fabricant_nom','N/A')
+                mod = row.get('modele_nom','') or row.get('version_os','') or ''
+                return Paragraph(f"{fab}\n<font size='6'>{mod}</font>", style_normal)
+            elif key == "cve_id":
+                cve = row.get('cve_id') or ''
+                style_cve = ParagraphStyle("cve", parent=style_normal,
+                    textColor=colors.HexColor("#1e40af"),
+                    fontSize=6.5, leading=8,
+                    splitLongWords=True,
+                    wordWrap='LTR')
+                return Paragraph(cve, style_cve)
+            elif key == "description":
+                desc = (row.get('description') or '')[:200]
+                return Paragraph(desc, style_small)
+            elif key == "score_cvss":
+                score = row.get('cvss_v3_score','')
+                sev = (row.get('cvss_v3_severity','') or '').replace('CRITICAL','CRIT.').replace('MEDIUM','MED.')
+                color = "#C0392B" if float(score or 0) >= 9 else "#E67E22" if float(score or 0) >= 7 else "#555"
+                return Paragraph(f"<font color='{color}'><b>{score}</b></font><br/><font size='6'>{sev}</font>", style_normal)
+            elif key == "date_detection":
+                return Paragraph(fmt_date(row.get('date_detection')), style_small)
+            elif key == "statut":
+                s = row.get('statut','')
+                p = row.get('priorite','')
+                return Paragraph(f"{STATUT_LABELS.get(s,s)}\n<font size='6'>{p.upper() if p else ''}</font>", style_normal)
+            elif key == "risque_reel":
+                return Paragraph((row.get('risque_reel') or 'N/A')[:150], style_small)
+            elif key == "analyse_ia":
+                return Paragraph(fmt_analyse(row.get('analyse_mistral')), style_italic)
+            return Paragraph("", style_normal)
+
+        # Grouper par (client, site)
+        groupes = {}
+        for row in rows:
+            key = (row.get('client_nom',''), row.get('site_nom',''))
+            groupes.setdefault(key, []).append(row)
+
+        header_style = TableStyle([
+            ("BACKGROUND",   (0,0), (-1,0), colors.HexColor("#E8EEF5")),
+            ("TEXTCOLOR",    (0,0), (-1,0), colors.HexColor("#374151")),
+            ("FONTNAME",     (0,0), (-1,0), "Helvetica-Bold"),
+            ("FONTSIZE",     (0,0), (-1,0), 7),
+            ("ROWBACKGROUNDS",(0,1),(-1,-1),[colors.white, colors.HexColor("#F9FAFB")]),
+            ("FONTSIZE",     (0,1), (-1,-1), 7),
+            ("VALIGN",       (0,0), (-1,-1), "TOP"),
+            ("GRID",         (0,0), (-1,-1), 0.3, colors.HexColor("#E2E8F0")),
+            ("TOPPADDING",   (0,0), (-1,-1), 4),
+            ("BOTTOMPADDING",(0,0), (-1,-1), 4),
+            ("LEFTPADDING",  (0,0), (-1,-1), 5),
+            ("RIGHTPADDING", (0,0), (-1,-1), 5),
+        ])
+
+        first_group = True
+        for (client_nom, site_nom), group_rows in groupes.items():
+            if not first_group:
+                elements.append(PageBreak())
+            first_group = False
+
+            # En-tête de section
+            elements.append(Paragraph(
+                f"{client_nom} — {site_nom}  ·  {len(group_rows)} vulnérabilité(s)",
+                style_h2
+            ))
+            elements.append(Spacer(1, 0.2*cm))
+
+            # Tableau
+            table_data = [[Paragraph(h, ParagraphStyle("TH", parent=styles["Normal"],
+                            fontSize=7, fontName="Helvetica-Bold")) for h in col_headers]]
+            for row in group_rows:
+                table_data.append([cell(k, row) for k in col_keys])
+
+            t = Table(table_data, colWidths=col_widths, repeatRows=1)
+            t.setStyle(header_style)
+            elements.append(t)
 
     doc.build(elements)
     return output_path
-
 
 @router.post("/generer")
 def generer_rapport(req: RapportRequest):
