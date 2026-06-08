@@ -3,7 +3,7 @@
   Dernière mise à jour : 11/05/2026 ✅
 ═══════════════════════════════════════════════════════════════
 
-[] 1 - Revoir l'affichage de la page vulns : 
+[✅] 1 - Revoir l'affichage de la page vulns : 
        Il faut que la page affiche les assets par site et par client. Chaque asset aura un menu déroulant indiquant toutes les vulns.
        Cependant, il faut que la recherche de filtre se fasse sur les assets déjà présents visuellement. 
        Donc il faut revoir le fonctionnement de la page.

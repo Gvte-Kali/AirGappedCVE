@@ -706,6 +706,18 @@
                                 class="small text-muted">Tout décocher</a>
                         </div>
                     </div>
+                    <!-- Type de vue -->
+                    <div class="mb-3">
+                        <label class="form-label stat-label">Type de rapport</label>
+                        <div class="d-flex gap-3">
+                            <label class="d-flex align-items-center gap-2 small" style="cursor:pointer">
+                                <input type="radio" name="pdfViewType" value="full" checked> Rapport complet
+                            </label>
+                            <label class="d-flex align-items-center gap-2 small" style="cursor:pointer">
+                                <input type="radio" name="pdfViewType" value="treeview"> Résumé (treeview)
+                            </label>
+                        </div>
+                    </div>
                     <!-- Nom du fichier -->
                     <div class="mb-3">
                         <label class="form-label stat-label">Nom du fichier PDF</label>
@@ -939,6 +951,34 @@
         }
 
         // ============================================================
+        // SAUVEGARDE / RESTAURATION DE L'ÉTAT D'OUVERTURE
+        // ============================================================
+        function sauvegarderEtatOuverture() {
+            const etat = {};
+            document.querySelectorAll('.client-content, .site-content, .vuln-list').forEach(el => {
+                etat[el.id] = el.classList.contains('show');
+            });
+            return etat;
+        }
+
+        function restaurerEtatOuverture(etat) {
+            if (!etat || Object.keys(etat).length === 0) return;
+            Object.entries(etat).forEach(([id, estOuvert]) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (estOuvert) {
+                    el.classList.add('show');
+                    const chevronId = id
+                        .replace('content-client-', 'chevron-client-')
+                        .replace('content-site-', 'chevron-site-')
+                        .replace('vuln-list-', 'chevron-');
+                    const chevron = document.getElementById(chevronId);
+                    if (chevron) chevron.classList.add('rotate');
+                }
+            });
+        }
+
+        // ============================================================
         // AFFICHAGE HIÉRARCHIQUE
         // ============================================================
         function afficherVulnerabilites(vulns) {
@@ -1011,12 +1051,7 @@
                         <span>👥 ${client.client}</span>
                         <span class="badge bg-secondary ms-2">${clientTotalVulns} vulnérabilités</span>
                     </div>
-                    <div class="d-flex align-items-center">
-                        <span class="chevron-client" id="chevron-client-${clientKey}">▼</span>
-                        <button class="toggle-all-btn" onclick="event.stopPropagation(); toggleAllSitesInClient('${clientKey}')">
-                            <span id="toggleAllSitesText-${clientKey}">📁 Tout plier</span>
-                        </button>
-                    </div>
+                    <span class="chevron-client" id="chevron-client-${clientKey}">▼</span>
                 </div>
                 <div class="client-content" id="content-client-${clientKey}">
         `;
@@ -1034,12 +1069,7 @@
                             <span>🏢 ${site.site}</span>
                             <span class="badge bg-secondary ms-2">${siteTotalVulns} vulnérabilités</span>
                         </div>
-                        <div class="d-flex align-items-center">
-                            <span class="chevron-site" id="chevron-site-${clientKey}-${siteKey}">▼</span>
-                            <button class="toggle-all-btn" onclick="event.stopPropagation(); toggleAllAssetsInSite('${clientKey}', '${siteKey}')">
-                                <span id="toggleAllAssetsText-${clientKey}-${siteKey}">📁 Tout plier</span>
-                            </button>
-                        </div>
+                        <span class="chevron-site" id="chevron-site-${clientKey}-${siteKey}">▼</span>
                     </div>
                     <div class="site-content" id="content-site-${clientKey}-${siteKey}">
             `;
@@ -1500,6 +1530,7 @@
         async function sauvegarderModification() {
             if (!correlationEnCours) return;
 
+            const etatAvant = sauvegarderEtatOuverture();
             const data = {
                 statut: document.getElementById('editStatut').value,
                 priorite: document.getElementById('editPriorite').value,
@@ -1516,8 +1547,8 @@
 
                 if (response.ok) {
                     bootstrap.Modal.getInstance(document.getElementById('modalDetails')).hide();
-                    // Recharger les données pour mettre à jour l'affichage
-                    chargerToutesLesVulnerabilites();
+                    await chargerToutesLesVulnerabilites();
+                    restaurerEtatOuverture(etatAvant);
                 } else {
                     alert('Erreur lors de la sauvegarde');
                 }
@@ -1528,6 +1559,7 @@
         }
 
         async function changerStatut(id, nouveauStatut) {
+            const etatAvant = sauvegarderEtatOuverture();
             try {
                 const response = await fetch(`/api/correlations/${id}`, {
                     method: 'PATCH',
@@ -1536,8 +1568,8 @@
                 });
 
                 if (response.ok) {
-                    // Recharger les données pour mettre à jour l'affichage
-                    chargerToutesLesVulnerabilites();
+                    await chargerToutesLesVulnerabilites();
+                    restaurerEtatOuverture(etatAvant);
                 } else {
                     alert('Erreur lors du changement de statut');
                 }
