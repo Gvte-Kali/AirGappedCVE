@@ -1,67 +1,20 @@
 #!/bin/bash
-cat << "EOF"
-
-${PURPLE}
-${NC}
-
-EOF
 
 # =============================================================================
-# VÉRIFICATIONS PRÉLIMINAIRES
-=======
-# =============================================================================
-# VÉRIFICATIONS PRÉLIMINAIRESVÉRIFICATION ROOT
-# =============================================================================
-if [ "$EUID" -ne 0 ]; then
-  echo "Ce script doit être lancé en root." >&2
-  echo "Relance avec : sudo bash $0" >&2
-  exit 1
-fi
-
-# Créer le fichier de log
-mkdir -p "$INSTALL_DIR"
-touch "$LOG_FILE"
-
-# =============================================================================
-# ASCII ART DE BIENVENUE
-# =============================================================================
-cat << "EOF"
-
-${PURPLE}
-${NC}
-
-EOF
-
-# =============================================================================
-# VÉRIFICATIONS PRÉLIMINAIRES
-# =============================================================================
-=======
-# =============================================================================
-# VÉRIFICATION ROOT
-# =============================================================================
-if [ "$EUID" -ne 0 ]; then
-  echo "Ce script doit être lancé en root." >&2
-  echo "Relance avec : sudo bash $0" >&2
-  exit 1
-fi
-
-# Créer le fichier de log
-mkdir -p "$INSTALL_DIR"
-touch "$LOG_FILE"
-
-# =============================================================================
-# VÉRIFICATIONS PRÉLIMINAIRES
-# ==========================================================================================================================================================
-# install_user_friendly.sh — Script d'installation utilisateur pour AirGappedCVE
-# Ce script guide l'utilisateur étape par étape avec barres de progression
-# Usage: sudo bash install_user_friendly.sh
+# install_user_friendly.sh — Script d'installation pour AirGappedCVE
+# Auteur : Gvte-Kali / Vibe Code
+# Version : 2.0.0 (corrigée)
+# Description : Installe et configure automatiquement AirGappedCVE sur Ubuntu Server
+# Usage: sudo bash install.sh
 # =============================================================================
 
 set -euo pipefail
 
 # =============================================================================
-# CONFIGURATION
+# CONFIGURATION GLOBALE
 # =============================================================================
+
+# Chemins et fichiers
 INSTALL_DIR="/opt/asset-manager"
 LOG_FILE="$INSTALL_DIR/installation.log"
 ENV_FILE="$INSTALL_DIR/.env"
@@ -81,11 +34,60 @@ ERRORS=0
 START_TIME=$(date +%s)
 
 # =============================================================================
+# ASCII ART DE BIENVENUE
+# =============================================================================
+cat << "EOF"
+
+${PURPLE}
+  _____ _                 _   _____ ____ _____ ___  ____
+ |_   _| |__   ___   ___ | | |_   _/ ___|_   _/ _ \|  _ \
+   | | | '_ \ / _ \ / _ \| |   | | \___ \ | || | | | |_) |
+   | | | | | | (_) | (_) | |___| |  ___) || || |_| |  _ <
+   |_| |_| |_|\___/ \___/|_____|_| |____/ |_| \___/|_| \_\\
+${NC}
+  AirGappedCVE - Gestion de vulnérabilités en environnement isolé
+
+EOF
+
+# =============================================================================
+# FONCTIONS DE LOG
+# =============================================================================
+
+log() {
+  echo -e "${GREEN}[✓]${NC}  $1" | tee -a "$LOG_FILE"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - [OK] $1" >> "$LOG_FILE"
+}
+
+error() {
+  ERRORS=$((ERRORS+1))
+  echo -e "${RED}${BOLD}[ERREUR $ERRORS]${NC} $1" | tee -a "$LOG_FILE"
+  [ -n "${2:-}" ] && echo -e "         ${YELLOW}→ $2${NC}" | tee -a "$LOG_FILE"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - [ERROR $ERRORS] $1" >> "$LOG_FILE"
+  [ -n "${2:-}" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') - [ERROR $ERRORS] Solution: $2" >> "$LOG_FILE"
+}
+
+warn() {
+  echo -e "${YELLOW}[⚠]${NC}  $1" | tee -a "$LOG_FILE"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - [WARN] $1" >> "$LOG_FILE"
+}
+
+info() {
+  echo -e "${CYAN}[~]${NC}   $1" | tee -a "$LOG_FILE"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - [INFO] $1" >> "$LOG_FILE"
+}
+
+header() {
+  echo "" | tee -a "$LOG_FILE"
+  echo -e "${BLUE}${BOLD}═══════════════════════════════════════════════════${NC}" | tee -a "$LOG_FILE"
+  echo -e "${BLUE}${BOLD}  $1${NC}" | tee -a "$LOG_FILE"
+  echo -e "${BLUE}${BOLD}═══════════════════════════════════════════════════${NC}" | tee -a "$LOG_FILE"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - [HEADER] $1" >> "$LOG_FILE"
+}
+
+# =============================================================================
 # FONCTIONS DE PROGRESSION
 # =============================================================================
 
-# Barre de progression
-# Usage: progress_bar current_step total_steps "message"
 progress_bar() {
   local current=$1
   local total=$2
@@ -93,7 +95,7 @@ progress_bar() {
   local percentage=$((current * 100 / total))
   local completed=$((current * 50 / total))
   local remaining=$((50 - completed))
-  
+
   local bar="["
   for ((i=0; i<completed; i++)); do
     bar+="="
@@ -102,20 +104,19 @@ progress_bar() {
     bar+=" "
   done
   bar+="]"
-  
+
   printf "\r${CYAN}%3d%% ${bar} ${message}${NC}" "$percentage"
-  
+
   if [ "$current" -eq "$total" ]; then
     echo ""
   fi
 }
 
-# Fonction pour afficher une étape avec barre de progression
 step_header() {
   local step_num=$1
   local step_name="$2"
   local total_steps=$3
-  
+
   echo ""
   echo -e "${BLUE}${BOLD}═══════════════════════════════════════════════════${NC}" | tee -a "$LOG_FILE"
   echo -e "${BLUE}${BOLD}  Étape ${step_num}/${total_steps} — ${step_name}${NC}" | tee -a "$LOG_FILE"
@@ -124,35 +125,9 @@ step_header() {
 }
 
 # =============================================================================
-# FONCTIONS DE LOG
+# FONCTIONS UTILITAIRES
 # =============================================================================
-log()     {
-  echo -e "${GREEN}[✓]${NC}  $1" | tee -a "$LOG_FILE"
-  echo "$(date '+%Y-%m-%d %H:%M:%S') - [OK] $1" >> "$LOG_FILE"
-}
 
-error()   {
-  ERRORS=$((ERRORS+1))
-  echo -e "${RED}${BOLD}[ERREUR $ERRORS]${NC} $1" | tee -a "$LOG_FILE"
-  [ -n "${2:-}" ] && echo -e "         ${YELLOW}→ $2${NC}" | tee -a "$LOG_FILE"
-  echo "$(date '+%Y-%m-%d %H:%M:%S') - [ERROR $ERRORS] $1" >> "$LOG_FILE"
-  [ -n "${2:-}" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') - [ERROR $ERRORS] Solution: $2" >> "$LOG_FILE"
-}
-
-info()    {
-  echo -e "${CYAN}[~]${NC}   $1" | tee -a "$LOG_FILE"
-  echo "$(date '+%Y-%m-%d %H:%M:%S') - [INFO] $1" >> "$LOG_FILE"
-}
-
-header()  {
-  echo "" | tee -a "$LOG_FILE"
-  echo -e "${BLUE}${BOLD}═══════════════════════════════════════════════════${NC}" | tee -a "$LOG_FILE"
-  echo -e "${BLUE}${BOLD}  $1${NC}" | tee -a "$LOG_FILE"
-  echo -e "${BLUE}${BOLD}═══════════════════════════════════════════════════${NC}" | tee -a "$LOG_FILE"
-  echo "$(date '+%Y-%m-%d %H:%M:%S') - [HEADER] $1" >> "$LOG_FILE"
-}
-
-# Fonction pour demander si on continue après une erreur
 ask_continue() {
   if [ $ERRORS -gt 0 ]; then
     echo ""
@@ -169,13 +144,11 @@ ask_continue() {
   fi
 }
 
-# Fonction pour générer un mot de passe aléatoire de 32 caractères
 generate_password() {
   tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32
   echo
 }
 
-# Fonction pour vérifier qu'un port est disponible
 check_port_available() {
   local port=$1
   local service_name=$2
@@ -186,15 +159,12 @@ check_port_available() {
   return 0
 }
 
-# Fonction pour afficher une barre de chargement pendant une opération
-# Usage: run_with_progress "message" "commande"
 run_with_progress() {
   local message="$1"
   local command="$2"
-  
+
   echo -n "${CYAN}  → $message...${NC}"
-  
-  # Exécuter la commande
+
   if eval "$command" > /dev/null 2>&1; then
     echo -e " ${GREEN}✓${NC}"
     return 0
@@ -216,16 +186,6 @@ fi
 # Créer le fichier de log
 mkdir -p "$INSTALL_DIR"
 touch "$LOG_FILE"
-
-# =============================================================================
-# ASCII ART DE BIENVENUE
-# =============================================================================
-cat << "EOF"
-
-${PURPLE}
-${NC}
-
-EOF
 
 # =============================================================================
 # VÉRIFICATIONS PRÉLIMINAIRES
@@ -279,16 +239,28 @@ check_port_available 3306 "MariaDB"
 
 # 6. Vérification de Python
 PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}' | cut -d. -f1-2 || echo "0.0")
-if [ "$(printf '%s\n%s' "3.12" "$PYTHON_VERSION" | sort -V | head -1)" != "3.12" ]; then
-  warn "Python $PYTHON_VERSION détecté. Recommandé: Python 3.12+"
+if [ "$(printf '%s\n%s' "3.10" "$PYTHON_VERSION" | sort -V | head -1)" != "3.10" ]; then
+  warn "Python $PYTHON_VERSION détecté. Recommandé: Python 3.10+"
 else
   info "Python $PYTHON_VERSION détecté"
+fi
+
+# 7. Vérification de la distribution
+if [ -f /etc/os-release ]; then
+  . /etc/os-release
+  if [[ "$ID" != "ubuntu" && "$ID" != "debian" ]]; then
+    warn "Ce script est optimisé pour Ubuntu/Debian. Distribution détectée: $ID"
+  else
+    info "Distribution: $ID $VERSION_ID"
+  fi
+else
+  warn "Impossible de détecter la distribution Linux"
 fi
 
 header "Début de l'installation - $(date '+%Y-%m-%d %H:%M:%S')"
 echo "Script: $0"
 echo "Utilisateur: $(whoami)"
-echo "Système: $(lsb_release -d 2>/dev/null | cut -f2-)"
+echo "Système: $(lsb_release -d 2>/dev/null | cut -f2- || echo 'Inconnu')"
 echo ""
 
 # =============================================================================
@@ -296,7 +268,6 @@ echo ""
 # =============================================================================
 step_header 1 5 "Mise à jour système et installation des dépendances"
 
-# Barre de progression pour la mise à jour
 info "Mise à jour des paquets..."
 if run_with_progress "Mise à jour APT" "apt-get update -qq"; then
   log "Mise à jour APT terminée"
@@ -312,11 +283,32 @@ else
   ask_continue
 fi
 
-info "Installation des dépendances..."
-if run_with_progress "Installation des dépendances système" "apt-get install -y -qq curl wget git python3 python3-pip python3-venv mariadb-server mariadb-client bc net-tools netcat"; then
-  log "Dépendances installées"
+# Installation des dépendances de base
+info "Installation des dépendances de base..."
+BASE_DEPS="curl wget git bc net-tools netcat software-properties-common"
+if run_with_progress "Installation des dépendances de base" "apt-get install -y -qq $BASE_DEPS"; then
+  log "Dépendances de base installées"
 else
-  error "Échec de l'installation des dépendances" "Relance le script ou installe manuellement"
+  error "Échec de l'installation des dépendances de base" "Relance le script ou installe manuellement"
+  ask_continue
+fi
+
+# Installation de Python et pip
+info "Installation de Python et venv..."
+PYTHON_DEPS="python3 python3-pip python3-venv python3-dev"
+if run_with_progress "Installation de Python" "apt-get install -y -qq $PYTHON_DEPS"; then
+  log "Python et venv installés"
+else
+  error "Échec de l'installation de Python" "Vérifie que les dépôts universe sont activés"
+  ask_continue
+fi
+
+# Installation de MariaDB
+info "Installation de MariaDB..."
+if run_with_progress "Installation de MariaDB" "apt-get install -y -qq mariadb-server mariadb-client"; then
+  log "MariaDB installé"
+else
+  error "Échec de l'installation de MariaDB" "Vérifie que les dépôts sont à jour ou installe MariaDB manuellement"
   ask_continue
 fi
 
@@ -350,7 +342,7 @@ rm -rf "$INSTALL_DIR/.devcontainer"
 log ".devcontainer supprimé"
 
 # Créer les dossiers nécessaires
-mkdir -p "$INSTALL_DIR/logs" "$INSTALL_DIR/data" "$INSTALL_DIR/documents"
+mkdir -p "$INSTALL_DIR/logs" "$INSTALL_DIR/data" "$INSTALL_DIR/documents" "$INSTALL_DIR/backups"
 log "Dossiers créés"
 
 ask_continue
@@ -398,7 +390,7 @@ DB_PASSWORD=$(generate_password)
 echo "  → Mot de passe généré automatiquement pour $DB_USER"
 
 # Définir les valeurs par défaut
-SERVER_IP=$(hostname -I | awk '{print $1}')
+SERVER_IP=$(hostname -I | awk '{print $1}' || echo "127.0.0.1")
 MISTRAL_MODEL="mistral-large-latest"
 DB_HOST="127.0.0.1"
 DB_PORT="3306"
@@ -665,7 +657,7 @@ VERIFICATION_RESULTS=()
 run_verification() {
   local cmd_name="$1"
   local cmd="$2"
-  
+
   echo -n "  → Vérification: $cmd_name..."
   if eval "$cmd" >> "$LOG_FILE" 2>&1; then
     echo -e " ${GREEN}✓${NC}"
