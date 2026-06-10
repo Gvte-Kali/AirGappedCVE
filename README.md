@@ -18,7 +18,7 @@ Le script d'installation guide l'utilisateur étape par étape et configure tout
 
 ```bash
 # Télécharger et exécuter le script d'installation
-curl -sSL https://raw.githubusercontent.com/Gvte-Kali/AirGappedCVE/main/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/Gvte-Kali/AirGappedCVE/refs/heads/main/install.sh | sudo bash
 ```
 
 **Le script effectue les étapes suivantes :**
