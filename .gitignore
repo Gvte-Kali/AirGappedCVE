@@ -25,3 +25,4 @@ documents/*
 .vscode/settings.json
 schema_export.sql
 routers/__pycache__/*
+backups/*
