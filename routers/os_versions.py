@@ -108,24 +108,34 @@ def create_os_version(entry: OsVersionCreate):
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            # Vérifier si la combinaison nvd_vendor + nvd_product existe déjà
+            # Log des valeurs reçues
+            print(f"DEBUG: Received data - os_nom: {entry.os_nom}, version: {entry.version}, nvd_vendor: {entry.nvd_vendor}, nvd_product: {entry.nvd_product}, type_produit: {entry.type_produit}")
+
+            # Vérification de l'unicité
             cur.execute("""
                 SELECT id FROM os_versions
-                WHERE nvd_vendor = %s AND nvd_product = %s
-            """, (entry.nvd_vendor, entry.nvd_product))
-            if cur.fetchone():
+                WHERE nvd_vendor = %s AND nvd_product = %s AND version = %s
+            """, (entry.nvd_vendor, entry.nvd_product, entry.version))
+            existing = cur.fetchone()
+            if existing:
+                print(f"DEBUG: Duplicate found - ID: {existing['id']}")
                 raise HTTPException(
                     status_code=409,
-                    detail="Cette combinaison vendor/produit existe déjà dans le référentiel."
+                    detail="Cette combinaison vendor/produit/version existe déjà dans le référentiel."
                 )
 
-            cur.execute("""
+            # Log de la requête d'insertion
+            insert_query = """
                 INSERT INTO os_versions (os_nom, version, nvd_vendor, nvd_product, type_produit)
                 VALUES (%s, %s, %s, %s, %s)
-            """, (entry.os_nom, entry.version, entry.nvd_vendor, entry.nvd_product, entry.type_produit))
+            """
+            print(f"DEBUG: Insert query - {insert_query} with params: {entry.os_nom}, {entry.version}, {entry.nvd_vendor}, {entry.nvd_product}, {entry.type_produit}")
+
+            cur.execute(insert_query, (entry.os_nom, entry.version, entry.nvd_vendor, entry.nvd_product, entry.type_produit))
             conn.commit()
             return {"id": cur.lastrowid, "message": "Entrée créée"}
     except Exception as e:
+        print(f"DEBUG: Error - {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()

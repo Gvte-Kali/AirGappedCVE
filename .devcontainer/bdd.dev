@@ -7,3 +7,8 @@ mariadb-dump -h 127.0.0.1 --skip-ssl -u avea -pdevpassword --no-data asset_vuln_
 # Vider la BDD 
 TRUNCATE TABLE correlations;
 TRUNCATE TABLE correlation_rejects;
+
+# Supprime les entrées dans ma table os_versions en cas de doublons
+DELETE FROM os_versions
+WHERE created_at >= NOW() - INTERVAL 1 HOUR;
+

@@ -141,7 +141,7 @@ CREATE TABLE `correlation_rejects` (
   KEY `idx_cve` (`cve_id`),
   KEY `idx_raison` (`raison`),
   KEY `idx_date` (`date_rejet`)
-) ENGINE=InnoDB AUTO_INCREMENT=1169 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=147 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -187,7 +187,7 @@ CREATE TABLE `correlations` (
   KEY `idx_correlations_cve_id` (`cve_id`),
   CONSTRAINT `correlations_ibfk_1` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE,
   CONSTRAINT `correlations_ibfk_2` FOREIGN KEY (`cve_id`) REFERENCES `cve` (`cve_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=98 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -225,7 +225,7 @@ CREATE TABLE `cve` (
   KEY `idx_cve_fabricant` (`fabricant`),
   KEY `idx_cve_cve_id` (`cve_id`),
   KEY `idx_cve_date_publication` (`date_publication`)
-) ENGINE=InnoDB AUTO_INCREMENT=932143 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1522142 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -243,7 +243,7 @@ CREATE TABLE `cve_cwe` (
   UNIQUE KEY `uk_cve_cwe` (`cve_id`,`cwe_id`),
   KEY `idx_cve` (`cve_id`),
   KEY `idx_cwe` (`cwe_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=966603 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1578864 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -336,11 +336,11 @@ CREATE TABLE `os_versions` (
   `type_produit` enum('os','firmware','bios') DEFAULT 'os',
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_nvd` (`os_nom`,`nvd_vendor`,`nvd_product`),
+  UNIQUE KEY `nvd_vendor` (`nvd_vendor`,`nvd_product`,`version`),
   KEY `idx_os_nom` (`os_nom`),
   KEY `idx_nvd_vendor` (`nvd_vendor`),
   KEY `idx_type_produit` (`type_produit`)
-) ENGINE=InnoDB AUTO_INCREMENT=33503 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=46890 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -364,7 +364,7 @@ CREATE TABLE `product_models` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_vendor_product` (`vendor_id`,`nvd_product`),
   CONSTRAINT `product_models_ibfk_1` FOREIGN KEY (`vendor_id`) REFERENCES `product_vendors` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=681440 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1022278 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -383,7 +383,7 @@ CREATE TABLE `product_vendors` (
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_nvd_vendor` (`nvd_vendor`)
-) ENGINE=InnoDB AUTO_INCREMENT=144898 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=363221 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -687,4 +687,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2026-06-04 13:45:58
+-- Dump completed on 2026-06-10 13:54:41

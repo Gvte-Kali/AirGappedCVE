@@ -367,10 +367,9 @@ def import_vendors_models(raw_dir, logger, batch_size=100):
     # Étape 1: Extraction
     all_entries = []
     seen_global = set()
-    file_count = 0
 
     with ProgressBar(len(json_files), "Extracting CPE") as pbar:
-        for jf in json_files:
+        for i, jf in enumerate(json_files, 1):
             entries = extract_pairs_from_file(jf, logger)
             new = 0
             for e in entries:
@@ -379,8 +378,7 @@ def import_vendors_models(raw_dir, logger, batch_size=100):
                     seen_global.add(key)
                     all_entries.append(e)
                     new += 1
-            file_count += 1
-            pbar.update(file_count, f"{jf.name} (+{new})")
+            pbar.update(i, f"{jf.name} (+{new})")
 
     if not all_entries:
         logger.warning("No CPE entries found!")
@@ -389,11 +387,16 @@ def import_vendors_models(raw_dir, logger, batch_size=100):
     unique_vendors = list({e["nvd_vendor"]: e for e in all_entries}.values())
     logger.success(f"Extracted {len(all_entries)} pairs, {len(unique_vendors)} unique vendors")
 
-    # Étape 2: Insertion des vendors
+    # Étape 2: Charger TOUS les vendors existants en mémoire
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            # Insert vendors par petits batches
+            # Charger tous les vendors d'un coup
+            cur.execute("SELECT id, nvd_vendor FROM product_vendors")
+            all_vendor_ids = {row["nvd_vendor"]: row["id"] for row in cur.fetchall()}
+            logger.log(f"Loaded {len(all_vendor_ids)} vendor IDs from database")
+
+            # Insert vendors par batches
             vendors_inserted = 0
             with ProgressBar(len(unique_vendors), "Inserting vendors") as pbar:
                 for i in range(0, len(unique_vendors), batch_size):
@@ -408,16 +411,6 @@ def import_vendors_models(raw_dir, logger, batch_size=100):
                     except Exception as e:
                         logger.warning(f"Vendor batch failed: {e}")
                         conn.rollback()
-                        for v in batch:
-                            try:
-                                cur.execute(
-                                    "INSERT IGNORE INTO product_vendors (nom, nvd_vendor) VALUES (%s, %s)",
-                                    (v["nom_vendor"], v["nvd_vendor"])
-                                )
-                                vendors_inserted += cur.rowcount
-                                conn.commit()
-                            except Exception as inner_e:
-                                logger.warning(f"Single vendor failed: {v['nvd_vendor']} - {inner_e}")
                     pbar.update(i + len(batch))
 
             logger.success(f"Vendors: {vendors_inserted} inserted, {len(unique_vendors) - vendors_inserted} existed")
@@ -427,29 +420,32 @@ def import_vendors_models(raw_dir, logger, batch_size=100):
             with ProgressBar(len(all_entries), "Inserting models") as pbar:
                 for i in range(0, len(all_entries), batch_size):
                     batch = all_entries[i:i+batch_size]
-                    batch_vendors = list({e["nvd_vendor"] for e in batch})
 
-                    # Récupérer les vendor_ids par petits batches (MAX 1000)
-                    vendor_ids = {}
-                    for vendor_batch in [batch_vendors[j:j+500] for j in range(0, len(batch_vendors), 500)]:
-                        try:
-                            placeholders = ",".join(["%s"] * len(vendor_batch))
-                            cur.execute(
-                                f"SELECT id, nvd_vendor FROM product_vendors WHERE nvd_vendor IN ({placeholders})",
-                                vendor_batch
-                            )
-                            vendor_ids.update({row[1]: row[0] for row in cur.fetchall()})
-                        except Exception as e:
-                            logger.error(f"Failed to fetch vendor IDs batch: {e}")
-                            return False
-
-                    # Préparer les données
+                    # Utiliser le cache all_vendor_ids
                     rows = []
                     for m in batch:
-                        vid = vendor_ids.get(m["nvd_vendor"])
+                        vid = all_vendor_ids.get(m["nvd_vendor"])
                         if vid is None:
-                            logger.warning(f"No vendor_id for {m['nvd_vendor']}")
-                            continue
+                            # Vendor n'existe pas encore, on le crée
+                            try:
+                                cur.execute(
+                                    "INSERT IGNORE INTO product_vendors (nom, nvd_vendor) VALUES (%s, %s)",
+                                    (m["nom_vendor"], m["nvd_vendor"])
+                                )
+                                conn.commit()
+                                # Recharger l'ID
+                                cur.execute("SELECT id FROM product_vendors WHERE nvd_vendor = %s", (m["nvd_vendor"],))
+                                row = cur.fetchone()
+                                if row:
+                                    vid = row["id"]
+                                    all_vendor_ids[m["nvd_vendor"]] = vid
+                                else:
+                                    logger.warning(f"Could not create vendor: {m['nvd_vendor']}")
+                                    continue
+                            except Exception as e:
+                                logger.warning(f"Failed to create vendor {m['nvd_vendor']}: {e}")
+                                continue
+
                         rows.append((
                             vid,
                             m["nom_product"],
@@ -459,7 +455,7 @@ def import_vendors_models(raw_dir, logger, batch_size=100):
                             m["cpe_base"]
                         ))
 
-                    # Insérer par batch
+                    # Insérer les models
                     if rows:
                         try:
                             cur.executemany("""
@@ -470,7 +466,7 @@ def import_vendors_models(raw_dir, logger, batch_size=100):
                             models_inserted += cur.rowcount
                             conn.commit()
                         except Exception as e:
-                            logger.warning(f"Model batch failed ({len(rows)} items): {e}")
+                            logger.error(f"Model batch failed: {e}")
                             conn.rollback()
                             # Essayer un par un
                             for row in rows:
@@ -491,6 +487,8 @@ def import_vendors_models(raw_dir, logger, batch_size=100):
 
     except Exception as e:
         logger.error(f"Fatal SQL Error: {e}")
+        import traceback
+        traceback.print_exc()
         conn.rollback()
         return False
     finally:
@@ -630,28 +628,29 @@ def cve_sync(nvd_dir, logger):
 # =============================================================================
 
 NORMALIZATION_RULES = [
+    # Règles pour Windows (avec versions par défaut si absentes)
     (r'^windows_server_(\d{4})_(\d+h\d+)$', "Windows Server", lambda m: f"{m.group(1)} {m.group(2).upper()}", "os"),
     (r'^windows_server_(\d{4})$', "Windows Server", lambda m: m.group(1), "os"),
-    (r'^windows_server$', "Windows Server", lambda m: None, "os"),
+    (r'^windows_server$', "Windows Server", lambda m: "unknown", "os"),
     (r'^windows_11_(\d+h\d+)$', "Windows 11", lambda m: m.group(1).upper(), "os"),
-    (r'^windows_11$', "Windows 11", lambda m: None, "os"),
+    (r'^windows_11$', "Windows 11", lambda m: "unknown", "os"),
     (r'^windows_10_(\d{4})$', "Windows 10", lambda m: m.group(1), "os"),
-    (r'^windows_10$', "Windows 10", lambda m: None, "os"),
-    (r'^windows_8\.1$', "Windows 8.1", lambda m: None, "os"),
-    (r'^windows_(7|8|vista|xp)$', lambda m: f"Windows {m.group(1).title()}", lambda m: None, "os"),
-    (r'^windows$', "Windows", lambda m: None, "os"),
-    (r'^diskstation_manager$', "DSM", lambda m: None, "os"),
-    (r'^dsm$', "DSM", lambda m: None, "os"),
-    (r'^forti(os|gate|manager|analyzer)$', lambda m: f"Forti{m.group(1).title()}", lambda m: None, "firmware"),
-    (r'^ios(_xe|_xr)?$', lambda m: f"Cisco IOS{' X' + m.group(1).upper() if m.group(1) else ''}", lambda m: None, "firmware"),
-    (r'^nx-os$', "Cisco NX-OS", lambda m: None, "firmware"),
-    (r'^(ubuntu|debian)_linux$', lambda m: m.group(1).title(), lambda m: None, "os"),
-    (r'^(linux_kernel|fedora|centos|opensuse|enterprise_linux)$', lambda m: m.group(1).replace("_"," ").title(), lambda m: None, "os"),
-    (r'^esxi$', "VMware ESXi", lambda m: None, "firmware"),
-    (r'^vcenter_server$', "vCenter Server", lambda m: None, "os"),
-    (r'^(macos|mac_os_x|iphone_os)$', lambda m: {"macos":"macOS","mac_os_x":"Mac OS X","iphone_os":"iOS"}[m.group(1)], lambda m: None, "os"),
-    (r'^android$', "Android", lambda m: None, "os"),
-    (r'^(.+)_firmware$', lambda m: m.group(1).replace("_"," ").title() + " Firmware", lambda m: None, "firmware"),
+    (r'^windows_10$', "Windows 10", lambda m: "unknown", "os"),
+    (r'^windows_8\.1$', "Windows 8.1", lambda m: "unknown", "os"),
+    (r'^windows_(7|8|vista|xp)$', lambda m: f"Windows {m.group(1).title()}", lambda m: "unknown", "os"),
+    (r'^windows$', "Windows", lambda m: "unknown", "os"),
+    (r'^diskstation_manager$', "DSM", lambda m: "unknown", "os"),
+    (r'^dsm$', "DSM", lambda m: "unknown", "os"),
+    (r'^forti(os|gate|manager|analyzer)$', lambda m: f"Forti{m.group(1).title()}", lambda m: "unknown", "firmware"),
+    (r'^ios(_xe|_xr)?$', lambda m: f"Cisco IOS{' X' + m.group(1).upper() if m.group(1) else ''}", lambda m: "unknown", "firmware"),
+    (r'^nx-os$', "Cisco NX-OS", lambda m: "unknown", "firmware"),
+    (r'^(ubuntu|debian)_linux$', lambda m: m.group(1).title(), lambda m: "unknown", "os"),
+    (r'^(linux_kernel|fedora|centos|opensuse|enterprise_linux)$', lambda m: m.group(1).replace("_"," ").title(), lambda m: "unknown", "os"),
+    (r'^esxi$', "VMware ESXi", lambda m: "unknown", "firmware"),
+    (r'^vcenter_server$', "vCenter Server", lambda m: "unknown", "os"),
+    (r'^(macos|mac_os_x|iphone_os)$', lambda m: {"macos":"macOS","mac_os_x":"Mac OS X","iphone_os":"iOS"}[m.group(1)], lambda m: "unknown", "os"),
+    (r'^android$', "Android", lambda m: "unknown", "os"),
+    (r'^(.+)_firmware$', lambda m: m.group(1).replace("_"," ").title() + " Firmware", lambda m: "unknown", "firmware"),
 ]
 
 COMPILED_RULES = [(re.compile(p, re.IGNORECASE), n, v, t) for p, n, v, t in NORMALIZATION_RULES]
@@ -660,48 +659,103 @@ def normalize_product(vendor, product):
     for pattern, os_nom_def, version_fn, type_produit in COMPILED_RULES:
         if match := pattern.match(product):
             os_nom = os_nom_def(match) if callable(os_nom_def) else os_nom_def
-            version = version_fn(match) if version_fn else None
-            return {"os_nom": os_nom, "version": version, "nvd_vendor": vendor, "nvd_product": product, "type_produit": type_produit}
+            version = version_fn(match) if callable(version_fn) else version_fn
+            # Remplacer NULL par une chaîne vide
+            version = version if version is not None else ""
+            return {
+                "os_nom": os_nom.strip(),
+                "version": version,
+                "nvd_vendor": vendor.lower(),
+                "nvd_product": product.lower(),
+                "type_produit": type_produit
+            }
     return None
 
 def extract_os_versions(logger, dry_run=False, verbose=False, vendor_filter=None):
     conn = get_connection()
     try:
         cur = conn.cursor()
-        cur.execute("""CREATE TABLE IF NOT EXISTS os_versions (id INT AUTO_INCREMENT PRIMARY KEY, os_nom VARCHAR(255) NOT NULL,
-            version VARCHAR(100), nvd_vendor VARCHAR(255) NOT NULL, nvd_product VARCHAR(255) NOT NULL,
-            type_produit ENUM('os','firmware','bios') DEFAULT 'os', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE KEY uq_nvd (nvd_vendor,nvd_product), KEY idx_os_nom (os_nom), KEY idx_nvd_vendor (nvd_vendor))
-            ENGINE=InnoDB DEFAULT CHARSET=utf8mb4""")
-        conn.commit()
-        filter_sql = "AND fabricant = %s" if vendor_filter else ""
-        params = [vendor_filter] if vendor_filter else []
-        cur.execute(f"SELECT DISTINCT fabricant, produit FROM cve WHERE fabricant IS NOT NULL AND produit IS NOT NULL {filter_sql} ORDER BY fabricant, produit", params)
+        cur.execute("SHOW TABLES LIKE 'os_versions'")
+        if not cur.fetchone():
+            logger.error("Table os_versions n'existe pas !")
+            return False
+
+        vendor_filter_sql = "AND fabricant = %s" if vendor_filter else ""
+        query_params = [vendor_filter] if vendor_filter else []
+
+        cur.execute(f"""
+            SELECT DISTINCT fabricant, produit
+            FROM cve
+            WHERE fabricant IS NOT NULL
+              AND produit IS NOT NULL
+              {vendor_filter_sql}
+            ORDER BY fabricant, produit
+        """, query_params)
+
         pairs = cur.fetchall()
-        logger.log(f"Processing {len(pairs)} distinct pairs")
-        inserted = skipped = no_match = 0
-        with ProgressBar(len(pairs), "Extracting OS") as pbar:
+        logger.log(f"Couples (fabricant, produit) distincts : {len(pairs)}")
+
+        inserted = 0
+        skipped = 0
+        no_match = 0
+        errors = 0
+
+        with ProgressBar(len(pairs), "Extracting OS versions") as pbar:
             for i, row in enumerate(pairs, 1):
-                entry = normalize_product(row["fabricant"], row["produit"])
-                if not entry:
+                vendor = row["fabricant"]
+                product = row["produit"]
+                entry = normalize_product(vendor, product)
+
+                if entry is None:
                     no_match += 1
+                    if verbose:
+                        logger.log(f"  [NO MATCH] {vendor} / {product}")
                     pbar.update(i)
                     continue
-                if verbose:
-                    v = f" v{entry['version']}" if entry['version'] else ""
-                    logger.log(f"  {row['fabricant']}/{row['produit']} -> {entry['os_nom']}{v} ({entry['type_produit']})")
+
+                # Vérifier si l'entrée existe déjà (avec COALESCE pour gérer NULL)
                 if not dry_run:
-                    cur.execute("INSERT IGNORE INTO os_versions (os_nom,version,nvd_vendor,nvd_product,type_produit) VALUES (%s,%s,%s,%s,%s)",
-                              (entry["os_nom"], entry["version"], entry["nvd_vendor"], entry["nvd_product"], entry["type_produit"]))
-                    inserted += 1 if cur.rowcount > 0 else 0
-                    skipped += 1 if cur.rowcount == 0 else 0
+                    try:
+                        cur.execute("""
+                            SELECT 1 FROM os_versions
+                            WHERE nvd_vendor = %s
+                              AND nvd_product = %s
+                              AND COALESCE(version, '') = %s
+                            LIMIT 1
+                        """, (
+                            entry["nvd_vendor"],
+                            entry["nvd_product"],
+                            entry["version"]  # Toujours une chaîne (jamais NULL)
+                        ))
+                        if cur.fetchone():
+                            skipped += 1
+                            if verbose:
+                                logger.log(f"  [SKIP] {entry['nvd_vendor']}/{entry['nvd_product']}/{entry['version']}")
+                        else:
+                            cur.execute("""
+                                INSERT INTO os_versions
+                                    (os_nom, version, nvd_vendor, nvd_product, type_produit)
+                                VALUES (%s, %s, %s, %s, %s)
+                            """, (
+                                entry["os_nom"],
+                                entry["version"],
+                                entry["nvd_vendor"],
+                                entry["nvd_product"],
+                                entry["type_produit"],
+                            ))
+                            inserted += 1
+                            conn.commit()
+                    except Exception as e:
+                        logger.error(f"Erreur SQL : {e}")
+                        errors += 1
+                        conn.rollback()
                 pbar.update(i)
-        if not dry_run:
-            conn.commit()
-        logger.success(f"Results: {inserted} inserted, {skipped} skipped, {no_match} no match")
+
+        logger.success(f"Résultats: {inserted} insérés, {skipped} ignorés, {no_match} non normalisés, {errors} erreurs")
         return True
+
     except Exception as e:
-        logger.error(f"Error: {e}")
+        logger.error(f"Erreur fatale : {e}")
         return False
     finally:
         conn.close()

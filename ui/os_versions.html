@@ -529,13 +529,19 @@
 
         async function creerEntree() {
             const os_nom = document.getElementById('newOsNom').value.trim();
-            const vendor = document.getElementById('newVendor').value.trim().toLowerCase();
-            const product = document.getElementById('newProduct').value.trim().toLowerCase();
+            let vendor = document.getElementById('newVendor').value.trim().toLowerCase();
+            let product = document.getElementById('newProduct').value.trim().toLowerCase();
             const version = document.getElementById('newVersion').value.trim() || null;
             const type = document.getElementById('newType').value;
             const errDiv = document.getElementById('ajoutErreur');
 
             errDiv.classList.add('d-none');
+
+            // Si le produit NVD est vide, le générer automatiquement
+            if (!product && os_nom && version) {
+                product = `${os_nom.toLowerCase().replace(/\s+/g, '_')}_${version.toLowerCase().replace(/\s+/g, '_')}`;
+                document.getElementById('newProduct').value = product;
+            }
 
             if (!os_nom || !vendor || !product) {
                 errDiv.textContent = 'Nom OS, Vendor NVD et Produit NVD sont obligatoires.';
@@ -547,7 +553,13 @@
                 const r = await fetch(API, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ os_nom, version, nvd_vendor: vendor, nvd_product: product, type_produit: type })
+                    body: JSON.stringify({
+                        os_nom,
+                        version,
+                        nvd_vendor: vendor,
+                        nvd_product: product,
+                        type_produit: type
+                    })
                 });
                 if (!r.ok) {
                     const err = await r.json();
@@ -610,14 +622,17 @@
                         <div class="col-12">
                             <label class="form-label">Produit NVD <span class="text-danger">*</span></label>
                             <div class="position-relative">
-                                <input type="text" class="form-control" id="newProduct" placeholder="ex: linux_kernel"
+                                <input type="text" class="form-control" id="newProduct" placeholder="ex: windows_11_25h2"
                                     autocomplete="off">
                                 <div id="ddNewProduct" style="display:none;position:absolute;top:100%;left:0;width:100%;
                                 background:#161b22;border:1px solid #30363d;border-radius:6px;
                                 box-shadow:0 8px 24px rgba(0,0,0,0.6);z-index:99999;max-height:180px;overflow-y:auto;">
                                 </div>
                             </div>
-                            <div class="form-text text-muted">En minuscules avec underscores</div>
+                            <div class="form-text text-muted">
+                                En minuscules avec underscores. Ex: <code>windows_11_25h2</code>.
+                                <br>Si vide, il sera généré automatiquement à partir du nom OS et de la version.
+                            </div>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Type <span class="text-danger">*</span></label>

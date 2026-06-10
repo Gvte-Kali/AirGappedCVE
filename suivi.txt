@@ -3,13 +3,10 @@
   Dernière mise à jour : 11/05/2026 ✅
 ═══════════════════════════════════════════════════════════════
 
-[✅] 1 - Revoir l'affichage de la page vulns : 
-       Il faut que la page affiche les assets par site et par client. Chaque asset aura un menu déroulant indiquant toutes les vulns.
-       Cependant, il faut que la recherche de filtre se fasse sur les assets déjà présents visuellement. 
-       Donc il faut revoir le fonctionnement de la page.
-       J'aimerais bien garder le fontionnement des typeahead existants
+A PATCHER : 
 
-[] 2 - 
+Doublons sur l'import dans sync_all.py : conversation 'OS-Version insertion'
+Les dernières modifications sont à tester, je ne l'ai pas fait.
 
 ===================================================
 Idées pour la fin du projet avant la mise en prod |
