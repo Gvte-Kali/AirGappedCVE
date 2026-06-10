@@ -17,7 +17,6 @@ Système de gestion d'assets informatiques et de vulnérabilités de sécurité,
 Le script d'installation guide l'utilisateur étape par étape et configure tout automatiquement :
 
 ```bash
-# Télécharger et exécuter le script d'installation
 curl -sSL https://raw.githubusercontent.com/Gvte-Kali/AirGappedCVE/refs/heads/main/install.sh | sudo bash
 ```
 
