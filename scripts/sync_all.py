@@ -351,7 +351,7 @@ def extract_pairs_from_file(json_path, logger):
         logger.warning(f"Cannot read {json_path.name}: {e}")
     return results
 
-def import_vendors_models(raw_dir, logger, batch_size=500):
+def import_vendors_models(raw_dir, logger, batch_size=100):
     raw_path = Path(raw_dir)
     if not raw_path.exists():
         logger.error(f"Directory not found: {raw_dir}")
@@ -363,11 +363,14 @@ def import_vendors_models(raw_dir, logger, batch_size=500):
         return False
 
     logger.log(f"Processing {len(json_files)} files...")
+
+    # Étape 1: Extraction
     all_entries = []
     seen_global = set()
+    file_count = 0
 
     with ProgressBar(len(json_files), "Extracting CPE") as pbar:
-        for i, jf in enumerate(json_files, 1):
+        for jf in json_files:
             entries = extract_pairs_from_file(jf, logger)
             new = 0
             for e in entries:
@@ -376,45 +379,122 @@ def import_vendors_models(raw_dir, logger, batch_size=500):
                     seen_global.add(key)
                     all_entries.append(e)
                     new += 1
-            pbar.update(i, f"{jf.name} (+{new})")
+            file_count += 1
+            pbar.update(file_count, f"{jf.name} (+{new})")
+
+    if not all_entries:
+        logger.warning("No CPE entries found!")
+        return True
 
     unique_vendors = list({e["nvd_vendor"]: e for e in all_entries}.values())
-    logger.success(f"Extracted {len(all_entries)} pairs, {len(unique_vendors)} vendors")
+    logger.success(f"Extracted {len(all_entries)} pairs, {len(unique_vendors)} unique vendors")
 
+    # Étape 2: Insertion des vendors
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            # Insert vendors
+            # Insert vendors par petits batches
+            vendors_inserted = 0
             with ProgressBar(len(unique_vendors), "Inserting vendors") as pbar:
                 for i in range(0, len(unique_vendors), batch_size):
                     batch = unique_vendors[i:i+batch_size]
-                    cur.executemany("INSERT IGNORE INTO product_vendors (nom, nvd_vendor) VALUES (%s, %s)",
-                                  [(v["nom_vendor"], v["nvd_vendor"]) for v in batch])
-                    conn.commit()
-                    pbar.update(i+len(batch))
-            logger.success(f"Vendors: {cur.rowcount} inserted")
+                    try:
+                        cur.executemany(
+                            "INSERT IGNORE INTO product_vendors (nom, nvd_vendor) VALUES (%s, %s)",
+                            [(v["nom_vendor"], v["nvd_vendor"]) for v in batch]
+                        )
+                        vendors_inserted += cur.rowcount
+                        conn.commit()
+                    except Exception as e:
+                        logger.warning(f"Vendor batch failed: {e}")
+                        conn.rollback()
+                        for v in batch:
+                            try:
+                                cur.execute(
+                                    "INSERT IGNORE INTO product_vendors (nom, nvd_vendor) VALUES (%s, %s)",
+                                    (v["nom_vendor"], v["nvd_vendor"])
+                                )
+                                vendors_inserted += cur.rowcount
+                                conn.commit()
+                            except Exception as inner_e:
+                                logger.warning(f"Single vendor failed: {v['nvd_vendor']} - {inner_e}")
+                    pbar.update(i + len(batch))
 
-            # Insert models
+            logger.success(f"Vendors: {vendors_inserted} inserted, {len(unique_vendors) - vendors_inserted} existed")
+
+            # Étape 3: Insertion des models
+            models_inserted = 0
             with ProgressBar(len(all_entries), "Inserting models") as pbar:
                 for i in range(0, len(all_entries), batch_size):
                     batch = all_entries[i:i+batch_size]
-                    nvd_vendors = list({e["nvd_vendor"] for e in batch})
-                    cur.execute(f"SELECT id, nvd_vendor FROM product_vendors WHERE nvd_vendor IN ({','.join(['%s']*len(nvd_vendors))})", nvd_vendors)
-                    vendor_ids = {row[1]: row[0] for row in cur.fetchall()}
-                    rows = [(vendor_ids.get(m["nvd_vendor"]), m["nom_product"], m["nvd_product"],
-                            m["cpe_part"], m["type_produit"], m["cpe_base"]) for m in batch if vendor_ids.get(m["nvd_vendor"])]
+                    batch_vendors = list({e["nvd_vendor"] for e in batch})
+
+                    # Récupérer les vendor_ids par petits batches (MAX 1000)
+                    vendor_ids = {}
+                    for vendor_batch in [batch_vendors[j:j+500] for j in range(0, len(batch_vendors), 500)]:
+                        try:
+                            placeholders = ",".join(["%s"] * len(vendor_batch))
+                            cur.execute(
+                                f"SELECT id, nvd_vendor FROM product_vendors WHERE nvd_vendor IN ({placeholders})",
+                                vendor_batch
+                            )
+                            vendor_ids.update({row[1]: row[0] for row in cur.fetchall()})
+                        except Exception as e:
+                            logger.error(f"Failed to fetch vendor IDs batch: {e}")
+                            return False
+
+                    # Préparer les données
+                    rows = []
+                    for m in batch:
+                        vid = vendor_ids.get(m["nvd_vendor"])
+                        if vid is None:
+                            logger.warning(f"No vendor_id for {m['nvd_vendor']}")
+                            continue
+                        rows.append((
+                            vid,
+                            m["nom_product"],
+                            m["nvd_product"],
+                            m["cpe_part"],
+                            m["type_produit"],
+                            m["cpe_base"]
+                        ))
+
+                    # Insérer par batch
                     if rows:
-                        cur.executemany("INSERT IGNORE INTO product_models (vendor_id, nom, nvd_product, cpe_part, type_produit, cpe_base) VALUES (%s,%s,%s,%s,%s,%s)", rows)
-                    conn.commit()
-                    pbar.update(i+len(batch))
-            logger.success(f"Models: {len(all_entries)} processed")
+                        try:
+                            cur.executemany("""
+                                INSERT IGNORE INTO product_models
+                                (vendor_id, nom, nvd_product, cpe_part, type_produit, cpe_base)
+                                VALUES (%s, %s, %s, %s, %s, %s)
+                            """, rows)
+                            models_inserted += cur.rowcount
+                            conn.commit()
+                        except Exception as e:
+                            logger.warning(f"Model batch failed ({len(rows)} items): {e}")
+                            conn.rollback()
+                            # Essayer un par un
+                            for row in rows:
+                                try:
+                                    cur.execute("""
+                                        INSERT IGNORE INTO product_models
+                                        (vendor_id, nom, nvd_product, cpe_part, type_produit, cpe_base)
+                                        VALUES (%s, %s, %s, %s, %s, %s)
+                                    """, row)
+                                    models_inserted += cur.rowcount
+                                    conn.commit()
+                                except Exception as inner_e:
+                                    logger.warning(f"Single model failed: {row[2]} - {inner_e}")
+                    pbar.update(i + len(batch))
+
+            logger.success(f"Models: {models_inserted} inserted, {len(all_entries) - models_inserted} existed")
+            return True
+
     except Exception as e:
+        logger.error(f"Fatal SQL Error: {e}")
         conn.rollback()
-        logger.error(f"SQL Error: {e}")
         return False
     finally:
         conn.close()
-    return True
 
 # =============================================================================
 # CVE SYNC FUNCTIONS

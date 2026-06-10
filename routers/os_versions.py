@@ -108,6 +108,17 @@ def create_os_version(entry: OsVersionCreate):
     conn = get_connection()
     try:
         with conn.cursor() as cur:
+            # Vérifier si la combinaison nvd_vendor + nvd_product existe déjà
+            cur.execute("""
+                SELECT id FROM os_versions
+                WHERE nvd_vendor = %s AND nvd_product = %s
+            """, (entry.nvd_vendor, entry.nvd_product))
+            if cur.fetchone():
+                raise HTTPException(
+                    status_code=409,
+                    detail="Cette combinaison vendor/produit existe déjà dans le référentiel."
+                )
+
             cur.execute("""
                 INSERT INTO os_versions (os_nom, version, nvd_vendor, nvd_product, type_produit)
                 VALUES (%s, %s, %s, %s, %s)
