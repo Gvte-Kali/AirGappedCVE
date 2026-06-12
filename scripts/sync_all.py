@@ -660,8 +660,8 @@ def normalize_product(vendor, product):
         if match := pattern.match(product):
             os_nom = os_nom_def(match) if callable(os_nom_def) else os_nom_def
             version = version_fn(match) if callable(version_fn) else version_fn
-            # Remplacer NULL par une chaîne vide
-            version = version if version is not None else ""
+            # Remplacer NULL par "unknown"
+            version = version if version is not None else "unknown"
             return {
                 "os_nom": os_nom.strip(),
                 "version": version,
@@ -700,6 +700,11 @@ def extract_os_versions(logger, dry_run=False, verbose=False, vendor_filter=None
         no_match = 0
         errors = 0
 
+        # Étape de nettoyage : normaliser les NULL existants
+        cur.execute("UPDATE os_versions SET version = 'unknown' WHERE version IS NULL")
+        conn.commit()
+        logger.log(f"Nettoyage NULL effectué : {cur.rowcount} lignes mises à jour")
+
         with ProgressBar(len(pairs), "Extracting OS versions") as pbar:
             for i, row in enumerate(pairs, 1):
                 vendor = row["fabricant"]
@@ -713,38 +718,24 @@ def extract_os_versions(logger, dry_run=False, verbose=False, vendor_filter=None
                     pbar.update(i)
                     continue
 
-                # Vérifier si l'entrée existe déjà (avec COALESCE pour gérer NULL)
                 if not dry_run:
                     try:
                         cur.execute("""
-                            SELECT 1 FROM os_versions
-                            WHERE nvd_vendor = %s
-                              AND nvd_product = %s
-                              AND COALESCE(version, '') = %s
-                            LIMIT 1
+                            INSERT IGNORE INTO os_versions
+                                (os_nom, version, nvd_vendor, nvd_product, type_produit)
+                            VALUES (%s, %s, %s, %s, %s)
                         """, (
+                            entry["os_nom"],
+                            entry["version"],   # jamais NULL (garanti par normalize_product)
                             entry["nvd_vendor"],
                             entry["nvd_product"],
-                            entry["version"]  # Toujours une chaîne (jamais NULL)
+                            entry["type_produit"],
                         ))
-                        if cur.fetchone():
-                            skipped += 1
-                            if verbose:
-                                logger.log(f"  [SKIP] {entry['nvd_vendor']}/{entry['nvd_product']}/{entry['version']}")
-                        else:
-                            cur.execute("""
-                                INSERT INTO os_versions
-                                    (os_nom, version, nvd_vendor, nvd_product, type_produit)
-                                VALUES (%s, %s, %s, %s, %s)
-                            """, (
-                                entry["os_nom"],
-                                entry["version"],
-                                entry["nvd_vendor"],
-                                entry["nvd_product"],
-                                entry["type_produit"],
-                            ))
+                        if cur.rowcount == 1:
                             inserted += 1
                             conn.commit()
+                        else:
+                            skipped += 1
                     except Exception as e:
                         logger.error(f"Erreur SQL : {e}")
                         errors += 1
