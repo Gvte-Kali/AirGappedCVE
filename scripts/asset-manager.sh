@@ -342,17 +342,57 @@ cmd_db_backup() {
     if ! check_mariadb; then
         exit 1
     fi
-    local backup_file="$BACKUP_DIR/am_backup_$(date +%Y%m%d).sql"
+
+    local compress=true
+    local backup_file
+    local temp_file=""
+    local timestamp=$(date +"%Y%m%d_%H%M%S")
+
+    # Vérifier si l'utilisateur veut un fichier non compressé
+    if [[ "$1" == "--no-compress" || "$1" == "-n" ]]; then
+        compress=false
+        shift
+    fi
+
+    # Définir le nom du fichier de sauvegarde (même format que backup.sh)
+    if [ $# -gt 0 ]; then
+        # Si un nom personnalisé est fourni, l'utiliser
+        backup_file="$1"
+    else
+        # Sinon, utiliser le format par défaut : backup_<DB_NAME>_YYYYMMDD_HHMMSS.sql
+        backup_file="$BACKUP_DIR/backup_${DB_NAME}_${timestamp}.sql"
+    fi
+
+    if [ "$compress" = true ]; then
+        backup_file="${backup_file}.gz"
+        temp_file=$(mktemp)
+    fi
+
     echo "💾 Sauvegarde de $DB_NAME vers $backup_file..."
     mysqldump --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
-              --single-transaction --routines --triggers --events "$DB_NAME" > "$backup_file"
-    if [ $? -eq 0 ]; then
-        echo "✅ Sauvegarde terminée : $backup_file"
-        ls -lh "$backup_file"
-    else
+              --single-transaction --routines --triggers --events "$DB_NAME" > "${temp_file:-$backup_file}"
+
+    if [ $? -ne 0 ]; then
         echo "❌ Échec de la sauvegarde."
+        rm -f "$temp_file"
         exit 1
     fi
+
+    if [ "$compress" = true ]; then
+        echo "🗜️ Compression du fichier..."
+        if gzip -c "$temp_file" > "$backup_file"; then
+            echo "✅ Sauvegarde compressée terminée : $backup_file"
+            rm -f "$temp_file"
+        else
+            echo "❌ Échec de la compression."
+            rm -f "$temp_file"
+            exit 1
+        fi
+    else
+        echo "✅ Sauvegarde terminée : $backup_file"
+    fi
+
+    ls -lh "$backup_file"
 }
 
 cmd_db_schema() {
@@ -411,8 +451,9 @@ cmd_db_check() {
 cmd_db_import() {
     clear
     if [ $# -eq 0 ]; then
-        echo "❌ Usage : asset-manager db import <fichier.sql>"
+        echo "❌ Usage : asset-manager db import <fichier.sql[.gz]>"
         echo "   Exemple : asset-manager db import /chemin/vers/backup.sql"
+        echo "   Exemple : asset-manager db import /chemin/vers/backup.sql.gz"
         exit 1
     fi
 
@@ -426,13 +467,28 @@ cmd_db_import() {
         exit 1
     fi
 
-    echo "📥 Import du fichier $sql_file vers $DB_NAME..."
+    local temp_file=""
+    if [[ "$sql_file" == *.gz ]]; then
+        echo "🔍 Décompression de $sql_file..."
+        temp_file=$(mktemp)
+        if ! gunzip -c "$sql_file" > "$temp_file"; then
+            echo "❌ Échec de la décompression du fichier .gz."
+            rm -f "$temp_file"
+            exit 1
+        fi
+        sql_file="$temp_file"
+    fi
+
+    echo "📥 Import du fichier $1 vers $DB_NAME..."
     if mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl "$DB_NAME" < "$sql_file"; then
         echo "✅ Import terminé avec succès."
     else
         echo "❌ Échec de l'import. Vérifiez le fichier SQL et les permissions."
+        rm -f "$temp_file"
         exit 1
     fi
+
+    rm -f "$temp_file"
 }
 
 # --- COMMANDES CORRÉLATIONS ---
