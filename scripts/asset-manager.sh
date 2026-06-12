@@ -50,7 +50,7 @@ NVD_API_KEY="${NVD_API_KEY:-}"
 declare -A CATEGORIES=(
     ["fastapi"]="Gestion du service FastAPI (start/stop/restart/status)"
     ["logs"]="Affichage des logs (show)"
-    ["db"]="Gestion de la base de données (connect, backup, schema, size, vacuum, check)"
+    ["db"]="Gestion de la base de données (connect, backup, import, schema, size, vacuum, check)"
     ["corr"]="Gestion des corrélations (launch)"
     ["docs"]="Gestion des documents PDF (list, clear, size)"
     ["cve"]="Statistiques et dernières CVE (show)"
@@ -70,10 +70,12 @@ declare -A COMMANDS=(
     # Base de données
     ["db:connect"]="cmd_db_connect"      # <-- "db:connect" au lieu de "db:db-connect"
     ["db:backup"]="cmd_db_backup"
+    ["db:import"]="cmd_db_import"
     ["db:schema"]="cmd_db_schema"
     ["db:size"]="cmd_db_size"
     ["db:vacuum"]="cmd_db_vacuum"
     ["db:check"]="cmd_db_check"
+
 
     # Corrélations
     ["corr:launch"]="cmd_correlate"
@@ -167,6 +169,7 @@ show_category_help() {
                 "cmd_db") desc="Affiche la commande MySQL pour se connecter" ;;
                 "cmd_db_connect") desc="Se connecte directement à MariaDB" ;;
                 "cmd_db_backup") desc="Effectue un dump complet de la BDD" ;;
+                "cmd_db_import") desc="Importe un fichier SQL vers la BDD" ;;
                 "cmd_db_schema") desc="Génère le schéma SQL de la BDD" ;;
                 "cmd_db_size") desc="Affiche la taille des tables en Mo" ;;
                 "cmd_db_vacuum") desc="Optimise les tables corrélations et cve" ;;
@@ -403,6 +406,33 @@ cmd_db_check() {
     mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl \
           -e "CHECK TABLE clients, sites, assets, cve, correlations, equipment_types;" "$DB_NAME"
     echo "✅ Vérification terminée."
+}
+
+cmd_db_import() {
+    clear
+    if [ $# -eq 0 ]; then
+        echo "❌ Usage : asset-manager db import <fichier.sql>"
+        echo "   Exemple : asset-manager db import /chemin/vers/backup.sql"
+        exit 1
+    fi
+
+    local sql_file="$1"
+    if [ ! -f "$sql_file" ]; then
+        echo "❌ Fichier introuvable : $sql_file"
+        exit 1
+    fi
+
+    if ! check_mariadb; then
+        exit 1
+    fi
+
+    echo "📥 Import du fichier $sql_file vers $DB_NAME..."
+    if mysql --skip-ssl --host="$DB_HOST" --port="$DB_PORT" --user="$DB_USER" --password="$DB_PASSWORD" --skip-ssl "$DB_NAME" < "$sql_file"; then
+        echo "✅ Import terminé avec succès."
+    else
+        echo "❌ Échec de l'import. Vérifiez le fichier SQL et les permissions."
+        exit 1
+    fi
 }
 
 # --- COMMANDES CORRÉLATIONS ---
