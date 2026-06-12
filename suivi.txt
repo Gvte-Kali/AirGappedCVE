@@ -5,15 +5,10 @@
 
 A FAIRE : 
 
-- Ajouter dans le script install.sh les cronjobs suivants (dossiers parents de 'scripts' vus dans l'installation ) : 
-  - scripts/sync_all --> Tous les jours à 2H00 du matin
-  - scripts/correlate_and_analyze.py --> Tous les jours à 2H30 du matin
-  - script/backup.sh --> tous les jours à 4H00 du matin
+Ajout d'une case à cocher à côté de chaque vuln et au niveau de l'asset dans vulns.html : 
+On pourra appliquer des modifications en bulk
 
-  - Ajouter dans le dépôt toutes les pages nvd afin de gagner du temps sur la première installation ( /data/nvd/raw/* ). 
-  Le git clone les prendra
-  Adapter le script install.sh pour faire un mv des pages téléchargées via le git clone vers le dossier d'installation
-  
+
 ===================================================
 Idées pour la fin du projet avant la mise en prod |
 ===================================================
