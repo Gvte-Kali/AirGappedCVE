@@ -12,7 +12,6 @@ venv/
 nohup.out
 logs/*
 !logs/.gitkeep
-data/*
 !data/.gitkeep
 documents/*
 !documents/.gitkeep
