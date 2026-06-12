@@ -3,7 +3,7 @@
 # =============================================================================
 # install_user_friendly.sh — Script d'installation pour AirGappedCVE
 # Auteur : Gvte-Kali / Vibe Code
-# Version : 2.0.0 (corrigée)
+# Version : 3.0.0 (améliorée avec gestion d'erreurs avancée)
 # Description : Installe et configure automatiquement AirGappedCVE sur Ubuntu Server
 # Usage: sudo bash install.sh
 # =============================================================================
@@ -27,8 +27,15 @@ REPO_URL="https://github.com/Gvte-Kali/AirGappedCVE.git"
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 PURPLE='\033[0;35m'; ORANGE='\033[0;33m'
 
+# Niveaux d'erreur
+ERROR_LEVEL_NONE=0
+ERROR_LEVEL_WARNING=1
+ERROR_LEVEL_ERROR=2
+ERROR_LEVEL_CRITICAL=3
+
 # Compteur d'erreurs
 ERRORS=0
+declare -a ERROR_MESSAGES=()
 
 # Temps de début
 START_TIME=$(date +%s)
@@ -43,7 +50,7 @@ ${PURPLE}
  |_   _| |__   ___   ___ | | |_   _/ ___|_   _/ _ \|  _ \
    | | | '_ \ / _ \ / _ \| |   | | \___ \ | || | | | |_) |
    | | | | | | (_) | (_) | |___| |  ___) || || |_| |  _ <
-   |_| |_| |_|\___/ \___/|_____|_| |____/ |_| \___/|_| \_\\
+   |_| |_| |_|\___/ \___/|_____|_| |____/ |_| \___/|_| \_\
 ${NC}
   AirGappedCVE - Gestion de vulnérabilités en environnement isolé
 
@@ -59,11 +66,29 @@ log() {
 }
 
 error() {
+  local level=${3:-$ERROR_LEVEL_ERROR}
   ERRORS=$((ERRORS+1))
-  echo -e "${RED}${BOLD}[ERREUR $ERRORS]${NC} $1" | tee -a "$LOG_FILE"
+  local level_str=""
+  case $level in
+    $ERROR_LEVEL_CRITICAL) level_str="${RED}${BOLD}[ERREUR CRITIQUE $ERRORS]${NC}" ;;
+    $ERROR_LEVEL_ERROR)    level_str="${RED}${BOLD}[ERREUR $ERRORS]${NC}" ;;
+    $ERROR_LEVEL_WARNING)  level_str="${YELLOW}${BOLD}[AVERTISSEMENT $ERRORS]${NC}" ;;
+    *)                      level_str="${RED}${BOLD}[ERREUR $ERRORS]${NC}" ;;
+  esac
+  local full_msg="$1"
+  [ -n "${2:-}" ] && full_msg="$full_msg → $2"
+  ERROR_MESSAGES+=("$full_msg")
+
+  echo -e "$level_str $1" | tee -a "$LOG_FILE"
   [ -n "${2:-}" ] && echo -e "         ${YELLOW}→ $2${NC}" | tee -a "$LOG_FILE"
-  echo "$(date '+%Y-%m-%d %H:%M:%S') - [ERROR $ERRORS] $1" >> "$LOG_FILE"
-  [ -n "${2:-}" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') - [ERROR $ERRORS] Solution: $2" >> "$LOG_FILE"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - [$level_str] $1" >> "$LOG_FILE"
+  [ -n "${2:-}" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') - [$level_str] Solution: $2" >> "$LOG_FILE"
+
+  if [ "$level" -eq "$ERROR_LEVEL_CRITICAL" ]; then
+    echo ""
+    echo -e "${RED}${BOLD}❌ Installation arrêtée à cause d'une erreur critique.${NC}"
+    exit 1
+  fi
 }
 
 warn() {
@@ -136,8 +161,7 @@ ask_continue() {
     read -rp "Voulez-vous continuer l'installation ? (o/N) : " CONTINUE
     if [[ ! "$CONTINUE" =~ ^[oOyY]$ ]]; then
       echo ""
-      error "Installation annulée par l'utilisateur" "Corrigez les erreurs et relancez le script"
-      exit 1
+      error "Installation annulée par l'utilisateur" "Corrigez les erreurs et relancez le script" $ERROR_LEVEL_CRITICAL
     fi
     echo ""
     info "Reprise de l'installation..."
@@ -152,35 +176,66 @@ generate_password() {
 check_port_available() {
   local port=$1
   local service_name=$2
-  if ss -tuln | grep -q ":$port " 2>/dev/null; then
-    error "Le port $port est déjà utilisé par $service_name" "Arrêtez le service en cours ou changez le port"
-    return 1
+  if command -v ss > /dev/null 2>&1; then
+    if ss -tuln | grep -q ":$port " 2>/dev/null; then
+      error "Le port $port est déjà utilisé par $service_name" "Arrêtez le service en cours ou changez le port" $ERROR_LEVEL_ERROR
+      return 1
+    fi
+  elif command -v netstat > /dev/null 2>&1; then
+    if netstat -tuln | grep -q ":$port " 2>/dev/null; then
+      error "Le port $port est déjà utilisé par $service_name" "Arrêtez le service en cours ou changez le port" $ERROR_LEVEL_ERROR
+      return 1
+    fi
+  else
+    warn "Ni 'ss' ni 'netstat' trouvés. Impossible de vérifier le port $port."
+    return 0
   fi
   return 0
 }
 
-run_with_progress() {
+# Fonction pour exécuter une commande avec affichage en temps réel
+run_with_verbose() {
   local message="$1"
   local command="$2"
+  local log_file="$3"
 
-  echo -n "${CYAN}  → $message...${NC}"
-
-  if eval "$command" > /dev/null 2>&1; then
-    echo -e " ${GREEN}✓${NC}"
+  echo -e "${CYAN}  → $message...${NC}"
+  if [ -n "$log_file" ]; then
+    eval "$command" | tee -a "$log_file"
+  else
+    eval "$command"
+  fi
+  local exit_code=${PIPESTATUS[0]}
+  if [ $exit_code -eq 0 ]; then
+    echo -e "  ${GREEN}✓ $message terminé${NC}"
     return 0
   else
-    echo -e " ${RED}✗${NC}"
+    echo -e "  ${RED}✗ Échec de $message${NC}"
     return 1
   fi
+}
+
+# Fonction pour installer un paquet si manquant
+install_if_missing() {
+  local package="$1"
+  if ! command -v "$package" > /dev/null 2>&1 && ! dpkg -l | grep -q "^ii.*$package"; then
+    info "Installation de $package..."
+    if apt-get install -y "$package" > /dev/null 2>&1; then
+      log "$package installé"
+      return 0
+    else
+      error "Échec de l'installation de $package" "Vérifie les dépôts APT" $ERROR_LEVEL_ERROR
+      return 1
+    fi
+  fi
+  return 0
 }
 
 # =============================================================================
 # VÉRIFICATION ROOT
 # =============================================================================
 if [ "$EUID" -ne 0 ]; then
-  echo "Ce script doit être lancé en root." >&2
-  echo "Relance avec : sudo bash $0" >&2
-  exit 1
+  error "Ce script doit être lancé en root." "Relance avec : sudo bash $0" $ERROR_LEVEL_CRITICAL
 fi
 
 # Créer le fichier de log
@@ -193,31 +248,50 @@ touch "$LOG_FILE"
 
 header "Vérifications préliminaires"
 
-# 1. Vérification de l'espace disque
+# 1. Vérification des outils requis
+info "Vérification des outils requis..."
+REQUIRED_TOOLS=("curl" "wget" "git" "bc" "net-tools" "netcat" "software-properties-common" "ping" "ss")
+MISSING_TOOLS=()
+
+for tool in "${REQUIRED_TOOLS[@]}"; do
+  if ! command -v "$tool" > /dev/null 2>&1; then
+    MISSING_TOOLS+=("$tool")
+  fi
+done
+
+if [ ${#MISSING_TOOLS[@]} -gt 0 ]; then
+  info "Installation des outils manquants: ${MISSING_TOOLS[*]}"
+  if apt-get update > /dev/null 2>&1 && apt-get install -y "${MISSING_TOOLS[@]}" > /dev/null 2>&1; then
+    log "Outils manquants installés"
+  else
+    error "Échec de l'installation des outils requis: ${MISSING_TOOLS[*]}" "Vérifie ta connexion ou les sources APT" $ERROR_LEVEL_CRITICAL
+  fi
+else
+  info "Tous les outils requis sont installés"
+fi
+
+# 2. Vérification de l'espace disque
 MIN_SPACE_GB=5
 AVAILABLE_SPACE_KB=$(df /opt --output=avail | tail -1)
 AVAILABLE_SPACE_GB=$((AVAILABLE_SPACE_KB / 1024 / 1024))
 
 if [ "$AVAILABLE_SPACE_GB" -lt "$MIN_SPACE_GB" ]; then
-  error "Espace disque insuffisant sur /opt" "Il faut au moins ${MIN_SPACE_GB}GB, vous avez ${AVAILABLE_SPACE_GB}GB"
-  echo ""
-  df -h /opt
-  exit 1
+  error "Espace disque insuffisant sur /opt" "Il faut au moins ${MIN_SPACE_GB}GB, vous avez ${AVAILABLE_SPACE_GB}GB" $ERROR_LEVEL_CRITICAL
 else
   info "Espace disque suffisant (${AVAILABLE_SPACE_GB}GB disponible sur /opt)"
 fi
 
-# 2. Vérification de la mémoire
+# 3. Vérification de la mémoire
 MIN_RAM_MB=2048
 TOTAL_RAM_MB=$(free -m 2>/dev/null | awk '/Mem:/ {print $2}' || echo "0")
 
 if [ "$TOTAL_RAM_MB" -lt "$MIN_RAM_MB" ] 2>/dev/null; then
-  warn "Mémoire faible détectée (${TOTAL_RAM_MB}MB). Recommandé: ${MIN_RAM_MB}MB+"
+  error "Mémoire faible détectée (${TOTAL_RAM_MB}MB). Recommandé: ${MIN_RAM_MB}MB+" "" $ERROR_LEVEL_WARNING
 else
   info "Mémoire suffisante (${TOTAL_RAM_MB}MB détectés)"
 fi
 
-# 3. Détection de l'architecture
+# 4. Détection de l'architecture
 ARCH=$(uname -m)
 if [[ "$ARCH" == *"arm"* || "$ARCH" == *"aarch64"* ]]; then
   info "Architecture ARM détectée ($ARCH) - Compatible Raspberry Pi"
@@ -225,36 +299,36 @@ else
   info "Architecture $ARCH détectée"
 fi
 
-# 4. Vérification de la connectivité internet
+# 5. Vérification de la connectivité internet
 if ping -c 1 -W 2 github.com > /dev/null 2>&1; then
   info "Connexion internet active"
 else
-  warn "Pas de connexion internet détectée - Certaines étapes peuvent nécessiter une connexion"
+  error "Pas de connexion internet détectée" "Certaines étapes peuvent nécessiter une connexion" $ERROR_LEVEL_WARNING
 fi
 
-# 5. Vérification des ports
+# 6. Vérification des ports
 info "Vérification des ports..."
 check_port_available 8000 "FastAPI"
 check_port_available 3306 "MariaDB"
 
-# 6. Vérification de Python
+# 7. Vérification de Python
 PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}' | cut -d. -f1-2 || echo "0.0")
 if [ "$(printf '%s\n%s' "3.10" "$PYTHON_VERSION" | sort -V | head -1)" != "3.10" ]; then
-  warn "Python $PYTHON_VERSION détecté. Recommandé: Python 3.10+"
+  error "Python $PYTHON_VERSION détecté. Recommandé: Python 3.10+" "" $ERROR_LEVEL_WARNING
 else
   info "Python $PYTHON_VERSION détecté"
 fi
 
-# 7. Vérification de la distribution
+# 8. Vérification de la distribution
 if [ -f /etc/os-release ]; then
   . /etc/os-release
   if [[ "$ID" != "ubuntu" && "$ID" != "debian" ]]; then
-    warn "Ce script est optimisé pour Ubuntu/Debian. Distribution détectée: $ID"
+    error "Ce script est optimisé pour Ubuntu/Debian. Distribution détectée: $ID" "" $ERROR_LEVEL_WARNING
   else
     info "Distribution: $ID $VERSION_ID"
   fi
 else
-  warn "Impossible de détecter la distribution Linux"
+  error "Impossible de détecter la distribution Linux" "" $ERROR_LEVEL_WARNING
 fi
 
 header "Début de l'installation - $(date '+%Y-%m-%d %H:%M:%S')"
@@ -268,48 +342,45 @@ echo ""
 # =============================================================================
 step_header 1 5 "Mise à jour système et installation des dépendances"
 
-info "Mise à jour des paquets..."
-if run_with_progress "Mise à jour APT" "apt-get update -qq"; then
-  log "Mise à jour APT terminée"
+info "Mise à jour des paquets (cela peut prendre quelques minutes)..."
+if apt-get update; then
+  UPDATES_AVAILABLE=$(apt-get -s upgrade 2>/dev/null | grep -c ^Inst || echo 0)
+  log "Mise à jour APT terminée ($UPDATES_AVAILABLE paquets à mettre à jour)"
 else
-  error "Échec de la mise à jour des paquets" "Vérifie ta connexion ou les sources APT (/etc/apt/sources.list)"
-  ask_continue
+  error "Échec de la mise à jour des paquets" "Vérifie ta connexion ou les sources APT (/etc/apt/sources.list)" $ERROR_LEVEL_CRITICAL
 fi
 
-if run_with_progress "Mise à niveau des paquets" "apt-get upgrade -y -qq"; then
+info "Mise à niveau des paquets..."
+if apt-get upgrade -y; then
   log "Système à jour"
 else
-  error "Échec de la mise à niveau des paquets" "Vérifie ta connexion"
-  ask_continue
+  error "Échec de la mise à niveau des paquets" "Vérifie ta connexion" $ERROR_LEVEL_ERROR
 fi
 
 # Installation des dépendances de base
 info "Installation des dépendances de base..."
 BASE_DEPS="curl wget git bc net-tools netcat software-properties-common"
-if run_with_progress "Installation des dépendances de base" "apt-get install -y -qq $BASE_DEPS"; then
+if apt-get install -y $BASE_DEPS; then
   log "Dépendances de base installées"
 else
-  error "Échec de l'installation des dépendances de base" "Relance le script ou installe manuellement"
-  ask_continue
+  error "Échec de l'installation des dépendances de base" "Relance le script ou installe manuellement" $ERROR_LEVEL_ERROR
 fi
 
 # Installation de Python et pip
 info "Installation de Python et venv..."
 PYTHON_DEPS="python3 python3-pip python3-venv python3-dev"
-if run_with_progress "Installation de Python" "apt-get install -y -qq $PYTHON_DEPS"; then
+if apt-get install -y $PYTHON_DEPS; then
   log "Python et venv installés"
 else
-  error "Échec de l'installation de Python" "Vérifie que les dépôts universe sont activés"
-  ask_continue
+  error "Échec de l'installation de Python" "Vérifie que les dépôts universe sont activés" $ERROR_LEVEL_ERROR
 fi
 
 # Installation de MariaDB
 info "Installation de MariaDB..."
-if run_with_progress "Installation de MariaDB" "apt-get install -y -qq mariadb-server mariadb-client"; then
+if apt-get install -y mariadb-server mariadb-client; then
   log "MariaDB installé"
 else
-  error "Échec de l'installation de MariaDB" "Vérifie que les dépôts sont à jour ou installe MariaDB manuellement"
-  ask_continue
+  error "Échec de l'installation de MariaDB" "Vérifie que les dépôts sont à jour ou installe MariaDB manuellement" $ERROR_LEVEL_ERROR
 fi
 
 ask_continue
@@ -322,19 +393,24 @@ step_header 2 5 "Clone du projet AirGappedCVE"
 if [ -d "$INSTALL_DIR/.git" ]; then
     info "Dépôt existant détecté — mise à jour..."
     cd "$INSTALL_DIR"
-    if run_with_progress "Mise à jour du dépôt" "git pull origin main"; then
+    if git pull origin main; then
       log "Dépôt mis à jour"
     else
-      error "Échec de la mise à jour du dépôt" "Vérifie ta connexion ou les permissions"
+      error "Échec de la mise à jour du dépôt" "Vérifie ta connexion ou les permissions" $ERROR_LEVEL_ERROR
       ask_continue
     fi
 else
-    if run_with_progress "Clonage du dépôt" "git clone $REPO_URL $INSTALL_DIR"; then
+    if git clone "$REPO_URL" "$INSTALL_DIR"; then
       log "Dépôt cloné dans $INSTALL_DIR"
     else
-      error "Échec du clonage du dépôt GitHub" "Vérifie que $REPO_URL est accessible"
+      error "Échec du clonage du dépôt GitHub" "Vérifie que $REPO_URL est accessible" $ERROR_LEVEL_ERROR
       ask_continue
     fi
+fi
+
+# Vérification de l'intégrité du dépôt
+if [ ! -f "$INSTALL_DIR/main.py" ] || [ ! -f "$INSTALL_DIR/requirements.txt" ]; then
+  error "Le dépôt semble incomplet ou corrompu" "Vérifie que $REPO_URL est valide et accessible" $ERROR_LEVEL_CRITICAL
 fi
 
 # Supprimer les fichiers inutiles en production
@@ -343,7 +419,8 @@ log ".devcontainer supprimé"
 
 # Créer les dossiers nécessaires
 mkdir -p "$INSTALL_DIR/logs" "$INSTALL_DIR/data" "$INSTALL_DIR/documents" "$INSTALL_DIR/backups"
-log "Dossiers créés"
+chmod 750 "$INSTALL_DIR/logs" "$INSTALL_DIR/data" "$INSTALL_DIR/backups"
+log "Dossiers créés avec les permissions appropriées"
 
 ask_continue
 
@@ -356,12 +433,24 @@ echo ""
 echo "Nous allons maintenant configurer les variables nécessaires."
 echo ""
 
+# Sauvegarde du .env existant si présent
+if [ -f "$ENV_FILE" ]; then
+  info "Sauvegarde du fichier .env existant..."
+  cp "$ENV_FILE" "$ENV_FILE.backup-$(date +%Y%m%d-%H%M%S)"
+  log "Fichier .env existant sauvegardé"
+fi
+
 # Demander NVD_API_KEY (optionnel)
 while true; do
   read -rp "Entrez votre clé API NVD (laisser vide si vous n'en avez pas) : " NVD_API_KEY
   if [ -z "$NVD_API_KEY" ]; then
     echo "  → Aucune clé NVD fournie (optionnel)"
     break
+  fi
+  # Validation basique (longueur minimale)
+  if [ ${#NVD_API_KEY} -lt 10 ]; then
+    echo "  → La clé API NVD semble trop courte. Vérifiez-la."
+    continue
   fi
   break
 done
@@ -373,16 +462,32 @@ while true; do
     echo "  → Aucune clé Mistral fournie (optionnel)"
     break
   fi
+  # Validation basique (longueur minimale)
+  if [ ${#MISTRAL_API_KEY} -lt 10 ]; then
+    echo "  → La clé API Mistral semble trop courte. Vérifiez-la."
+    continue
+  fi
   break
 done
 
 # Demander DB_USER (obligatoire)
 while true; do
   read -rp "Entrez le nom d'utilisateur pour la base de données (obligatoire) : " DB_USER
-  if [ -n "$DB_USER" ]; then
-    break
+  if [ -z "$DB_USER" ]; then
+    echo "  → Le nom d'utilisateur est obligatoire !"
+    continue
   fi
-  echo "  → Le nom d'utilisateur est obligatoire !"
+  # Vérifier que le nom ne contient que des caractères alphanumériques et _
+  if ! [[ "$DB_USER" =~ ^[a-zA-Z0-9_]+$ ]]; then
+    echo "  → Le nom d'utilisateur ne doit contenir que des lettres, chiffres ou _"
+    continue
+  fi
+  # Vérifier que le nom n'est pas réservé
+  if [[ "$DB_USER" =~ ^(root|mysql|admin|mariadb)$ ]]; then
+    echo "  → Ce nom est réservé. Choisissez-en un autre."
+    continue
+  fi
+  break
 done
 
 # Générer DB_PASSWORD automatiquement
@@ -415,8 +520,32 @@ echo ""
 read -rp "Confirmez-vous cette configuration ? (o/N) : " CONFIRM
 if [[ ! "$CONFIRM" =~ ^[oOyY]$ ]]; then
   echo ""
-  error "Installation annulée par l'utilisateur" "Modifiez les valeurs et relancez le script"
-  exit 0
+  error "Installation annulée par l'utilisateur" "Modifiez les valeurs et relancez le script" $ERROR_LEVEL_CRITICAL
+fi
+
+# Test des clés API (optionnel)
+if [ -n "$NVD_API_KEY" ]; then
+  read -rp "Voulez-vous tester la clé API NVD ? (o/N) : " TEST_NVD
+  if [[ "$TEST_NVD" =~ ^[oOyY]$ ]]; then
+    info "Test de la clé API NVD..."
+    if curl -s -I "https://services.nvd.nist.gov/rest/json/cves/2.0?apiKey=$NVD_API_KEY" | grep -q "200 OK"; then
+      log "Clé API NVD valide"
+    else
+      warn "Clé API NVD invalide ou problème de connexion"
+    fi
+  fi
+fi
+
+if [ -n "$MISTRAL_API_KEY" ]; then
+  read -rp "Voulez-vous tester la clé API Mistral ? (o/N) : " TEST_MISTRAL
+  if [[ "$TEST_MISTRAL" =~ ^[oOyY]$ ]]; then
+    info "Test de la clé API Mistral..."
+    if curl -s -I "https://api.mistral.ai/v1/models" -H "Authorization: Bearer $MISTRAL_API_KEY" | grep -q "200 OK"; then
+      log "Clé API Mistral valide"
+    else
+      warn "Clé API Mistral invalide ou problème de connexion"
+    fi
+  fi
 fi
 
 # Créer le fichier .env
@@ -448,8 +577,6 @@ LOG_LEVEL=info
 EOF
 
 chmod 600 "$ENV_FILE"
-
-# Sauvegarde du .env
 cp "$ENV_FILE" "$ENV_FILE.backup-$(date +%Y%m%d-%H%M%S)"
 log "Fichier .env créé et sauvegardé"
 
@@ -463,36 +590,38 @@ step_header 4 5 "Installation de la base de données et de l'application"
 # Configuration de MariaDB
 info "Configuration de MariaDB..."
 
-if run_with_progress "Démarrage de MariaDB" "systemctl start mariadb"; then
+if run_with_verbose "Démarrage de MariaDB" "systemctl start mariadb" "$LOG_FILE"; then
   log "MariaDB démarré"
 else
-  error "Impossible de démarrer MariaDB" "Vérifie les logs : journalctl -u mariadb -n 30"
+  error "Impossible de démarrer MariaDB" "Vérifie les logs : journalctl -u mariadb -n 30" $ERROR_LEVEL_ERROR
   ask_continue
 fi
 
-if run_with_progress "Activation de MariaDB au démarrage" "systemctl enable mariadb"; then
+# Activation de MariaDB au démarrage (ignorer si déjà activé)
+if systemctl enable mariadb 2>/dev/null || systemctl is-enabled mariadb > /dev/null 2>&1; then
   log "MariaDB activé au démarrage"
 else
-  error "Impossible d'activer MariaDB au démarrage" "Vérifie systemctl"
+  error "Impossible d'activer MariaDB au démarrage" "Vérifie systemctl" $ERROR_LEVEL_ERROR
   ask_continue
 fi
 
-# Attendre que MariaDB soit prêt
-info "Attente que MariaDB soit opérationnel..."
+# Attendre que MariaDB soit prêt (timeout: 60s)
+info "Attente que MariaDB soit opérationnel (timeout: 60s)..."
 RETRIES=0
+MAX_RETRIES=30
 until mariadb -u root -e "SELECT 1" > /dev/null 2>&1; do
   RETRIES=$((RETRIES+1))
-  if [ "$RETRIES" -ge 15 ]; then
-    error "MariaDB ne répond pas après 30 secondes" "Vérifie les logs : journalctl -u mariadb -n 30"
+  if [ "$RETRIES" -ge "$MAX_RETRIES" ]; then
+    error "MariaDB ne répond pas après $((MAX_RETRIES * 2)) secondes" "Vérifie les logs: journalctl -u mariadb -n 50" $ERROR_LEVEL_ERROR
     ask_continue
     break
   fi
   sleep 2
-  echo -n "."
+  printf "\r${CYAN}  → Attente... ($RETRIES/$MAX_RETRIES)${NC}"
 done
-if [ "$RETRIES" -lt 15 ]; then
+if [ "$RETRIES" -lt "$MAX_RETRIES" ]; then
   echo ""
-  log "MariaDB opérationnel"
+  log "MariaDB opérationnel après $RETRIES tentatives"
 fi
 
 # Sécurisation de base
@@ -507,8 +636,16 @@ EOF
 then
   log "MariaDB sécurisé"
 else
-  error "Échec de la sécurisation de MariaDB" "Vérifie les permissions root"
+  error "Échec de la sécurisation de MariaDB" "Vérifie les permissions root" $ERROR_LEVEL_ERROR
   ask_continue
+fi
+
+# Vérification de la version de MariaDB
+MARIADB_VERSION=$(mariadb --version 2>/dev/null | awk '{print $5}' | cut -d. -f1-2)
+if [ -z "$MARIADB_VERSION" ]; then
+  error "MariaDB n'est pas installé correctement" "Vérifie l'installation avec: apt-get install -y mariadb-server" $ERROR_LEVEL_CRITICAL
+else
+  info "MariaDB $MARIADB_VERSION installé"
 fi
 
 # Création de la base et import du schéma
@@ -524,42 +661,47 @@ EOF
 then
   log "Base et utilisateur créés"
 else
-  error "Échec de la création de la base ou de l'utilisateur" "Vérifie les permissions MariaDB"
+  error "Échec de la création de la base ou de l'utilisateur" "Vérifie les permissions MariaDB" $ERROR_LEVEL_ERROR
   ask_continue
 fi
 
-# Import du schéma
+# Vérification de l'existence de schema.sql
 SCHEMA_FILE="$INSTALL_DIR/sql/schema.sql"
+if [ ! -f "$SCHEMA_FILE" ]; then
+  error "Fichier schema.sql introuvable dans $INSTALL_DIR/sql/" "Vérifie que le dépôt a été cloné correctement" $ERROR_LEVEL_CRITICAL
+fi
+
+# Import du schéma
 info "Import du schéma SQL..."
-if run_with_progress "Import du schéma" "mariadb -u root $DB_NAME < $SCHEMA_FILE"; then
+if mariadb -u root "$DB_NAME" < "$SCHEMA_FILE"; then
   log "Schéma importé"
 else
-  error "Échec de l'import du schéma SQL" "Vérifie le fichier sql/schema.sql"
+  error "Échec de l'import du schéma SQL" "Vérifie le fichier sql/schema.sql" $ERROR_LEVEL_ERROR
   ask_continue
 fi
 
 # Création du virtualenv Python
 info "Création de l'environnement virtuel Python..."
-if run_with_progress "Création du virtualenv" "python3 -m venv $INSTALL_DIR/venv"; then
+if python3 -m venv "$INSTALL_DIR/venv"; then
   log "Virtualenv créé"
 else
-  error "Échec de la création du virtualenv" "Vérifie que python3-venv est bien installé"
+  error "Échec de la création du virtualenv" "Vérifie que python3-venv est bien installé" $ERROR_LEVEL_ERROR
   ask_continue
 fi
 
 # Installation des dépendances Python
-info "Installation des dépendances Python..."
-if run_with_progress "Mise à jour de pip" "$INSTALL_DIR/venv/bin/pip install --upgrade pip -q"; then
+info "Installation des dépendances Python (cela peut prendre plusieurs minutes)..."
+if "$INSTALL_DIR/venv/bin/pip" install --upgrade pip; then
   log "pip mis à jour"
 else
-  error "Échec de la mise à jour de pip" "Vérifie l'environnement virtuel"
+  error "Échec de la mise à jour de pip" "Vérifie l'environnement virtuel" $ERROR_LEVEL_ERROR
   ask_continue
 fi
 
-if run_with_progress "Installation des packages Python" "$INSTALL_DIR/venv/bin/pip install -r $INSTALL_DIR/requirements.txt -q"; then
-  log "Dépendances installées"
+if "$INSTALL_DIR/venv/bin/pip" install -r "$INSTALL_DIR/requirements.txt"; then
+  log "Dépendances Python installées"
 else
-  error "Échec de l'installation des dépendances Python" "Vérifie le fichier requirements.txt ou ta connexion internet"
+  error "Échec de l'installation des dépendances Python" "Vérifie le fichier requirements.txt ou ta connexion internet" $ERROR_LEVEL_ERROR
   ask_continue
 fi
 
@@ -586,41 +728,44 @@ StandardError=append:$INSTALL_DIR/logs/FastAPI.log
 WantedBy=multi-user.target
 EOF
 
-if run_with_progress "Rechargement de systemd" "systemctl daemon-reload"; then
+if systemctl daemon-reload; then
   log "systemd rechargé"
 else
-  error "Échec du rechargement de systemd" "Vérifie les permissions"
+  error "Échec du rechargement de systemd" "Vérifie les permissions" $ERROR_LEVEL_ERROR
   ask_continue
 fi
 
-if run_with_progress "Activation du service" "systemctl enable $SERVICE_NAME"; then
+# Activation du service (ignorer si déjà activé)
+if systemctl enable "$SERVICE_NAME" 2>/dev/null || systemctl is-enabled "$SERVICE_NAME" > /dev/null 2>&1; then
   log "Service activé"
 else
-  error "Échec de l'activation du service" "Vérifie le fichier de service"
+  error "Échec de l'activation du service" "Vérifie le fichier de service" $ERROR_LEVEL_ERROR
   ask_continue
 fi
 
 info "Démarrage du service..."
-if run_with_progress "Démarrage de $SERVICE_NAME" "systemctl start $SERVICE_NAME"; then
+if systemctl start "$SERVICE_NAME"; then
   log "Service démarré"
 else
-  error "Échec du démarrage du service" "Vérifie : journalctl -u $SERVICE_NAME -n 30"
+  error "Échec du démarrage du service" "Vérifie : journalctl -u $SERVICE_NAME -n 30" $ERROR_LEVEL_ERROR
   ask_continue
 fi
 
-# Attendre que le service soit prêt
+# Attendre que le service FastAPI soit prêt (timeout: 60s)
+info "Attente que FastAPI soit opérationnel (timeout: 60s)..."
 RETRIES=0
+MAX_RETRIES=30
 until curl -sf http://localhost:8000/health > /dev/null 2>&1; do
   RETRIES=$((RETRIES+1))
-  if [ "$RETRIES" -ge 15 ]; then
-    error "Service FastAPI ne répond pas après 30 secondes" "Vérifie les logs : journalctl -u $SERVICE_NAME -n 30"
+  if [ "$RETRIES" -ge "$MAX_RETRIES" ]; then
+    error "Service FastAPI ne répond pas après $((MAX_RETRIES * 2)) secondes" "Vérifie les logs : journalctl -u $SERVICE_NAME -n 50" $ERROR_LEVEL_ERROR
     ask_continue
     break
   fi
   sleep 2
-  echo -n "."
+  printf "\r${CYAN}  → Attente... ($RETRIES/$MAX_RETRIES)${NC}"
 done
-if [ "$RETRIES" -lt 15 ]; then
+if [ "$RETRIES" -lt "$MAX_RETRIES" ]; then
   echo ""
   log "Service FastAPI opérationnel"
 fi
@@ -665,7 +810,7 @@ run_verification() {
     return 0
   else
     echo -e " ${RED}✗${NC}"
-    error "Échec de $cmd_name" "Vérifie les services"
+    error "Échec de $cmd_name" "Vérifie les services" $ERROR_LEVEL_ERROR
     VERIFICATION_RESULTS+=("✗ $cmd_name")
     return 1
   fi
@@ -765,6 +910,15 @@ echo "📋 Résultats des vérifications :"
 for result in "${VERIFICATION_RESULTS[@]}"; do
   echo "  $result"
 done
+
+# Afficher le résumé des erreurs
+if [ $ERRORS -gt 0 ]; then
+  echo ""
+  echo -e "${RED}${BOLD}📋 Liste des erreurs :${NC}"
+  for msg in "${ERROR_MESSAGES[@]}"; do
+    echo "  - $msg"
+  done
+fi
 
 echo ""
 echo "📁 Configuration :"
