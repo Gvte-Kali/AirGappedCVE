@@ -141,7 +141,7 @@ CREATE TABLE `correlation_rejects` (
   KEY `idx_cve` (`cve_id`),
   KEY `idx_raison` (`raison`),
   KEY `idx_date` (`date_rejet`)
-) ENGINE=InnoDB AUTO_INCREMENT=147 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=293 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -187,7 +187,7 @@ CREATE TABLE `correlations` (
   KEY `idx_correlations_cve_id` (`cve_id`),
   CONSTRAINT `correlations_ibfk_1` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE,
   CONSTRAINT `correlations_ibfk_2` FOREIGN KEY (`cve_id`) REFERENCES `cve` (`cve_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -225,7 +225,7 @@ CREATE TABLE `cve` (
   KEY `idx_cve_fabricant` (`fabricant`),
   KEY `idx_cve_cve_id` (`cve_id`),
   KEY `idx_cve_date_publication` (`date_publication`)
-) ENGINE=InnoDB AUTO_INCREMENT=1522142 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1817614 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -243,7 +243,7 @@ CREATE TABLE `cve_cwe` (
   UNIQUE KEY `uk_cve_cwe` (`cve_id`,`cwe_id`),
   KEY `idx_cve` (`cve_id`),
   KEY `idx_cwe` (`cwe_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1578864 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1885510 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -330,7 +330,7 @@ DROP TABLE IF EXISTS `os_versions`;
 CREATE TABLE `os_versions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `os_nom` varchar(255) NOT NULL COMMENT 'Nom affiché : "Windows Server", "DSM", "FortiOS"',
-  `version` varchar(100) DEFAULT NULL COMMENT 'Version affichée : "2022", "24H2", "9.1.2"',
+  `version` varchar(100) NOT NULL DEFAULT 'unknown',
   `nvd_vendor` varchar(255) NOT NULL COMMENT 'Vendor NVD exact : "microsoft", "synology"',
   `nvd_product` varchar(255) NOT NULL COMMENT 'Produit NVD exact : "windows_server_2022"',
   `type_produit` enum('os','firmware','bios') DEFAULT 'os',
@@ -340,7 +340,7 @@ CREATE TABLE `os_versions` (
   KEY `idx_os_nom` (`os_nom`),
   KEY `idx_nvd_vendor` (`nvd_vendor`),
   KEY `idx_type_produit` (`type_produit`)
-) ENGINE=InnoDB AUTO_INCREMENT=46890 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=100359 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -364,7 +364,7 @@ CREATE TABLE `product_models` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_vendor_product` (`vendor_id`,`nvd_product`),
   CONSTRAINT `product_models_ibfk_1` FOREIGN KEY (`vendor_id`) REFERENCES `product_vendors` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1022278 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1192292 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -383,7 +383,7 @@ CREATE TABLE `product_vendors` (
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_nvd_vendor` (`nvd_vendor`)
-) ENGINE=InnoDB AUTO_INCREMENT=363221 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=399230 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -687,4 +687,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2026-06-10 13:54:41
+-- Dump completed on 2026-06-12  8:05:05
