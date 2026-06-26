@@ -198,18 +198,20 @@
             top: 10px; /* Fixed position from card top */
             z-index: 10;
             pointer-events: auto;
+            width: 18px; /* CRITICAL: Container must have size */
+            height: 18px; /* CRITICAL: Container must have size */
         }
 
-        /* Checkbox input - MUST have position: absolute to inherit container positioning */
+        /* Checkbox input - positioned relative to container */
         .checkbox-container input[type="checkbox"] {
-            position: absolute; /* CRITICAL: Inherit container's absolute positioning */
-            width: 18px;
-            height: 18px;
+            position: relative; /* Changed to relative - inside the sized container */
+            width: 100%; /* Fill container width */
+            height: 100%; /* Fill container height */
             cursor: pointer;
             accent-color: #58a6ff;
             margin: 0;
             pointer-events: auto;
-            left: 0; /* Position relative to container */
+            left: 0;
             top: 0;
         }
 
