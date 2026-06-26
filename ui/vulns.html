@@ -183,22 +183,24 @@
             font-size: 0.85rem;
         }
 
-        /* ===== SOLUTION 4: Absolute positioning ===== */
-        /* Headers are relative containers */
+        /* ===== SOLUTION 4v2: Absolute positioning + pointer-events ===== */
+        /* Headers are relative containers with pointer-events: none */
         .client-header,
         .site-header,
         .asset-header {
             position: relative;
             padding-left: 28px; /* Space for checkbox */
+            pointer-events: none; /* Disable clicks on header */
         }
 
-        /* Checkbox container - absolutely positioned */
+        /* Checkbox container - absolutely positioned with pointer-events: auto */
         .checkbox-container {
             position: absolute;
             left: 0;
             top: 50%;
             transform: translateY(-50%);
             z-index: 10;
+            pointer-events: auto; /* Re-enable clicks on checkbox */
         }
 
         .checkbox-container input[type="checkbox"] {
@@ -207,6 +209,15 @@
             cursor: pointer;
             accent-color: #58a6ff;
             margin: 0;
+            pointer-events: auto; /* Ensure checkbox is clickable */
+        }
+
+        /* Re-enable pointer-events for chevrons */
+        .chevron,
+        .chevron-client,
+        .chevron-site {
+            pointer-events: auto;
+            cursor: pointer;
         }
 
         /* Vuln item checkbox */
@@ -215,11 +226,17 @@
             left: 8px;
             top: 50%;
             transform: translateY(-50%);
+            pointer-events: auto;
         }
 
         /* Vuln item needs relative positioning */
         .vuln-item {
             position: relative;
+        }
+
+        /* Vuln actions need to be clickable */
+        .vuln-actions {
+            pointer-events: auto;
         }
 
 
