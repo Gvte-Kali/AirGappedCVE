@@ -187,6 +187,7 @@
         .checkbox-container {
             display: inline-block;
             margin-right: 8px;
+            pointer-events: none;
         }
 
         .checkbox-container input[type="checkbox"] {
@@ -194,6 +195,7 @@
             height: 16px;
             cursor: pointer;
             accent-color: #58a6ff;
+            pointer-events: auto;
         }
 
         .vuln-item .checkbox-container {
@@ -1136,7 +1138,7 @@
             <div class="client-card p-3 mb-4">
                 <div class="client-header" onclick="toggleClient('${clientKey}')">
                     <div class="d-flex align-items-center">
-                        <span class="checkbox-container" onclick="event.stopPropagation()">
+                        <span class="checkbox-container">
                             <input type="checkbox" class="client-checkbox" data-client="${clientKey}"
                                    onchange="updateSelection()">
                         </span>
@@ -1158,7 +1160,7 @@
                 <div class="site-card p-3 mt-3 ms-3">
                     <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
                         <div class="d-flex align-items-center">
-                            <span class="checkbox-container" onclick="event.stopPropagation()">
+                            <span class="checkbox-container">
                                 <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}"
                                        onchange="updateSelection()">
                             </span>
@@ -1182,7 +1184,7 @@
                     <div class="asset-card mt-2 ms-3">
                         <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
                             <div class="d-flex align-items-center">
-                                <span class="checkbox-container" onclick="event.stopPropagation()">
+                                <span class="checkbox-container">
                                     <input type="checkbox" class="asset-checkbox"
                                            data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}"
                                            onchange="updateSelection()">
