@@ -201,21 +201,19 @@
             top: 10px; /* Fixed position from card top */
             z-index: 10;
             pointer-events: auto;
-            width: 18px; /* CRITICAL: Container must have size */
-            height: 18px; /* CRITICAL: Container must have size */
+            width: 18px;
+            height: 18px;
         }
 
-        /* Checkbox input - positioned relative to container */
+        /* Checkbox input - STATIC position (normal flow within container) */
         .checkbox-container input[type="checkbox"] {
-            position: relative; /* Changed to relative - inside the sized container */
-            width: 100%; /* Fill container width */
-            height: 100%; /* Fill container height */
+            position: static; /* CRITICAL: Keep in normal flow */
+            width: 100%;
+            height: 100%;
             cursor: pointer;
             accent-color: #58a6ff;
             margin: 0;
             pointer-events: auto;
-            left: 0;
-            top: 0;
         }
 
         /* Headers - have pointer-events: none, padding-left for checkbox space */
