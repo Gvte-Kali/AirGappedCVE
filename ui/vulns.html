@@ -183,24 +183,20 @@
             font-size: 0.85rem;
         }
 
-        /* ===== SOLUTION 4v2: Absolute positioning + pointer-events ===== */
-        /* Headers are relative containers with pointer-events: none */
-        .client-header,
-        .site-header,
-        .asset-header {
+        /* ===== FINAL SOLUTION: Checkboxes as siblings ===== */
+        /* Header wrapper - contains checkbox + header */
+        .header-wrapper {
             position: relative;
-            padding-left: 28px; /* Space for checkbox */
-            pointer-events: none; /* Disable clicks on header */
         }
 
-        /* Checkbox container - absolutely positioned with pointer-events: auto */
+        /* Checkbox container - sibling of header, absolutely positioned */
         .checkbox-container {
             position: absolute;
-            left: 0;
+            left: 8px;
             top: 50%;
             transform: translateY(-50%);
             z-index: 10;
-            pointer-events: auto; /* Re-enable clicks on checkbox */
+            pointer-events: auto;
         }
 
         .checkbox-container input[type="checkbox"] {
@@ -209,10 +205,34 @@
             cursor: pointer;
             accent-color: #58a6ff;
             margin: 0;
-            pointer-events: auto; /* Ensure checkbox is clickable */
         }
 
-        /* Re-enable pointer-events for chevrons */
+        /* Headers - have pointer-events: none, margin-left for checkbox space */
+        .client-header,
+        .site-header,
+        .asset-header {
+            pointer-events: none;
+            margin-left: 28px; /* Space for checkbox */
+            cursor: pointer; /* Show pointer cursor */
+        }
+
+        /* Re-enable pointer-events for specific elements */
+        .client-header *,
+        .site-header *,
+        .asset-header * {
+            pointer-events: auto;
+        }
+
+        /* Vuln item */
+        .vuln-item {
+            position: relative;
+        }
+
+        .vuln-item .checkbox-container {
+            left: 8px;
+        }
+
+        /* Chevrons - ensure they're clickable */
         .chevron,
         .chevron-client,
         .chevron-site {
@@ -220,21 +240,7 @@
             cursor: pointer;
         }
 
-        /* Vuln item checkbox */
-        .vuln-item .checkbox-container {
-            position: absolute;
-            left: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            pointer-events: auto;
-        }
-
-        /* Vuln item needs relative positioning */
-        .vuln-item {
-            position: relative;
-        }
-
-        /* Vuln actions need to be clickable */
+        /* Vuln actions */
         .vuln-actions {
             pointer-events: auto;
         }
@@ -1170,18 +1176,19 @@
 
                 html += `
             <div class="client-card p-3 mb-4">
-                <div class="client-header" onclick="toggleClient('${clientKey}')">
-                    <div class="d-flex align-items-center">
-                        <span class="checkbox-container">
-                            <input type="checkbox" class="client-checkbox" data-client="${clientKey}"
-                                   onchange="updateSelection()">
-                        </span>
-                        <span>👥 ${client.client}</span>
-                        <span class="badge bg-secondary ms-2">${clientTotalVulns} vulnérabilités</span>
-                    </div>
-                    <span class="chevron-client" id="chevron-client-${clientKey}">▼</span>
-                </div>
-                <div class="client-content" id="content-client-${clientKey}">
+    <div class="header-wrapper">
+        <span class="checkbox-container">
+            <input type="checkbox" class="client-checkbox" data-client="${clientKey}" onchange="updateSelection()">
+        </span>
+        <div class="client-header" onclick="toggleClient('${clientKey}')">
+            <div class="d-flex align-items-center">
+                <span>👥 ${client.client}</span>
+                <span class="badge bg-secondary ms-2">${clientTotalVulns} vulnérabilités</span>
+            </div>
+            <span class="chevron-client" id="chevron-client-${clientKey}">▼</span>
+        </div>
+    </div>
+    <div class="client-content" id="content-client-${clientKey}">
         `;
 
                 for (const siteKey in client.sites) {
@@ -1192,18 +1199,19 @@
 
                     html += `
                 <div class="site-card p-3 mt-3 ms-3">
-                    <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
-                        <div class="d-flex align-items-center">
-                            <span class="checkbox-container">
-                                <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}"
-                                       onchange="updateSelection()">
-                            </span>
-                            <span>🏢 ${site.site}</span>
-                            <span class="badge bg-secondary ms-2">${siteTotalVulns} vulnérabilités</span>
-                        </div>
-                        <span class="chevron-site" id="chevron-site-${clientKey}-${siteKey}">▼</span>
-                    </div>
-                    <div class="site-content" id="content-site-${clientKey}-${siteKey}">
+    <div class="header-wrapper">
+        <span class="checkbox-container">
+            <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}" onchange="updateSelection()">
+        </span>
+        <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
+            <div class="d-flex align-items-center">
+                <span>🏢 ${site.site}</span>
+                <span class="badge bg-secondary ms-2">${siteTotalVulns} vulnérabilités</span>
+            </div>
+            <span class="chevron-site" id="chevron-site-${clientKey}-${siteKey}">▼</span>
+        </div>
+    </div>
+    <div class="site-content" id="content-site-${clientKey}-${siteKey}">
             `;
 
                     for (const assetKey in site.assets) {
@@ -1216,26 +1224,26 @@
 
                         html += `
                     <div class="asset-card mt-2 ms-3">
-                        <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
-                            <div class="d-flex align-items-center">
-                                <span class="checkbox-container">
-                                    <input type="checkbox" class="asset-checkbox"
-                                           data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}"
-                                           onchange="updateSelection()">
-                                </span>
-                                <span>💻 ${asset.asset}</span>
-                                <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
-                                <div class="ms-3">
-                                    ${critCount > 0 ? `<span class="badge badge-critique">${critCount} Critique</span>` : ''}
-                                    ${highCount > 0 ? `<span class="badge badge-haute">${highCount} Haute</span>` : ''}
-                                    ${medCount > 0 ? `<span class="badge badge-moyenne">${medCount} Moyenne</span>` : ''}
-                                    ${lowCount > 0 ? `<span class="badge badge-basse">${lowCount} Basse</span>` : ''}
-                                    ${assetVulnsCount > 0 ? `<span class="badge bg-secondary">${assetVulnsCount} total</span>` : ''}
-                                </div>
-                            </div>
-                            <span class="chevron" id="chevron-${clientKey}-${siteKey}-${assetKey}">▼</span>
-                        </div>
-                        <div class="vuln-list" id="vuln-list-${clientKey}-${siteKey}-${assetKey}">
+    <div class="header-wrapper">
+        <span class="checkbox-container">
+            <input type="checkbox" class="asset-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" onchange="updateSelection()">
+        </span>
+        <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
+            <div class="d-flex align-items-center">
+                <span>💻 ${asset.asset}</span>
+                <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
+                <div class="ms-3">
+                    ${critCount > 0 ? `<span class="badge badge-critique">${critCount} Critique</span>` : ''}
+                    ${highCount > 0 ? `<span class="badge badge-haute">${highCount} Haute</span>` : ''}
+                    ${medCount > 0 ? `<span class="badge badge-moyenne">${medCount} Moyenne</span>` : ''}
+                    ${lowCount > 0 ? `<span class="badge badge-basse">${lowCount} Basse</span>` : ''}
+                    ${assetVulnsCount > 0 ? `<span class="badge bg-secondary">${assetVulnsCount} total</span>` : ''}
+                </div>
+            </div>
+            <span class="chevron" id="chevron-${clientKey}-${siteKey}-${assetKey}">▼</span>
+        </div>
+    </div>
+    <div class="vuln-list" id="vuln-list-${clientKey}-${siteKey}-${assetKey}">
                 `;
 
                         // Trier les vulnérabilités par priorité
@@ -1247,13 +1255,10 @@
                         sortedVulns.forEach(v => {
                             html += `
                         <div class="vuln-item">
-                            <span class="checkbox-container">
-                                <input type="checkbox" class="vuln-checkbox"
-                                       data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}"
-                                       data-vuln-id="${v.id}"
-                                       onchange="updateSelection()">
-                            </span>
-                            <div class="d-flex flex-column">
+    <span class="checkbox-container">
+        <input type="checkbox" class="vuln-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" data-vuln-id="${v.id}" onchange="updateSelection()">
+    </span>
+    <div class="d-flex flex-column" style="margin-left: 28px;">
                                 <div>
                                     <code class="me-2">${v.cve_id || 'N/A'}</code>
                                     <span class="badge badge-${v.priorite}">${(v.priorite || 'N/A').charAt(0).toUpperCase() + (v.priorite || 'N/A').slice(1)}</span>
