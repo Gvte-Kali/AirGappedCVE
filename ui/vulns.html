@@ -80,7 +80,6 @@
             border-left: 4px solid #58a6ff;
             background-color: #161b22;
             border-radius: 6px;
-            overflow: visible; /* CRITICAL: Allow absolute positioned checkboxes to be visible */
         }
 
         .site-card {
@@ -89,7 +88,6 @@
             background-color: #0d1117;
             border-radius: 6px;
             margin-left: 15px;
-            overflow: visible; /* Allow absolute positioned checkboxes */
         }
 
         .asset-card {
@@ -98,7 +96,6 @@
             border: 1px solid #30363d;
             border-radius: 6px;
             margin-left: 15px;
-            overflow: visible; /* Allow absolute positioned checkboxes */
         }
 
         .asset-header {
@@ -186,72 +183,47 @@
             font-size: 0.85rem;
         }
 
-        /* ===== FINAL SOLUTION v2: Checkboxes as siblings ===== */
-        /* Card containers - position relative for absolute checkboxes */
-        .client-card,
-        .site-card,
-        .asset-card {
-            position: relative;
+        /* ===== ROBUST SOLUTION ===== */
+        /* Checkbox label - simple inline-block */
+        .checkbox-label {
+            display: inline-block;
+            margin-right: 8px;
+            cursor: pointer;
         }
 
-        /* Checkbox container - absolutely positioned relative to CARD */
-        .checkbox-container {
-            position: absolute;
-            left: 8px;
-            top: 10px; /* Fixed position from card top */
-            z-index: 10;
-            pointer-events: auto;
+        .checkbox-label input[type="checkbox"] {
             width: 18px;
             height: 18px;
-        }
-
-        /* Checkbox input - STATIC position (normal flow within container) */
-        .checkbox-container input[type="checkbox"] {
-            position: static; /* CRITICAL: Keep in normal flow */
-            width: 100%;
-            height: 100%;
             cursor: pointer;
             accent-color: #58a6ff;
             margin: 0;
-            pointer-events: auto;
         }
 
-        /* Headers - have pointer-events: none, padding-left for checkbox space */
+        /* Headers - simple inline-block */
         .client-header,
         .site-header,
         .asset-header {
-            pointer-events: none;
-            padding-left: 28px; /* Space for checkbox */
+            display: inline-block;
             cursor: pointer;
+            padding: 10px 15px;
+            border-radius: 6px;
         }
 
-        /* Re-enable pointer-events for header children */
-        .client-header *,
-        .site-header *,
-        .asset-header * {
-            pointer-events: auto;
+        .client-header:hover,
+        .site-header:hover,
+        .asset-header:hover {
+            background-color: #1f262d;
         }
 
         /* Vuln item */
         .vuln-item {
-            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .vuln-item .checkbox-container {
-            left: 8px;
-        }
-
-        /* Chevrons - ensure they're clickable */
-        .chevron,
-        .chevron-client,
-        .chevron-site {
-            pointer-events: auto;
-            cursor: pointer;
-        }
-
-        /* Vuln actions */
-        .vuln-actions {
-            pointer-events: auto;
+        .vuln-content-wrapper {
+            flex: 1;
         }
 
 
@@ -405,6 +377,20 @@
 </head>
 
 <body>
+    <script>
+        // ============================================================
+        // GLOBAL EVENT LISTENER - ROBUST SOLUTION
+        // Prevents checkbox clicks from triggering header fold/unfold
+        // ============================================================
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('input[type="checkbox"]') ||
+                e.target.closest('.checkbox-label')) {
+                e.stopImmediatePropagation();
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        }, true);
+    </script>
     <!-- ─── NAVBAR ─────────────────────────────────────────── -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
@@ -1185,17 +1171,17 @@
 
                 html += `
             <div class="client-card p-3 mb-4">
-                <span class="checkbox-container">
-                    <input type="checkbox" class="client-checkbox" data-client="${clientKey}" onchange="updateSelection()">
-                </span>
-                <div class="client-header" onclick="toggleClient('${clientKey}')">
-                    <div class="d-flex align-items-center">
-                        <span>👥 ${client.client}</span>
-                        <span class="badge bg-secondary ms-2">${clientTotalVulns} vulnérabilités</span>
-                    </div>
-                    <span class="chevron-client" id="chevron-client-${clientKey}">▼</span>
-                </div>
-                <div class="client-content" id="content-client-${clientKey}">
+    <label class="checkbox-label">
+        <input type="checkbox" class="client-checkbox" data-client="${clientKey}" onchange="updateSelection()">
+    </label>
+    <div class="client-header" onclick="toggleClient('${clientKey}')">
+        <div class="d-flex align-items-center">
+            <span>👥 ${client.client}</span>
+            <span class="badge bg-secondary ms-2">${clientTotalVulns} vulnérabilités</span>
+        </div>
+        <span class="chevron-client" id="chevron-client-${clientKey}">▼</span>
+    </div>
+    <div class="client-content" id="content-client-${clientKey}">
         `;
 
                 for (const siteKey in client.sites) {
@@ -1206,17 +1192,17 @@
 
                     html += `
                 <div class="site-card p-3 mt-3 ms-3">
-                <span class="checkbox-container">
-                    <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}" onchange="updateSelection()">
-                </span>
-                <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
-                    <div class="d-flex align-items-center">
-                        <span>🏢 ${site.site}</span>
-                        <span class="badge bg-secondary ms-2">${siteTotalVulns} vulnérabilités</span>
-                    </div>
-                    <span class="chevron-site" id="chevron-site-${clientKey}-${siteKey}">▼</span>
-                </div>
-                <div class="site-content" id="content-site-${clientKey}-${siteKey}">
+    <label class="checkbox-label">
+        <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}" onchange="updateSelection()">
+    </label>
+    <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
+        <div class="d-flex align-items-center">
+            <span>🏢 ${site.site}</span>
+            <span class="badge bg-secondary ms-2">${siteTotalVulns} vulnérabilités</span>
+        </div>
+        <span class="chevron-site" id="chevron-site-${clientKey}-${siteKey}">▼</span>
+    </div>
+    <div class="site-content" id="content-site-${clientKey}-${siteKey}">
             `;
 
                     for (const assetKey in site.assets) {
@@ -1229,24 +1215,24 @@
 
                         html += `
                     <div class="asset-card mt-2 ms-3">
-                <span class="checkbox-container">
-                    <input type="checkbox" class="asset-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" onchange="updateSelection()">
-                </span>
-                <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
-                    <div class="d-flex align-items-center">
-                        <span>💻 ${asset.asset}</span>
-                        <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
-                        <div class="ms-3">
-                            ${critCount > 0 ? `<span class="badge badge-critique">${critCount} Critique</span>` : ''}
-                            ${highCount > 0 ? `<span class="badge badge-haute">${highCount} Haute</span>` : ''}
-                            ${medCount > 0 ? `<span class="badge badge-moyenne">${medCount} Moyenne</span>` : ''}
-                            ${lowCount > 0 ? `<span class="badge badge-basse">${lowCount} Basse</span>` : ''}
-                            ${assetVulnsCount > 0 ? `<span class="badge bg-secondary">${assetVulnsCount} total</span>` : ''}
-                        </div>
-                    </div>
-                    <span class="chevron" id="chevron-${clientKey}-${siteKey}-${assetKey}">▼</span>
-                </div>
-                <div class="vuln-list" id="vuln-list-${clientKey}-${siteKey}-${assetKey}">
+    <label class="checkbox-label">
+        <input type="checkbox" class="asset-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" onchange="updateSelection()">
+    </label>
+    <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
+        <div class="d-flex align-items-center">
+            <span>💻 ${asset.asset}</span>
+            <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
+            <div class="ms-3">
+                ${critCount > 0 ? `<span class="badge badge-critique">${critCount} Critique</span>` : ''}
+                ${highCount > 0 ? `<span class="badge badge-haute">${highCount} Haute</span>` : ''}
+                ${medCount > 0 ? `<span class="badge badge-moyenne">${medCount} Moyenne</span>` : ''}
+                ${lowCount > 0 ? `<span class="badge badge-basse">${lowCount} Basse</span>` : ''}
+                ${assetVulnsCount > 0 ? `<span class="badge bg-secondary">${assetVulnsCount} total</span>` : ''}
+            </div>
+        </div>
+        <span class="chevron" id="chevron-${clientKey}-${siteKey}-${assetKey}">▼</span>
+    </div>
+    <div class="vuln-list" id="vuln-list-${clientKey}-${siteKey}-${assetKey}">
                 `;
 
                         // Trier les vulnérabilités par priorité
@@ -1258,19 +1244,20 @@
                         sortedVulns.forEach(v => {
                             html += `
                         <div class="vuln-item">
-    <span class="checkbox-container">
+    <label class="checkbox-label">
         <input type="checkbox" class="vuln-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" data-vuln-id="${v.id}" onchange="updateSelection()">
-    </span>
-    <div class="d-flex flex-column" style="margin-left: 28px;">
+    </label>
+    <div class="vuln-content-wrapper">
         <div>
-            <code class="me-2">${v.cve_id || 'N/A'}</code>
+                                <div>
+                                    <code class="me-2">${v.cve_id || 'N/A'}</code>
                                     <span class="badge badge-${v.priorite}">${(v.priorite || 'N/A').charAt(0).toUpperCase() + (v.priorite || 'N/A').slice(1)}</span>
                                     <span class="badge badge-${v.statut} ms-1">${formatStatut(v.statut)}</span>
                                     ${v.cvss_v3_score ? `<span class="badge bg-secondary ms-1">CVSS: ${v.cvss_v3_score}</span>` : ''}
                                 </div>
-                                <small class="text-muted mt-1">${v.cve_description ? v.cve_description.substring(0, 100) + (v.cve_description.length > 100 ? '...' : '') : 'N/A'}</small>
-                            </div>
-                            <div class="vuln-actions">
+        <small class="text-muted mt-1">${v.cve_description ? v.cve_description.substring(0, 100) + (v.cve_description.length > 100 ? '...' : '') : 'N/A'}</small>
+    </div>
+    <div class="vuln-actions">
                                 <button class="btn btn-sm btn-outline-info" onclick="afficherDetails(${v.id})" title="Détails">🔍</button>
                                 <button class="btn btn-sm btn-outline-secondary" onclick="changerStatut(${v.id}, 'faux_positif')" title="Faux positif">✖</button>
                                 <button class="btn btn-sm btn-outline-success" onclick="changerStatut(${v.id}, 'confirme')" title="Confirmer">✅</button>
