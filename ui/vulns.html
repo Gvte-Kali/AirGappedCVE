@@ -131,11 +131,78 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: relative;
+            padding-left: 30px;
         }
 
         .vuln-item:hover {
             background-color: #1f262d;
         }
+        /* Styles pour les bulk actions */
+        .bulk-action-bar {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .bulk-action-bar.show {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bulk-select-all {
+            cursor: pointer;
+            color: #58a6ff;
+            font-size: 0.9rem;
+        }
+
+        .bulk-select-all:hover {
+            color: #79c0ff;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .bulk-actions select {
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .bulk-actions button {
+            padding: 4px 12px;
+            font-size: 0.85rem;
+        }
+
+        /* Style pour les cases à cocher */
+        .checkbox-container {
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #58a6ff;
+        }
+
+        .vuln-item .checkbox-container {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
 
         .chevron {
             transition: transform 0.2s;
@@ -619,6 +686,27 @@
         </div>
 
         <!-- Conteneur principal pour la vue hiérarchique -->
+        <!-- Barre d'actions pour les bulk updates -->
+        <div class="bulk-action-bar" id="bulkActionBar">
+            <div class="d-flex align-items-center gap-3">
+                <span class="bulk-select-all" onclick="toggleAllCheckboxes()">
+                    <span id="bulkSelectText">Tout sélectionner</span>
+                </span>
+                <span class="text-muted small" id="selectedCount">0 sélectionné(s)</span>
+            </div>
+            <div class="bulk-actions">
+                <select id="bulkStatutSelect" class="form-select form-select-sm">
+                    <option value="">Changer le statut...</option>
+                    <option value="nouveau">Nouveau</option>
+                    <option value="en_analyse">En analyse</option>
+                    <option value="confirme">Confirmé</option>
+                    <option value="faux_positif">Faux positif</option>
+                    <option value="patche">Patché</option>
+                </select>
+                <button class="btn btn-sm btn-primary" onclick="applyBulkAction()">Appliquer</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearSelection()">Annuler</button>
+            </div>
+        </div>
         <div id="hierarchicalView" class="mb-5">
             <!-- Les données seront chargées ici -->
         </div>
@@ -1048,6 +1136,10 @@
             <div class="client-card p-3 mb-4">
                 <div class="client-header" onclick="toggleClient('${clientKey}')">
                     <div class="d-flex align-items-center">
+                        <span class="checkbox-container">
+                            <input type="checkbox" class="client-checkbox" data-client="${clientKey}"
+                                   onchange="updateSelection()">
+                        </span>
                         <span>👥 ${client.client}</span>
                         <span class="badge bg-secondary ms-2">${clientTotalVulns} vulnérabilités</span>
                     </div>
@@ -1066,6 +1158,10 @@
                 <div class="site-card p-3 mt-3 ms-3">
                     <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
                         <div class="d-flex align-items-center">
+                            <span class="checkbox-container">
+                                <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}"
+                                       onchange="updateSelection()">
+                            </span>
                             <span>🏢 ${site.site}</span>
                             <span class="badge bg-secondary ms-2">${siteTotalVulns} vulnérabilités</span>
                         </div>
@@ -1086,6 +1182,11 @@
                     <div class="asset-card mt-2 ms-3">
                         <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
                             <div class="d-flex align-items-center">
+                                <span class="checkbox-container">
+                                    <input type="checkbox" class="asset-checkbox"
+                                           data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}"
+                                           onchange="updateSelection()">
+                                </span>
                                 <span>💻 ${asset.asset}</span>
                                 <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
                                 <div class="ms-3">
@@ -1110,6 +1211,12 @@
                         sortedVulns.forEach(v => {
                             html += `
                         <div class="vuln-item">
+                            <span class="checkbox-container">
+                                <input type="checkbox" class="vuln-checkbox"
+                                       data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}"
+                                       data-vuln-id="${v.id}"
+                                       onchange="updateSelection()">
+                            </span>
                             <div class="d-flex flex-column">
                                 <div>
                                     <code class="me-2">${v.cve_id || 'N/A'}</code>
@@ -1156,6 +1263,9 @@
                 const chevron = document.getElementById(`chevron-${id}`);
                 if (chevron) chevron.classList.remove('rotate');
             });
+
+            // Réinitialiser les sélections
+            clearSelection();
         }
 
         function addToggleAllButtons() {
@@ -1655,6 +1765,140 @@
             }
         }
 
+
+        // ============================================================
+        // GESTION DES BULK ACTIONS
+        // ============================================================
+        let selectedVulns = new Set(); // Stocke les IDs des vulnérabilités sélectionnées
+
+        // Met à jour l'état des cases à cocher et la barre d'actions
+        function updateSelection() {
+            const allCheckboxes = document.querySelectorAll('.vuln-checkbox:checked');
+            selectedVulns = new Set([...allCheckboxes].map(cb => parseInt(cb.dataset.vulnId)));
+
+            // Mettre à jour le compteur
+            document.getElementById('selectedCount').textContent = `${selectedVulns.size} sélectionné(s)`;
+
+            // Afficher/masquer la barre d'actions
+            const bulkActionBar = document.getElementById('bulkActionBar');
+            if (selectedVulns.size > 0) {
+                bulkActionBar.classList.add('show');
+            } else {
+                bulkActionBar.classList.remove('show');
+            }
+
+            // Mettre à jour l'état des cases parent (assets, sites, clients)
+            updateParentCheckboxes();
+        }
+
+        // Met à jour l'état des cases parent en fonction des enfants
+        function updateParentCheckboxes() {
+            // Mettre à jour les cases des assets
+            document.querySelectorAll('.asset-checkbox').forEach(checkbox => {
+                const clientKey = checkbox.dataset.client;
+                const siteKey = checkbox.dataset.site;
+                const assetKey = checkbox.dataset.asset;
+                const vulnCheckboxes = document.querySelectorAll(`.vuln-checkbox[data-client="${clientKey}"][data-site="${siteKey}"][data-asset="${assetKey}"]`);
+                const allChecked = [...vulnCheckboxes].every(cb => cb.checked);
+                const someChecked = [...vulnCheckboxes].some(cb => cb.checked);
+                checkbox.checked = allChecked;
+                checkbox.indeterminate = someChecked && !allChecked;
+            });
+
+            // Mettre à jour les cases des sites
+            document.querySelectorAll('.site-checkbox').forEach(checkbox => {
+                const clientKey = checkbox.dataset.client;
+                const siteKey = checkbox.dataset.site;
+                const assetCheckboxes = document.querySelectorAll(`.asset-checkbox[data-client="${clientKey}"][data-site="${siteKey}"]`);
+                const allChecked = [...assetCheckboxes].every(cb => cb.checked);
+                const someChecked = [...assetCheckboxes].some(cb => cb.checked || cb.indeterminate);
+                checkbox.checked = allChecked;
+                checkbox.indeterminate = someChecked && !allChecked;
+            });
+
+            // Mettre à jour les cases des clients
+            document.querySelectorAll('.client-checkbox').forEach(checkbox => {
+                const clientKey = checkbox.dataset.client;
+                const siteCheckboxes = document.querySelectorAll(`.site-checkbox[data-client="${clientKey}"]`);
+                const allChecked = [...siteCheckboxes].every(cb => cb.checked);
+                const someChecked = [...siteCheckboxes].some(cb => cb.checked || cb.indeterminate);
+                checkbox.checked = allChecked;
+                checkbox.indeterminate = someChecked && !allChecked;
+            });
+        }
+
+        // Sélectionne/désélectionne toutes les cases
+        function toggleAllCheckboxes() {
+            const allCheckboxes = document.querySelectorAll('.vuln-checkbox');
+            const isChecked = [...allCheckboxes].every(cb => cb.checked);
+
+            allCheckboxes.forEach(cb => {
+                cb.checked = !isChecked;
+            });
+
+            // Mettre à jour les cases parent
+            document.querySelectorAll('.client-checkbox, .site-checkbox, .asset-checkbox').forEach(cb => {
+                cb.checked = !isChecked;
+                cb.indeterminate = false;
+            });
+
+            updateSelection();
+            document.getElementById('bulkSelectText').textContent = isChecked ? 'Tout sélectionner' : 'Tout désélectionner';
+        }
+
+        // Applique l'action en bulk
+        async function applyBulkAction() {
+            const statut = document.getElementById('bulkStatutSelect').value;
+            if (!statut || selectedVulns.size === 0) {
+                alert('Veuillez sélectionner un statut et au moins une vulnérabilité.');
+                return;
+            }
+
+            if (!confirm(`Êtes-vous sûr de vouloir mettre à jour ${selectedVulns.size} vulnérabilité(s) avec le statut "${formatStatut(statut)}" ?`)) {
+                return;
+            }
+
+            const etatAvant = sauvegarderEtatOuverture();
+
+            try {
+                // Appel à l'API pour chaque vulnérabilité sélectionnée
+                const promises = [...selectedVulns].map(vulnId => {
+                    return fetch(`/api/correlations/${vulnId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ statut })
+                    });
+                });
+
+                const results = await Promise.allSettled(promises);
+                const errors = results.filter(r => r.status === 'rejected');
+
+                if (errors.length > 0) {
+                    alert(`Erreur lors de la mise à jour de ${errors.length} vulnérabilité(s).`);
+                } else {
+                    alert(`${selectedVulns.size} vulnérabilité(s) mises à jour avec succès.`);
+                    await chargerToutesLesVulnerabilites();
+                    restaurerEtatOuverture(etatAvant);
+                    clearSelection();
+                }
+            } catch (e) {
+                console.error('Erreur:', e);
+                alert('Erreur lors de la mise à jour des vulnérabilités.');
+            }
+        }
+
+        // Désélectionne tout
+        function clearSelection() {
+            document.querySelectorAll('.vuln-checkbox, .client-checkbox, .site-checkbox, .asset-checkbox').forEach(cb => {
+                cb.checked = false;
+                cb.indeterminate = false;
+            });
+            selectedVulns = new Set();
+            document.getElementById('bulkActionBar').classList.remove('show');
+            document.getElementById('bulkSelectText').textContent = 'Tout sélectionner';
+            document.getElementById('selectedCount').textContent = '0 sélectionné(s)';
+        }
+
         // ============================================================
         // INITIALISATION
         // ============================================================
@@ -1662,6 +1906,7 @@
             initFiltresTypeaheads();
             updateActiveFilters();
             chargerToutesLesVulnerabilites();
+            clearSelection();
         });
     </script>
 </body>
