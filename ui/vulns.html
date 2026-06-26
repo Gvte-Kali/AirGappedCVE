@@ -183,18 +183,19 @@
             font-size: 0.85rem;
         }
 
-        /* ===== FINAL SOLUTION: Checkboxes as siblings ===== */
-        /* Header wrapper - contains checkbox + header */
-        .header-wrapper {
+        /* ===== FINAL SOLUTION v2: Checkboxes as siblings ===== */
+        /* Card containers - position relative for absolute checkboxes */
+        .client-card,
+        .site-card,
+        .asset-card {
             position: relative;
         }
 
-        /* Checkbox container - sibling of header, absolutely positioned */
+        /* Checkbox container - absolutely positioned relative to CARD */
         .checkbox-container {
             position: absolute;
             left: 8px;
-            top: 50%;
-            transform: translateY(-50%);
+            top: 10px; /* Fixed position from card top */
             z-index: 10;
             pointer-events: auto;
         }
@@ -205,19 +206,19 @@
             cursor: pointer;
             accent-color: #58a6ff;
             margin: 0;
-            pointer-events: auto; /* CRITICAL: Enable clicks on the checkbox itself */
+            pointer-events: auto;
         }
 
-        /* Headers - have pointer-events: none, margin-left for checkbox space */
+        /* Headers - have pointer-events: none, padding-left for checkbox space */
         .client-header,
         .site-header,
         .asset-header {
             pointer-events: none;
-            margin-left: 28px; /* Space for checkbox */
-            cursor: pointer; /* Show pointer cursor */
+            padding-left: 28px; /* Space for checkbox */
+            cursor: pointer;
         }
 
-        /* Re-enable pointer-events for specific elements */
+        /* Re-enable pointer-events for header children */
         .client-header *,
         .site-header *,
         .asset-header * {
@@ -1177,19 +1178,17 @@
 
                 html += `
             <div class="client-card p-3 mb-4">
-    <div class="header-wrapper">
-        <span class="checkbox-container">
-            <input type="checkbox" class="client-checkbox" data-client="${clientKey}" onchange="updateSelection()">
-        </span>
-        <div class="client-header" onclick="toggleClient('${clientKey}')">
-            <div class="d-flex align-items-center">
-                <span>👥 ${client.client}</span>
-                <span class="badge bg-secondary ms-2">${clientTotalVulns} vulnérabilités</span>
-            </div>
-            <span class="chevron-client" id="chevron-client-${clientKey}">▼</span>
-        </div>
-    </div>
-    <div class="client-content" id="content-client-${clientKey}">
+                <span class="checkbox-container">
+                    <input type="checkbox" class="client-checkbox" data-client="${clientKey}" onchange="updateSelection()">
+                </span>
+                <div class="client-header" onclick="toggleClient('${clientKey}')">
+                    <div class="d-flex align-items-center">
+                        <span>👥 ${client.client}</span>
+                        <span class="badge bg-secondary ms-2">${clientTotalVulns} vulnérabilités</span>
+                    </div>
+                    <span class="chevron-client" id="chevron-client-${clientKey}">▼</span>
+                </div>
+                <div class="client-content" id="content-client-${clientKey}">
         `;
 
                 for (const siteKey in client.sites) {
@@ -1200,19 +1199,17 @@
 
                     html += `
                 <div class="site-card p-3 mt-3 ms-3">
-    <div class="header-wrapper">
-        <span class="checkbox-container">
-            <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}" onchange="updateSelection()">
-        </span>
-        <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
-            <div class="d-flex align-items-center">
-                <span>🏢 ${site.site}</span>
-                <span class="badge bg-secondary ms-2">${siteTotalVulns} vulnérabilités</span>
-            </div>
-            <span class="chevron-site" id="chevron-site-${clientKey}-${siteKey}">▼</span>
-        </div>
-    </div>
-    <div class="site-content" id="content-site-${clientKey}-${siteKey}">
+                <span class="checkbox-container">
+                    <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}" onchange="updateSelection()">
+                </span>
+                <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
+                    <div class="d-flex align-items-center">
+                        <span>🏢 ${site.site}</span>
+                        <span class="badge bg-secondary ms-2">${siteTotalVulns} vulnérabilités</span>
+                    </div>
+                    <span class="chevron-site" id="chevron-site-${clientKey}-${siteKey}">▼</span>
+                </div>
+                <div class="site-content" id="content-site-${clientKey}-${siteKey}">
             `;
 
                     for (const assetKey in site.assets) {
@@ -1225,26 +1222,24 @@
 
                         html += `
                     <div class="asset-card mt-2 ms-3">
-    <div class="header-wrapper">
-        <span class="checkbox-container">
-            <input type="checkbox" class="asset-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" onchange="updateSelection()">
-        </span>
-        <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
-            <div class="d-flex align-items-center">
-                <span>💻 ${asset.asset}</span>
-                <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
-                <div class="ms-3">
-                    ${critCount > 0 ? `<span class="badge badge-critique">${critCount} Critique</span>` : ''}
-                    ${highCount > 0 ? `<span class="badge badge-haute">${highCount} Haute</span>` : ''}
-                    ${medCount > 0 ? `<span class="badge badge-moyenne">${medCount} Moyenne</span>` : ''}
-                    ${lowCount > 0 ? `<span class="badge badge-basse">${lowCount} Basse</span>` : ''}
-                    ${assetVulnsCount > 0 ? `<span class="badge bg-secondary">${assetVulnsCount} total</span>` : ''}
+                <span class="checkbox-container">
+                    <input type="checkbox" class="asset-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" onchange="updateSelection()">
+                </span>
+                <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
+                    <div class="d-flex align-items-center">
+                        <span>💻 ${asset.asset}</span>
+                        <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
+                        <div class="ms-3">
+                            ${critCount > 0 ? `<span class="badge badge-critique">${critCount} Critique</span>` : ''}
+                            ${highCount > 0 ? `<span class="badge badge-haute">${highCount} Haute</span>` : ''}
+                            ${medCount > 0 ? `<span class="badge badge-moyenne">${medCount} Moyenne</span>` : ''}
+                            ${lowCount > 0 ? `<span class="badge badge-basse">${lowCount} Basse</span>` : ''}
+                            ${assetVulnsCount > 0 ? `<span class="badge bg-secondary">${assetVulnsCount} total</span>` : ''}
+                        </div>
+                    </div>
+                    <span class="chevron" id="chevron-${clientKey}-${siteKey}-${assetKey}">▼</span>
                 </div>
-            </div>
-            <span class="chevron" id="chevron-${clientKey}-${siteKey}-${assetKey}">▼</span>
-        </div>
-    </div>
-    <div class="vuln-list" id="vuln-list-${clientKey}-${siteKey}-${assetKey}">
+                <div class="vuln-list" id="vuln-list-${clientKey}-${siteKey}-${assetKey}">
                 `;
 
                         // Trier les vulnérabilités par priorité
@@ -1260,8 +1255,8 @@
         <input type="checkbox" class="vuln-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" data-vuln-id="${v.id}" onchange="updateSelection()">
     </span>
     <div class="d-flex flex-column" style="margin-left: 28px;">
-                                <div>
-                                    <code class="me-2">${v.cve_id || 'N/A'}</code>
+        <div>
+            <code class="me-2">${v.cve_id || 'N/A'}</code>
                                     <span class="badge badge-${v.priorite}">${(v.priorite || 'N/A').charAt(0).toUpperCase() + (v.priorite || 'N/A').slice(1)}</span>
                                     <span class="badge badge-${v.statut} ms-1">${formatStatut(v.statut)}</span>
                                     ${v.cvss_v3_score ? `<span class="badge bg-secondary ms-1">CVSS: ${v.cvss_v3_score}</span>` : ''}
