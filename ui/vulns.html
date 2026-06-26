@@ -183,11 +183,22 @@
             font-size: 0.85rem;
         }
 
-        /* Style pour les cases à cocher */
+        /* ===== SOLUTION 4: Absolute positioning ===== */
+        /* Headers are relative containers */
+        .client-header,
+        .site-header,
+        .asset-header {
+            position: relative;
+            padding-left: 28px; /* Space for checkbox */
+        }
+
+        /* Checkbox container - absolutely positioned */
         .checkbox-container {
-            display: inline-block;
-            margin-right: 8px;
-            cursor: pointer;
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
         }
 
         .checkbox-container input[type="checkbox"] {
@@ -195,10 +206,20 @@
             height: 18px;
             cursor: pointer;
             accent-color: #58a6ff;
+            margin: 0;
         }
 
+        /* Vuln item checkbox */
         .vuln-item .checkbox-container {
-            margin-right: 8px;
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* Vuln item needs relative positioning */
+        .vuln-item {
+            position: relative;
         }
 
 
@@ -352,22 +373,6 @@
 </head>
 
 <body>
-    <script>
-        // ============================================================
-        // GLOBAL EVENT LISTENER - CAPTURE MODE
-        // Intercepts clicks BEFORE they reach the target
-        // ============================================================
-        document.addEventListener('click', function(e) {
-            // Check if click is on a checkbox or its container
-            if (e.target.matches('input[type="checkbox"]') ||
-                e.target.closest('.checkbox-container') ||
-                (e.target.tagName === 'LABEL' && e.target.querySelector('input[type="checkbox"]'))) {
-                e.stopImmediatePropagation();
-                e.stopPropagation();
-                return false;
-            }
-        }, true); // CAPTURE MODE = true (intercepts during capture phase)
-    </script>
     <!-- ─── NAVBAR ─────────────────────────────────────────── -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
