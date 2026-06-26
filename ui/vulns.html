@@ -137,6 +137,43 @@
             background-color: #1f262d;
         }
         /* Styles pour les bulk actions */
+        /* ===== SOLUTION 4 : ISOLER LES CHECKBOXES ===== */
+        .client-header,
+        .site-header,
+        .asset-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .checkbox-wrapper {
+            padding: 5px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #58a6ff;
+            margin: 0;
+        }
+
+        .header-content {
+            flex: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .vuln-content-wrapper {
+            flex: 1;
+            cursor: pointer;
+        }
+
+
         .bulk-action-bar {
             background-color: #161b22;
             border: 1px solid #30363d;
@@ -181,19 +218,6 @@
             font-size: 0.85rem;
         }
 
-        /* Style pour les cases à cocher */
-        .checkbox-container {
-            display: inline-block;
-            margin-right: 8px;
-            cursor: pointer;
-        }
-
-        .checkbox-container input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: #58a6ff;
-        }
 
 
         .chevron {
@@ -834,21 +858,6 @@
     <script src="/static/app-search.js"></script>
     <script>
         // ============================================================
-        // ============================================================
-        // GESTION DES CLICS SUR LES CHECKBOXES - SOLUTION ROBUSTE
-        // ============================================================
-        function initCheckboxClickHandlers() {
-            document.querySelectorAll(".checkbox-container").forEach(container => {
-                container.addEventListener("click", function(e) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                });
-            });
-            document.querySelectorAll(".client-checkbox, .site-checkbox, .asset-checkbox, .vuln-checkbox").forEach(cb => {
-                cb.addEventListener("click", function(e) { e.stopPropagation(); });
-            });
-        }
-
         // DONNÉES GLOBALES
         // ============================================================
         let toutesLesVulnerabilites = []; // Stock toutes les vulnérabilités chargées
@@ -1141,12 +1150,12 @@
 
                 html += `
             <div class="client-card p-3 mb-4">
-                <div class="client-header" onclick="toggleClient('${clientKey}')">
-                    <div class="d-flex align-items-center">
-                        <span class="checkbox-container" onclick="event.stopPropagation()">
-                            <input type="checkbox" class="client-checkbox" data-client="${clientKey}"
-                                   onchange="updateSelection()" onclick="event.stopPropagation()">
-                        </span>
+                <div class="client-header">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="client-checkbox" data-client="${clientKey}"
+                               onchange="updateSelection()">
+                    </div>
+                    <div class="header-content" onclick="toggleClient('${clientKey}')">
                         <span>👥 ${client.client}</span>
                         <span class="badge bg-secondary ms-2">${clientTotalVulns} vulnérabilités</span>
                     </div>
@@ -1163,12 +1172,12 @@
 
                     html += `
                 <div class="site-card p-3 mt-3 ms-3">
-                    <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
-                        <div class="d-flex align-items-center">
-                            <span class="checkbox-container" onclick="event.stopPropagation()">
-                                <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}"
-                                       onchange="updateSelection()" onclick="event.stopPropagation()">
-                            </span>
+                    <div class="site-header">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}"
+                                   onchange="updateSelection()">
+                        </div>
+                        <div class="header-content" onclick="toggleSite('${clientKey}', '${siteKey}')">
                             <span>🏢 ${site.site}</span>
                             <span class="badge bg-secondary ms-2">${siteTotalVulns} vulnérabilités</span>
                         </div>
@@ -1187,13 +1196,13 @@
 
                         html += `
                     <div class="asset-card mt-2 ms-3">
-                        <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
-                            <div class="d-flex align-items-center">
-                                <span class="checkbox-container" onclick="event.stopPropagation()">
-                                    <input type="checkbox" class="asset-checkbox"
-                                           data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}"
-                                           onchange="updateSelection()" onclick="event.stopPropagation()">
-                                </span>
+                        <div class="asset-header">
+                            <div class="checkbox-wrapper">
+                                <input type="checkbox" class="asset-checkbox"
+                                       data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}"
+                                       onchange="updateSelection()">
+                            </div>
+                            <div class="header-content" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
                                 <span>💻 ${asset.asset}</span>
                                 <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
                                 <div class="ms-3">
@@ -1218,20 +1227,22 @@
                         sortedVulns.forEach(v => {
                             html += `
                         <div class="vuln-item">
-                            <span class="checkbox-container" onclick="event.stopPropagation()">
+                            <div class="checkbox-wrapper">
                                 <input type="checkbox" class="vuln-checkbox"
                                        data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}"
                                        data-vuln-id="${v.id}"
-                                       onchange="updateSelection()" onclick="event.stopPropagation()">
-                            </span>
-                            <div class="d-flex flex-column">
-                                <div>
-                                    <code class="me-2">${v.cve_id || 'N/A'}</code>
-                                    <span class="badge badge-${v.priorite}">${(v.priorite || 'N/A').charAt(0).toUpperCase() + (v.priorite || 'N/A').slice(1)}</span>
-                                    <span class="badge badge-${v.statut} ms-1">${formatStatut(v.statut)}</span>
-                                    ${v.cvss_v3_score ? `<span class="badge bg-secondary ms-1">CVSS: ${v.cvss_v3_score}</span>` : ''}
+                                       onchange="updateSelection()">
+                            </div>
+                            <div class="vuln-content-wrapper">
+                                <div class="d-flex flex-column">
+                                    <div>
+                                        <code class="me-2">${v.cve_id || 'N/A'}</code>
+                                        <span class="badge badge-${v.priorite}">${(v.priorite || 'N/A').charAt(0).toUpperCase() + (v.priorite || 'N/A').slice(1)}</span>
+                                        <span class="badge badge-${v.statut} ms-1">${formatStatut(v.statut)}</span>
+                                        ${v.cvss_v3_score ? `<span class="badge bg-secondary ms-1">CVSS: ${v.cvss_v3_score}</span>` : ''}
+                                    </div>
+                                    <small class="text-muted mt-1">${v.cve_description ? v.cve_description.substring(0, 100) + (v.cve_description.length > 100 ? '...' : '') : 'N/A'}</small>
                                 </div>
-                                <small class="text-muted mt-1">${v.cve_description ? v.cve_description.substring(0, 100) + (v.cve_description.length > 100 ? '...' : '') : 'N/A'}</small>
                             </div>
                             <div class="vuln-actions">
                                 <button class="btn btn-sm btn-outline-info" onclick="afficherDetails(${v.id})" title="Détails">🔍</button>
@@ -1435,7 +1446,6 @@
                 toutesLesVulnerabilites = data;
                 afficherVulnerabilites(toutesLesVulnerabilites);
                 // Réinitialiser les gestionnaires de clics après affichage
-                setTimeout(initCheckboxClickHandlers, 100);
             } catch (e) {
                 console.error('Erreur:', e);
                 document.getElementById('hierarchicalView').innerHTML =
@@ -1916,7 +1926,6 @@
             updateActiveFilters();
             chargerToutesLesVulnerabilites();
             clearSelection();
-            initCheckboxClickHandlers();
         });
     </script>
 </body>
