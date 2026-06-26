@@ -183,37 +183,8 @@
             font-size: 0.85rem;
         }
 
-        /* ===== CLEAN STRUCTURE: Separate checkboxes from headers ===== */
-        /* Hierarchy level container */
-        .hierarchy-level {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 15px;
-            border-radius: 6px;
-        }
-
-        .hierarchy-level:hover {
-            background-color: #1f262d;
-        }
-
-        /* Checkbox cell - separate from header */
-        .checkbox-cell {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        /* Header cell - clickable for fold/unfold */
-        .header-cell {
-            flex: 1;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* Checkbox label styling */
+        /* ===== ULTRA-SIMPLE: Checkboxes outside headers ===== */
+        /* Checkbox label - placed BEFORE headers */
         .checkbox-label {
             display: inline-block;
             margin-right: 8px;
@@ -228,7 +199,24 @@
             margin: 0;
         }
 
-        /* Vuln item specific */
+        /* Header styles - inline-block so checkbox and header are side-by-side */
+        .client-header,
+        .site-header,
+        .asset-header {
+            display: inline-block;
+            cursor: pointer;
+            padding: 10px 15px;
+            border-radius: 6px;
+            vertical-align: middle;
+        }
+
+        .client-header:hover,
+        .site-header:hover,
+        .asset-header:hover {
+            background-color: #1f262d;
+        }
+
+        /* Vuln item - flex layout */
         .vuln-item {
             display: flex;
             align-items: center;
@@ -1170,17 +1158,13 @@
 
                 html += `
             <div class="client-card p-3 mb-4">
-    <div class="hierarchy-level">
-        <div class="checkbox-cell">
-            <label class="checkbox-label">
-                <input type="checkbox" class="client-checkbox" data-client="${clientKey}" onchange="updateSelection()">
-            </label>
-        </div>
-        <div class="header-cell" onclick="toggleClient('${clientKey}')">
-            <span>👥 ${client.client}</span>
-            <span class="badge bg-secondary ms-2">${clientTotalVulns} vulnérabilités</span>
-            <span class="chevron-client" id="chevron-client-${clientKey}">▼</span>
-        </div>
+    <label class="checkbox-label">
+        <input type="checkbox" class="client-checkbox" data-client="${clientKey}" onchange="updateSelection()">
+    </label>
+    <div class="client-header" onclick="toggleClient('${clientKey}')">
+        <span>👥 ${client.client}</span>
+        <span class="badge bg-secondary ms-2">${clientTotalVulns} vulnérabilités</span>
+        <span class="chevron-client" id="chevron-client-${clientKey}">▼</span>
     </div>
     <div class="client-content" id="content-client-${clientKey}">
         `;
@@ -1193,17 +1177,13 @@
 
                     html += `
                 <div class="site-card p-3 mt-3 ms-3">
-    <div class="hierarchy-level">
-        <div class="checkbox-cell">
-            <label class="checkbox-label">
-                <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}" onchange="updateSelection()">
-            </label>
-        </div>
-        <div class="header-cell" onclick="toggleSite('${clientKey}', '${siteKey}')">
-            <span>🏢 ${site.site}</span>
-            <span class="badge bg-secondary ms-2">${siteTotalVulns} vulnérabilités</span>
-            <span class="chevron-site" id="chevron-site-${clientKey}-${siteKey}">▼</span>
-        </div>
+    <label class="checkbox-label">
+        <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}" onchange="updateSelection()">
+    </label>
+    <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
+        <span>🏢 ${site.site}</span>
+        <span class="badge bg-secondary ms-2">${siteTotalVulns} vulnérabilités</span>
+        <span class="chevron-site" id="chevron-site-${clientKey}-${siteKey}">▼</span>
     </div>
     <div class="site-content" id="content-site-${clientKey}-${siteKey}">
             `;
@@ -1218,24 +1198,20 @@
 
                         html += `
                     <div class="asset-card mt-2 ms-3">
-    <div class="hierarchy-level">
-        <div class="checkbox-cell">
-            <label class="checkbox-label">
-                <input type="checkbox" class="asset-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" onchange="updateSelection()">
-            </label>
+    <label class="checkbox-label">
+        <input type="checkbox" class="asset-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" onchange="updateSelection()">
+    </label>
+    <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
+        <span>💻 ${asset.asset}</span>
+        <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
+        <div class="ms-3">
+            ${critCount > 0 ? `<span class="badge badge-critique">${critCount} Critique</span>` : ''}
+            ${highCount > 0 ? `<span class="badge badge-haute">${highCount} Haute</span>` : ''}
+            ${medCount > 0 ? `<span class="badge badge-moyenne">${medCount} Moyenne</span>` : ''}
+            ${lowCount > 0 ? `<span class="badge badge-basse">${lowCount} Basse</span>` : ''}
+            ${assetVulnsCount > 0 ? `<span class="badge bg-secondary">${assetVulnsCount} total</span>` : ''}
         </div>
-        <div class="header-cell" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
-            <span>💻 ${asset.asset}</span>
-            <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
-            <div class="ms-3">
-                ${critCount > 0 ? `<span class="badge badge-critique">${critCount} Critique</span>` : ''}
-                ${highCount > 0 ? `<span class="badge badge-haute">${highCount} Haute</span>` : ''}
-                ${medCount > 0 ? `<span class="badge badge-moyenne">${medCount} Moyenne</span>` : ''}
-                ${lowCount > 0 ? `<span class="badge badge-basse">${lowCount} Basse</span>` : ''}
-                ${assetVulnsCount > 0 ? `<span class="badge bg-secondary">${assetVulnsCount} total</span>` : ''}
-            </div>
-            <span class="chevron" id="chevron-${clientKey}-${siteKey}-${assetKey}">▼</span>
-        </div>
+        <span class="chevron" id="chevron-${clientKey}-${siteKey}-${assetKey}">▼</span>
     </div>
     <div class="vuln-list" id="vuln-list-${clientKey}-${siteKey}-${assetKey}">
                 `;
@@ -1249,14 +1225,12 @@
                         sortedVulns.forEach(v => {
                             html += `
                         <div class="vuln-item">
-                            <div class="checkbox-cell">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" class="vuln-checkbox"
-                                           data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}"
-                                           data-vuln-id="${v.id}"
-                                           onchange="updateSelection()">
-                                </label>
-                            </div>
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="vuln-checkbox"
+                                       data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}"
+                                       data-vuln-id="${v.id}"
+                                       onchange="updateSelection()">
+                            </label>
                             <div class="vuln-content d-flex flex-column flex-grow-1">
                                 <div>
                                     <code class="me-2">${v.cve_id || 'N/A'}</code>
