@@ -216,18 +216,26 @@
             min-width: 0; /* Allow content to shrink if needed */
         }
 
-        /* Keep existing header styles */
+        /* Header styles - NO padding (already in card) */
         .client-header,
         .site-header,
         .asset-header {
-            padding: 10px 15px;
             border-radius: 6px;
+            padding: 0; /* Removed padding - card already has it */
         }
 
         .client-header:hover,
         .site-header:hover,
         .asset-header:hover {
             background-color: #1f262d;
+        }
+
+        /* Add padding to header-cell instead */
+        .header-cell {
+            flex: 1;
+            cursor: pointer;
+            min-width: 0;
+            padding: 10px 15px; /* Moved padding here */
         }
 
         /* Vuln item layout */
