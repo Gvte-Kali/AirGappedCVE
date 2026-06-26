@@ -200,13 +200,17 @@
             pointer-events: auto;
         }
 
+        /* Checkbox input - MUST have position: absolute to inherit container positioning */
         .checkbox-container input[type="checkbox"] {
+            position: absolute; /* CRITICAL: Inherit container's absolute positioning */
             width: 18px;
             height: 18px;
             cursor: pointer;
             accent-color: #58a6ff;
             margin: 0;
             pointer-events: auto;
+            left: 0; /* Position relative to container */
+            top: 0;
         }
 
         /* Headers - have pointer-events: none, padding-left for checkbox space */
