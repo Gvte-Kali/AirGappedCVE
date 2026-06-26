@@ -185,24 +185,40 @@
 
         /* Style pour les cases à cocher */
         .checkbox-container {
-            display: inline-block;
-            margin-right: 8px;
+            position: absolute;
+            left: -25px;
+            top: 50%;
+            transform: translateY(-50%);
             pointer-events: none;
+            z-index: 10;
         }
 
         .checkbox-container input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             cursor: pointer;
             accent-color: #58a6ff;
             pointer-events: auto;
         }
 
-        .vuln-item .checkbox-container {
-            position: absolute;
-            left: 8px;
-            top: 50%;
-            transform: translateY(-50%);
+        /* Ajouter une marge à gauche pour faire de la place aux checkboxes */
+        .client-card,
+        .site-card,
+        .asset-card {
+            position: relative;
+            margin-left: 25px;
+        }
+
+        .vuln-item {
+            position: relative;
+            margin-left: 25px;
+        }
+
+        /* Assurer que les headers ont position: relative pour le positionnement absolu */
+        .client-header,
+        .site-header,
+        .asset-header {
+            position: relative;
         }
 
 
@@ -1136,12 +1152,12 @@
 
                 html += `
             <div class="client-card p-3 mb-4">
+                <span class="checkbox-container">
+                    <input type="checkbox" class="client-checkbox" data-client="${clientKey}"
+                           onchange="updateSelection()">
+                </span>
                 <div class="client-header" onclick="toggleClient('${clientKey}')">
                     <div class="d-flex align-items-center">
-                        <span class="checkbox-container">
-                            <input type="checkbox" class="client-checkbox" data-client="${clientKey}"
-                                   onchange="updateSelection()">
-                        </span>
                         <span>👥 ${client.client}</span>
                         <span class="badge bg-secondary ms-2">${clientTotalVulns} vulnérabilités</span>
                     </div>
@@ -1158,12 +1174,12 @@
 
                     html += `
                 <div class="site-card p-3 mt-3 ms-3">
+                    <span class="checkbox-container">
+                        <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}"
+                               onchange="updateSelection()">
+                    </span>
                     <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
                         <div class="d-flex align-items-center">
-                            <span class="checkbox-container">
-                                <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}"
-                                       onchange="updateSelection()">
-                            </span>
                             <span>🏢 ${site.site}</span>
                             <span class="badge bg-secondary ms-2">${siteTotalVulns} vulnérabilités</span>
                         </div>
@@ -1182,13 +1198,13 @@
 
                         html += `
                     <div class="asset-card mt-2 ms-3">
+                        <span class="checkbox-container">
+                            <input type="checkbox" class="asset-checkbox"
+                                   data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}"
+                                   onchange="updateSelection()">
+                        </span>
                         <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
                             <div class="d-flex align-items-center">
-                                <span class="checkbox-container">
-                                    <input type="checkbox" class="asset-checkbox"
-                                           data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}"
-                                           onchange="updateSelection()">
-                                </span>
                                 <span>💻 ${asset.asset}</span>
                                 <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
                                 <div class="ms-3">
