@@ -131,8 +131,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: relative;
-            padding-left: 30px;
         }
 
         .vuln-item:hover {
@@ -836,6 +834,21 @@
     <script src="/static/app-search.js"></script>
     <script>
         // ============================================================
+        // ============================================================
+        // GESTION DES CLICS SUR LES CHECKBOXES - SOLUTION ROBUSTE
+        // ============================================================
+        function initCheckboxClickHandlers() {
+            document.querySelectorAll(".checkbox-container").forEach(container => {
+                container.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                });
+            });
+            document.querySelectorAll(".client-checkbox, .site-checkbox, .asset-checkbox, .vuln-checkbox").forEach(cb => {
+                cb.addEventListener("click", function(e) { e.stopPropagation(); });
+            });
+        }
+
         // DONNÉES GLOBALES
         // ============================================================
         let toutesLesVulnerabilites = []; // Stock toutes les vulnérabilités chargées
@@ -1421,6 +1434,8 @@
                 const data = await response.json();
                 toutesLesVulnerabilites = data;
                 afficherVulnerabilites(toutesLesVulnerabilites);
+                // Réinitialiser les gestionnaires de clics après affichage
+                setTimeout(initCheckboxClickHandlers, 100);
             } catch (e) {
                 console.error('Erreur:', e);
                 document.getElementById('hierarchicalView').innerHTML =
@@ -1901,6 +1916,7 @@
             updateActiveFilters();
             chargerToutesLesVulnerabilites();
             clearSelection();
+            initCheckboxClickHandlers();
         });
     </script>
 </body>
