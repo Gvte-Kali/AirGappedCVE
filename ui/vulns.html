@@ -271,21 +271,18 @@
 
         
         /* ===== FINAL SOLUTION v2: Checkboxes as siblings ===== */
-        /* Headers - position relative for absolute checkboxes */
-        .client-header,
-        .site-header,
-        .asset-header {
+        /* Card containers - position relative for absolute checkboxes */
+        .client-card,
+        .site-card,
+        .asset-card {
             position: relative;
-            pointer-events: none;
-            cursor: pointer;
         }
 
-        /* Checkbox container - absolutely positioned relative to HEADER */
+        /* Checkbox container - absolutely positioned relative to CARD */
         .checkbox-container {
             position: absolute;
             left: 8px;
-            top: 50%;
-            transform: translateY(-50%);
+            top: 12px;
             z-index: 10;
             pointer-events: auto;
             width: 18px;
@@ -303,12 +300,18 @@
             pointer-events: auto;
         }
 
-        /* Header content - add padding-left to align text with checkbox */
-        .client-header > .header-content,
-        .site-header > .header-content,
-        .asset-header > .header-content,
-        .vuln-item > .vuln-content {
+        /* Headers - have pointer-events: none, padding-left for checkbox space */
+        .client-header,
+        .site-header,
+        .asset-header {
+            pointer-events: none;
             padding-left: 28px;
+            cursor: pointer;
+        }
+
+        /* Vuln item */
+        .vuln-item {
+            position: relative;
         }
 
         /* Re-enable pointer-events for header children */
@@ -1212,10 +1215,10 @@ let correlationEnCours = null;
                         sortedVulns.forEach(v => {
                             html += `
                         <div class="vuln-item">
-    <span class="checkbox-container">
-        <input type="checkbox" class="vuln-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" data-vuln-id="${v.id}" onchange="updateSelection(event)">
-    </span>
-    <div class="d-flex flex-column vuln-content">
+                            <span class="checkbox-container">
+                                <input type="checkbox" class="vuln-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" data-vuln-id="${v.id}" onchange="updateSelection(event)">
+                            </span>
+                            <div class="d-flex flex-column" style="margin-left: 28px;">
                                 <div>
                                     <code class="me-2">${v.cve_id || 'N/A'}</code>
                                     <span class="badge badge-${v.priorite}">${(v.priorite || 'N/A').charAt(0).toUpperCase() + (v.priorite || 'N/A').slice(1)}</span>
