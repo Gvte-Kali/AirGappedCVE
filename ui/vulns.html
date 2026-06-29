@@ -271,14 +271,16 @@
 
         
         /* ===== FINAL SOLUTION v2: Checkboxes as siblings ===== */
-        /* Card containers - position relative for absolute checkboxes */
-        .client-card,
-        .site-card,
-        .asset-card {
+        /* Headers - position relative for absolute checkboxes */
+        .client-header,
+        .site-header,
+        .asset-header {
             position: relative;
+            pointer-events: none;
+            cursor: pointer;
         }
 
-        /* Checkbox container - absolutely positioned relative to CARD */
+        /* Checkbox container - absolutely positioned relative to HEADER */
         .checkbox-container {
             position: absolute;
             left: 8px;
@@ -301,13 +303,12 @@
             pointer-events: auto;
         }
 
-        /* Headers - have pointer-events: none, padding-left for checkbox space */
-        .client-header,
-        .site-header,
-        .asset-header {
-            pointer-events: none;
+        /* Header content - add padding-left to align text with checkbox */
+        .client-header > .header-content,
+        .site-header > .header-content,
+        .asset-header > .header-content,
+        .vuln-item > .vuln-content {
             padding-left: 28px;
-            cursor: pointer;
         }
 
         /* Re-enable pointer-events for header children */
@@ -1214,7 +1215,7 @@ let correlationEnCours = null;
     <span class="checkbox-container">
         <input type="checkbox" class="vuln-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" data-vuln-id="${v.id}" onchange="updateSelection(event)">
     </span>
-    <div class="d-flex flex-column" style="margin-left: 28px;">
+    <div class="d-flex flex-column vuln-content">
                                 <div>
                                     <code class="me-2">${v.cve_id || 'N/A'}</code>
                                     <span class="badge badge-${v.priorite}">${(v.priorite || 'N/A').charAt(0).toUpperCase() + (v.priorite || 'N/A').slice(1)}</span>
