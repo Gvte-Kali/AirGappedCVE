@@ -283,93 +283,32 @@ log "✅ MariaDB sécurisé"
 # =============================================================================
 header "🚀 Étape 3/8 - Clone du projet AirGappedCVE"
 
-SKIP_CLONE=false
-
+# Supprimer le dossier s'il existe déjà (pour éviter les conflits)
 if [ -d "$INSTALL_DIR" ]; then
-    info "🗑️ Le dossier $INSTALL_DIR existe déjà"
-    
-    # Vérifier si git est accessible
-    if ! command -v git >/dev/null 2>&1; then
-        error "❌ Git n'est pas installé" "Installez git avec: apt-get install -y git"
-        ask_continue
-    fi
-    
-    # Vérifier si le dépôt est déjà cloné et complet
-    MISSING_FILES=()
-    for file in "main.py" "requirements.txt" "sql/schema.sql"; do
-        if [ ! -f "$INSTALL_DIR/$file" ]; then
-            MISSING_FILES+=("$file")
-        fi
-    done
-    
-    if [ ${#MISSING_FILES[@]} -eq 0 ]; then
-        info "✅ Dépôt déjà présent et complet dans $INSTALL_DIR"
-        SKIP_CLONE=true
-    else
-        info "⚠️ Dépôt incomplet dans $INSTALL_DIR (fichiers manquants: ${MISSING_FILES[*]})"
-        read -t 30 -rp "   Voulez-vous le supprimer et recloner ? (o/N) : " CLEAN_CHOICE
-        if [[ "$CLEAN_CHOICE" =~ ^[oOyY]$ ]]; then
-            run_with_spinner "🗑️ Suppression du dossier existant" "rm -rf $INSTALL_DIR"
-            ask_continue_if_error $?
-        else
-            error "❌ Dépôt incomplet ou corrompu dans $INSTALL_DIR" "Supprimez-le manuellement ou corrigez les fichiers manquants: ${MISSING_FILES[*]}"
-            ask_continue
-            SKIP_CLONE=true
-        fi
-    fi
+    info "🗑️ Le dossier $INSTALL_DIR existe déjà, suppression pour recloner..."
+    run_with_spinner "🗑️ Suppression du dossier existant" "rm -rf $INSTALL_DIR"
+    ask_continue_if_error $?
 fi
 
-if [ "$SKIP_CLONE" = false ]; then
-    mkdir -p "$INSTALL_DIR" || { error "📁 Échec de la création du dossier" "$INSTALL_DIR"; ask_continue; }
-    
-    # Vérifier que git est installé avant de cloner
-    if ! command -v git >/dev/null 2>&1; then
-        error "❌ Git n'est pas installé" "Impossible de cloner le dépôt. Installez git avec: apt-get install -y git"
-        ask_continue
-    fi
-    
-    # Tester la connexion à GitHub avant le clone
-    info "🔍 Test de la connexion à GitHub..."
-    if ! curl -sSf "https://github.com" >/dev/null 2>&1; then
-        error "❌ Impossible de contacter GitHub" "Vérifiez votre connexion internet ou le DNS"
-        ask_continue
-    else
-        info "✅ Connexion à GitHub OK"
-    fi
-    
-    # Cloner le dépôt avec gestion d'erreur détaillée
-    run_with_spinner "🚀 Clonage du dépôt ($REPO_URL)" "git clone $REPO_URL $INSTALL_DIR 2>&1"
-    CLONE_EXIT_CODE=$?
-    
-    if [ $CLONE_EXIT_CODE -ne 0 ]; then
-        error "❌ Échec du clonage du dépôt" "Vérifiez:"
-        error "   - La connexion internet (curl -sSf https://github.com)" ""
-        error "   - L'URL du dépôt: $REPO_URL" ""
-        error "   - Les permissions sur $INSTALL_DIR" ""
-        error "   - Les logs détaillés dans $VERBOSE_LOG" ""
-        ask_continue
-    fi
-    
-    # Vérifier que le clone a réussi
-    if [ ! -d "$INSTALL_DIR/.git" ]; then
-        error "❌ Le dossier cloné ne contient pas de dépôt git" "Vérifiez l'URL: $REPO_URL"
-        ask_continue
-    fi
-    
-    # Vérifier les fichiers critiques
-    for file in "main.py" "requirements.txt" "sql/schema.sql"; do
-        if [ ! -f "$INSTALL_DIR/$file" ]; then
-            error "❌ Fichier manquant après clone: $file" "Le dépôt est peut-être corrompu"
-            ask_continue
-        fi
-    done
-    
-    log "✅ Dépôt cloné avec succès depuis $REPO_URL"
-else
-    log "✅ Utilisation du dépôt existant dans $INSTALL_DIR"
+# Créer le dossier et cloner le projet en une seule étape
+run_with_spinner "🚀 Création du dossier et clonage du dépôt" "mkdir -p $INSTALL_DIR && git clone $REPO_URL $INSTALL_DIR"
+ask_continue_if_error $?
+
+# Vérifier que le clone a réussi
+if [ ! -d "$INSTALL_DIR/.git" ]; then
+    error "❌ Échec du clonage du dépôt" "Vérifiez:\n   - La connexion internet (curl -sSf https://github.com)\n   - L'URL du dépôt: $REPO_URL\n   - Les permissions sur $INSTALL_DIR"
+    ask_continue
 fi
 
-# Nettoyer les fichiers inutiles
+# Vérifier les fichiers critiques
+for file in "main.py" "requirements.txt" "sql/schema.sql"; do
+    if [ ! -f "$INSTALL_DIR/$file" ]; then
+        error "❌ Fichier manquant après clone: $file" "Le dépôt est peut-être corrompu"
+        ask_continue
+    fi
+done
+
+log "✅ Dépôt cloné avec succès dans $INSTALL_DIR"
 rm -rf "$INSTALL_DIR/.devcontainer" 2>/dev/null || warn "⚠️ Nettoyage échoué (ignoré)"
 # =============================================================================
 # ÉTAPE 4/8 : CONFIGURATION DU .ENV
