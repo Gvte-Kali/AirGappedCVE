@@ -3,7 +3,7 @@
 # =============================================================================
 # install_user_friendly.sh — Script d'installation pour AirGappedCVE
 # Auteur : Gvte-Kali / Vibe Code
-# Version : 5.3.0 (détection MariaDB corrigée avec sudo et vérifications multiples)
+# Version : 5.4.0 (spinner corrigé, détection des commandes et non des paquets)
 # Description : Installe et configure automatiquement AirGappedCVE sur Ubuntu Server
 # Usage: sudo bash install.sh
 # =============================================================================
@@ -46,6 +46,9 @@ ERROR_LEVEL_CRITICAL=3
 ERRORS=0
 declare -a ERROR_MESSAGES=()
 
+# Variable globale pour le PID du spinner
+SPINNER_PID=""
+
 # Temps de début
 START_TIME=$(date +%s)
 
@@ -55,49 +58,70 @@ mkdir -p "$INSTALL_DIR"
 > "$LOG_FILE"
 
 # =============================================================================
-# FONCTIONS SPINNER
+# FONCTIONS SPINNER (corrigées pour éviter les conflits)
 # =============================================================================
-
-spinner_pid=""
-spinner_index=0
 
 spinner_start() {
     local msg="$1"
+    # Afficher le premier caractère du spinner
     printf "[%s] %s" "${SPINNER_CHARS:0:1}" "$msg" >&2
+    
+    # Lancer le spinner en arrière-plan
     (
-        while [ 1 ]; do
-            spinner_index=$(( (spinner_index + 1) % 4 ))
-            printf "\r[%s] %s" "${SPINNER_CHARS:$spinner_index:1}" "$msg" >&2
+        local i=0
+        while true; do
+            i=$(( (i + 1) % 4 ))
+            printf "\r[%s] %s" "${SPINNER_CHARS:$i:1}" "$msg" >&2
             sleep $SPINNER_DELAY
         done
     ) &
-    spinner_pid=$!
+    SPINNER_PID=$!
+    disown
 }
 
 spinner_stop() {
     local msg="$1"
     local exit_code="$2"
-    if [ -n "$spinner_pid" ] && kill -0 $spinner_pid 2>/dev/null; then
-        kill $spinner_pid 2>/dev/null
-        wait $spinner_pid 2>/dev/null
+    
+    # Tuer le processus du spinner s'il existe
+    if [ -n "$SPINNER_PID" ] && kill -0 "$SPINNER_PID" 2>/dev/null; then
+        kill "$SPINNER_PID" 2>/dev/null
+        wait "$SPINNER_PID" 2>/dev/null
     fi
+    
+    # Effacer la ligne du spinner
     printf "\r" >&2
+    
+    # Afficher le résultat final
     if [ "$exit_code" -eq 0 ]; then
         printf "[${GREEN}✓${NC}] %s\n" "$msg" >&2
     else
         printf "[${RED}✗${NC}] %s\n" "$msg" >&2
     fi
-    spinner_pid=""
+    
+    # Réinitialiser
+    SPINNER_PID=""
 }
 
+# Fonction pour exécuter une commande avec spinner
+# Utilise un sous-shell pour isoler les variables et éviter les conflits
 run_with_spinner() {
     local msg="$1"
     shift
     local cmd="$*"
+    local exit_code=0
     
+    # Démarrer le spinner
     spinner_start "$msg"
-    eval "$cmd" >> "$VERBOSE_LOG" 2>&1
-    local exit_code=$?
+    
+    # Exécuter la commande et capturer le code de sortie
+    # On redirige stdout vers /dev/null pour éviter les conflits avec le spinner
+    # stderr est aussi redirigé pour éviter les messages d'erreur pendant le spinner
+    if ! eval "$cmd" >/dev/null 2>&1; then
+        exit_code=1
+    fi
+    
+    # Arrêter le spinner et afficher le résultat
     spinner_stop "$msg" $exit_code
     
     return $exit_code
@@ -136,6 +160,10 @@ error() {
         echo ""
         echo -e "${RED}${BOLD}❌ Installation arrêtée à cause d'une erreur critique.${NC}"
         echo "Détails dans $VERBOSE_LOG"
+        # Tuer le spinner s'il tourne encore
+        if [ -n "$SPINNER_PID" ] && kill -0 "$SPINNER_PID" 2>/dev/null; then
+            kill "$SPINNER_PID" 2>/dev/null
+        fi
         exit 1
     fi
 }
@@ -173,15 +201,13 @@ step_header() {
 }
 
 # =============================================================================
-# FONCTIONS DE DÉTECTION MARIADB (CORRIGÉES)
+# FONCTIONS DE DÉTECTION MARIADB
 # =============================================================================
 
-# Vérifie si MariaDB est installé (paquet)
 is_mariadb_installed() {
     dpkg -l | grep -q "^ii  mariadb-server "
 }
 
-# Vérifie si MariaDB est en cours d'exécution (service ou processus)
 is_mariadb_running() {
     # 1. Vérifier si le service est actif
     if systemctl is-active mariadb >/dev/null 2>&1; then
@@ -204,28 +230,15 @@ is_mariadb_running() {
     return 1
 }
 
-# Vérifie si MariaDB est prêt à accepter des connexions (avec sudo)
 wait_for_mariadb() {
     local port="${1:-$DB_PORT_DEFAULT}"
     local max_retries=30
     local retries=0
     
     while [ $retries -lt $max_retries ]; do
-        # Vérifier si le service est actif
-        if systemctl is-active mariadb >/dev/null 2>&1; then
-            # Tester la connexion avec sudo (root peut se connecter sans mot de passe via socket)
-            if sudo mariadb --port=$port -e "SELECT 1" >/dev/null 2>&1; then
-                return 0
-            fi
+        if sudo mariadb --port=$port -e "SELECT 1" >/dev/null 2>&1; then
+            return 0
         fi
-        
-        # Vérifier si le processus tourne
-        if pgrep -x mariadbd >/dev/null 2>&1; then
-            if sudo mariadb --port=$port -e "SELECT 1" >/dev/null 2>&1; then
-                return 0
-            fi
-        fi
-        
         retries=$((retries+1))
         sleep 2
         printf "\r${CYAN}  → Attente que MariaDB soit prêt... ($retries/$max_retries)${NC}"
@@ -234,25 +247,20 @@ wait_for_mariadb() {
     return 1
 }
 
-# Vérifie si un service écoute sur un port
 get_service_on_port() {
     local port="$1"
     ss -tlnp 2>/dev/null | grep ":$port " | awk '{print $7}' | cut -d':' -f2 | cut -d',' -f1 | xargs
 }
 
-# Vérifie si un port est utilisé
 is_port_in_use() {
     local port="$1"
     ss -tlnp 2>/dev/null | grep -q ":$port " || netstat -tlnp 2>/dev/null | grep -q ":$port "
 }
 
-# Gestion des conflits de port pour MariaDB (améliorée)
 handle_mariadb_conflict() {
     local port="$1"
     
-    # Vérifier si un service écoute sur le port
     if ! is_port_in_use $port; then
-        # Aucun conflit, on peut utiliser ce port
         DB_PORT=$port
         return 0
     fi
@@ -261,14 +269,12 @@ handle_mariadb_conflict() {
     service_on_port=$(get_service_on_port $port)
     
     if [[ "$service_on_port" == *"mariadb"* ]] || [[ "$service_on_port" == *"mysql"* ]]; then
-        # C'est déjà MariaDB/MySQL
         read -rp "Un service MariaDB/MySQL est déjà actif sur le port $port. Voulez-vous l'utiliser ? (O/n) : " use_existing
         if [[ "$use_existing" =~ ^[OoYy]$ ]] || [ -z "$use_existing" ]; then
             DB_PORT=$port
             info "Utilisation du service MariaDB existant sur le port $port"
             return 0
         else
-            # Supprimer le service existant
             info "Suppression du service MariaDB existant..."
             if ! systemctl stop mariadb >> "$VERBOSE_LOG" 2>&1; then
                 error "Échec de l'arrêt de MariaDB" "Vérifiez systemctl" $ERROR_LEVEL_ERROR
@@ -278,12 +284,10 @@ handle_mariadb_conflict() {
                 error "Échec de la suppression de MariaDB" "Vérifiez APT" $ERROR_LEVEL_ERROR
                 return 1
             fi
-            # On va réinstaller MariaDB plus tard
             DB_PORT=$port
             return 0
         fi
     else
-        # Ce n'est pas MariaDB
         echo ""
         echo "Un service non-MariaDB écoute sur le port $port: $service_on_port"
         echo "Choix disponibles:"
@@ -301,9 +305,7 @@ handle_mariadb_conflict() {
                         error "Échec de l'arrêt du service $service_name" "Vérifiez systemctl" $ERROR_LEVEL_ERROR
                         return 1
                     fi
-                    if ! systemctl disable "$service_name" >> "$VERBOSE_LOG" 2>&1; then
-                        warn "Impossible de désactiver $service_name"
-                    fi
+                    systemctl disable "$service_name" >> "$VERBOSE_LOG" 2>&1 || true
                 fi
                 DB_PORT=$port
                 ;;
@@ -348,12 +350,9 @@ generate_password() {
     echo
 }
 
+# Vérifie si une commande existe (pas un paquet !)
 command_exists() {
     command -v "$1" >/dev/null 2>&1
-}
-
-is_package_installed() {
-    dpkg -l | grep -q "^ii  $1 "
 }
 
 # =============================================================================
@@ -364,6 +363,10 @@ if [ "$EUID" -ne 0 ]; then
     echo -e "Ce script doit être lancé en root."
     echo -e "${YELLOW}→ Relancez avec : sudo bash $0${NC}"
     echo "$(date '+%Y-%m-%d %H:%M:%S') - [ERROR] Ce script doit être lancé en root." >> "$VERBOSE_LOG"
+    # Tuer le spinner s'il tourne
+    if [ -n "$SPINNER_PID" ] && kill -0 "$SPINNER_PID" 2>/dev/null; then
+        kill "$SPINNER_PID" 2>/dev/null
+    fi
     exit 1
 fi
 
@@ -380,30 +383,53 @@ echo -e "${NC}"
 
 header "Vérifications préliminaires"
 
-# 1. Vérification des outils requis
-info "Vérification des outils requis..."
-REQUIRED_TOOLS=("curl" "wget" "git" "bc" "net-tools" "netcat-openbsd" "software-properties-common" "iproute2" "iputils-ping" "ss" "pgrep")
-MISSING_TOOLS=()
+# 1. Vérification des COMMANDES requises (pas des paquets !)
+info "Vérification des commandes requises..."
+# Liste des COMMANDES (pas des noms de paquets) à vérifier
+REQUIRED_COMMANDS=("curl" "wget" "git" "bc" "netstat" "nc" "ip" "ping" "ss" "pgrep" "add-apt-repository")
+MISSING_COMMANDS=()
 
-for tool in "${REQUIRED_TOOLS[@]}"; do
-    if ! command_exists "$tool"; then
-        MISSING_TOOLS+=("$tool")
+for cmd in "${REQUIRED_COMMANDS[@]}"; do
+    if ! command_exists "$cmd"; then
+        MISSING_COMMANDS+=("$cmd")
     fi
 done
 
-if [ ${#MISSING_TOOLS[@]} -gt 0 ]; then
-    info "Installation des outils manquants: ${MISSING_TOOLS[*]}"
-    run_with_spinner "Mise à jour APT" "apt-get update"
+if [ ${#MISSING_COMMANDS[@]} -gt 0 ]; then
+    info "Installation des commandes manquantes: ${MISSING_COMMANDS[*]}"
+    
+    # Mapper les commandes aux paquets pour l'installation
+    declare -A CMD_TO_PKG=(
+        [curl]="curl"
+        [wget]="wget"
+        [git]="git"
+        [bc]="bc"
+        [netstat]="net-tools"
+        [nc]="netcat-openbsd"
+        [ip]="iproute2"
+        [ping]="iputils-ping"
+        [ss]="iproute2"
+        [pgrep]="procps"
+        [add-apt-repository]="software-properties-common"
+    )
+    
+    PKGS_TO_INSTALL=()
+    for cmd in "${MISSING_COMMANDS[@]}"; do
+        PKGS_TO_INSTALL+=("${CMD_TO_PKG[$cmd]}")
+    done
+    
+    run_with_spinner "Mise à jour APT" "apt-get update -qq"
     if [ $? -ne 0 ]; then
         error "Échec de la mise à jour des paquets" "Vérifiez votre connexion ou les sources APT" $ERROR_LEVEL_CRITICAL
     fi
-    run_with_spinner "Installation des outils manquants" "apt-get install -y \"${MISSING_TOOLS[*]}\""
+    
+    run_with_spinner "Installation des paquets manquants" "apt-get install -y -qq \"${PKGS_TO_INSTALL[*]}\""
     if [ $? -ne 0 ]; then
-        error "Échec de l'installation des outils requis" "Vérifiez votre connexion ou les sources APT" $ERROR_LEVEL_CRITICAL
+        error "Échec de l'installation des commandes requises" "Vérifiez votre connexion ou les sources APT" $ERROR_LEVEL_CRITICAL
     fi
-    log "Outils manquants installés"
+    log "Commandes manquantes installées"
 else
-    info "Tous les outils requis sont installés"
+    info "Toutes les commandes requises sont disponibles"
 fi
 
 # 2. Vérification de l'espace disque
@@ -448,30 +474,22 @@ if is_port_in_use 8000; then
     error "Le port 8000 est déjà utilisé par $(get_service_on_port 8000)" "Arrêtez le service ou changez le port FastAPI" $ERROR_LEVEL_ERROR
 fi
 
-# 7. Détection de MariaDB (NOUVEAU : vérification complète)
+# 7. Détection de MariaDB
 info "Détection de MariaDB..."
+DB_PORT=$DB_PORT_DEFAULT
+
 if is_mariadb_installed; then
     info "MariaDB est installé (paquet détecté)"
     if is_mariadb_running; then
         info "MariaDB est en cours d'exécution"
-        # Vérifier le port par défaut
         if is_port_in_use $DB_PORT_DEFAULT; then
             handle_mariadb_conflict $DB_PORT_DEFAULT
-        else
-            # MariaDB est installé mais pas en cours d'exécution sur 3306
-            # On va essayer de le démarrer plus tard
-            DB_PORT=$DB_PORT_DEFAULT
-            warn "MariaDB est installé mais ne semble pas en cours d'exécution sur le port $DB_PORT_DEFAULT"
         fi
     else
-        # MariaDB est installé mais pas en cours d'exécution
-        DB_PORT=$DB_PORT_DEFAULT
         warn "MariaDB est installé mais pas en cours d'exécution"
     fi
 else
-    # MariaDB n'est pas installé
-    DB_PORT=$DB_PORT_DEFAULT
-    info "MariaDB n'est pas installé, installation prévue sur le port $DB_PORT_DEFAULT"
+    info "MariaDB n'est pas installé"
 fi
 
 # 8. Vérification de Python
@@ -509,29 +527,27 @@ ask_continue
 # =============================================================================
 step_header 1 5 "Mise à jour système et installation des dépendances"
 
-run_with_spinner "Mise à jour des paquets" "apt-get update"
+run_with_spinner "Mise à jour des paquets" "apt-get update -qq"
 if [ $? -ne 0 ]; then
     error "Échec de la mise à jour des paquets" "Vérifiez votre connexion ou les sources APT" $ERROR_LEVEL_CRITICAL
 fi
 log "Mise à jour APT terminée"
 
-run_with_spinner "Mise à niveau des paquets" "apt-get upgrade -y"
+run_with_spinner "Mise à niveau des paquets" "apt-get upgrade -y -qq"
 if [ $? -ne 0 ]; then
     error "Échec de la mise à niveau des paquets" "Vérifiez votre connexion" $ERROR_LEVEL_ERROR
 fi
 log "Système à jour"
 
-# Installation des dépendances (sans mariadb-server, géré séparément)
-info "Installation des dépendances..."
-ALL_DEPS=(
-    "curl" "wget" "git" "bc" "net-tools" "netcat-openbsd" "software-properties-common" 
-    "iproute2" "iputils-ping" "ss" "pgrep" "python3" "python3-pip" 
-    "python3-venv" "python3-dev" "build-essential"
+# Installation des dépendances système (hors MariaDB)
+info "Installation des dépendances système..."
+SYSTEM_DEPS=(
+    "python3" "python3-pip" "python3-venv" "python3-dev" "build-essential"
 )
 
-run_with_spinner "Installation des dépendances système" "apt-get install -y \"${ALL_DEPS[*]}\""
+run_with_spinner "Installation des dépendances Python" "apt-get install -y -qq \"${SYSTEM_DEPS[*]}\""
 if [ $? -ne 0 ]; then
-    error "Échec de l'installation des dépendances" "Vérifiez les logs dans $VERBOSE_LOG" $ERROR_LEVEL_ERROR
+    error "Échec de l'installation des dépendances système" "Vérifiez les logs dans $VERBOSE_LOG" $ERROR_LEVEL_ERROR
 else
     log "Dépendances système installées"
 fi
@@ -545,7 +561,7 @@ step_header "1B" 5 "Installation de MariaDB sur le port $DB_PORT"
 
 # Installer MariaDB seulement si ce n'est pas déjà fait
 if ! is_mariadb_installed; then
-    run_with_spinner "Installation de MariaDB" "apt-get install -y mariadb-server mariadb-client"
+    run_with_spinner "Installation de MariaDB" "apt-get install -y -qq mariadb-server mariadb-client"
     if [ $? -ne 0 ]; then
         error "Échec de l'installation de MariaDB" "Vérifiez les logs APT" $ERROR_LEVEL_CRITICAL
     fi
@@ -554,7 +570,7 @@ else
     info "MariaDB est déjà installé"
 fi
 
-# Configuration du port si nécessaire (si on utilise un port alternatif)
+# Configuration du port si nécessaire
 if [ "$DB_PORT" != "$DB_PORT_DEFAULT" ]; then
     info "Configuration de MariaDB sur le port $DB_PORT..."
     if ! sed -i "s/^port.*=.*3306/port = $DB_PORT/" /etc/mysql/mariadb.conf.d/50-server.cnf; then
@@ -579,7 +595,7 @@ else
     info "MariaDB est déjà en cours d'exécution"
 fi
 
-# Attendre que MariaDB soit prêt (avec sudo pour la connexion root)
+# Attendre que MariaDB soit prêt
 info "Attente que MariaDB soit opérationnel..."
 if ! wait_for_mariadb $DB_PORT; then
     error "MariaDB ne répond pas après 60 secondes" "Vérifiez les logs: journalctl -u mariadb -n 50" $ERROR_LEVEL_ERROR
@@ -587,7 +603,7 @@ if ! wait_for_mariadb $DB_PORT; then
 fi
 log "MariaDB est prêt"
 
-# Sécurisation de base (avec sudo)
+# Sécurisation de base (avec sudo pour root)
 run_with_spinner "Sécurisation de MariaDB" "sudo mariadb --port=$DB_PORT -e \"DELETE FROM mysql.user WHERE User=''; DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1'); DROP DATABASE IF EXISTS test; DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'; FLUSH PRIVILEGES;\""
 if [ $? -ne 0 ]; then
     error "Échec de la sécurisation de MariaDB" "Vérifiez les permissions root" $ERROR_LEVEL_ERROR
@@ -1041,3 +1057,8 @@ echo ""
 echo "📄 Logs: $LOG_FILE / $VERBOSE_LOG"
 
 header "Fin de l'installation - $(date '+%Y-%m-%d %H:%M:%S')"
+
+# Nettoyage final : tuer le spinner s'il tourne encore
+if [ -n "$SPINNER_PID" ] && kill -0 "$SPINNER_PID" 2>/dev/null; then
+    kill "$SPINNER_PID" 2>/dev/null
+fi
