@@ -270,37 +270,73 @@
         }
 
         
-        /* ===== CHECKBOX STYLES ===== */
-        /* Checkbox label - simple inline-block */
-        .checkbox-label {
-            display: inline-block;
-            margin-right: 8px;
-            cursor: pointer;
-        }
-
-        .checkbox-label input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: #58a6ff;
-            margin: 0;
-        }
-
-        /* Card containers - flex to align checkbox + header */
+        /* ===== FINAL SOLUTION v2: Checkboxes as siblings ===== */
+        /* Card containers - position relative for absolute checkboxes */
         .client-card,
         .site-card,
         .asset-card {
-            display: flex;
-            align-items: center;
+            position: relative;
         }
 
-        /* Headers take remaining space */
+        /* Checkbox container - absolutely positioned relative to CARD */
+        .checkbox-container {
+            position: absolute;
+            left: 8px;
+            top: 10px;
+            z-index: 10;
+            pointer-events: auto;
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Checkbox input - STATIC position (normal flow within container) */
+        .checkbox-container input[type="checkbox"] {
+            position: static;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            accent-color: #58a6ff;
+            margin: 0;
+            pointer-events: auto;
+        }
+
+        /* Headers - have pointer-events: none, padding-left for checkbox space */
         .client-header,
         .site-header,
         .asset-header {
-            flex: 1;
+            pointer-events: none;
+            padding-left: 28px;
+            cursor: pointer;
         }
 
+        /* Re-enable pointer-events for header children */
+        .client-header *,
+        .site-header *,
+        .asset-header * {
+            pointer-events: auto;
+        }
+
+        /* Vuln item */
+        .vuln-item {
+            position: relative;
+        }
+
+        .vuln-item .checkbox-container {
+            left: 8px;
+        }
+
+        /* Chevrons - ensure they're clickable */
+        .chevron,
+        .chevron-client,
+        .chevron-site {
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        /* Vuln actions */
+        .vuln-actions {
+            pointer-events: auto;
+        }
 /* Boutons "Tout plier/déplier" */
         .toggle-all-btn {
             font-size: 0.8rem;
@@ -650,7 +686,29 @@
             </div>
         </div>
 
-        <!-- Conteneur principal pour la vue hiérarchique -->
+                <!-- Conteneur principal pour la vue hiérarchique -->
+        <!-- Barre d'actions pour les bulk updates -->
+        <div class="bulk-action-bar" id="bulkActionBar">
+            <div class="d-flex align-items-center gap-3">
+                <span class="bulk-select-all" onclick="toggleAllCheckboxes()">
+                    <span id="bulkSelectText">Tout sélectionner</span>
+                </span>
+                <span class="text-muted small" id="selectedCount">0 sélectionné(s)</span>
+            </div>
+            <div class="bulk-actions">
+                <select id="bulkStatutSelect" class="form-select form-select-sm">
+                    <option value="">Changer le statut...</option>
+                    <option value="nouveau">Nouveau</option>
+                    <option value="en_analyse">En analyse</option>
+                    <option value="confirme">Confirmé</option>
+                    <option value="faux_positif">Faux positif</option>
+                    <option value="patche">Patché</option>
+                </select>
+                <button class="btn btn-sm btn-primary" onclick="applyBulkAction()">Appliquer</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearSelection()">Annuler</button>
+            </div>
+        </div>
+
         <div id="hierarchicalView" class="mb-5">
             <!-- Les données seront chargées ici -->
         </div>
@@ -790,7 +848,8 @@
         // ============================================================
         let toutesLesVulnerabilites = []; // Stock toutes les vulnérabilités chargées
         let filtrePanneauOuvert = false;
-        let correlationEnCours = null;
+                let selectedVulns = new Set(); // Stocke les IDs des vulnérabilités sélectionnées
+let correlationEnCours = null;
 
         // ============================================================
         // FONCTIONS UTILITAIRES
@@ -1078,9 +1137,9 @@
 
                 html += `
             <div class="client-card p-3 mb-4">
-                <label class="checkbox-label">
-                    <input type="checkbox" class="client-checkbox" data-client="${clientKey}" onchange="updateSelection()">
-                </label>
+                <span class="checkbox-container">
+                    <input type="checkbox" class="client-checkbox" data-client="${clientKey}" onchange="updateSelection(event)">
+                </span>
                 <div class="client-header" onclick="toggleClient('${clientKey}')">
                     <div class="d-flex align-items-center">
                         <span>👥 ${client.client}</span>
@@ -1099,9 +1158,9 @@
 
                     html += `
                 <div class="site-card p-3 mt-3 ms-3">
-                <label class="checkbox-label">
-                    <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}" onchange="updateSelection()">
-                </label>
+                <span class="checkbox-container">
+                    <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}" onchange="updateSelection(event)">
+                </span>
                 <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
                         <div class="d-flex align-items-center">
                             <span>🏢 ${site.site}</span>
@@ -1122,10 +1181,10 @@
 
                         html += `
                     <div class="asset-card mt-2 ms-3">
-                    <label class="checkbox-label">
-                        <input type="checkbox" class="asset-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" onchange="updateSelection()">
-                    </label>
-                    <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
+                <span class="checkbox-container">
+                    <input type="checkbox" class="asset-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" onchange="updateSelection(event)">
+                </span>
+                <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
                             <div class="d-flex align-items-center">
                                 <span>💻 ${asset.asset}</span>
                                 <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
@@ -1151,7 +1210,10 @@
                         sortedVulns.forEach(v => {
                             html += `
                         <div class="vuln-item">
-                            <div class="d-flex flex-column">
+    <span class="checkbox-container">
+        <input type="checkbox" class="vuln-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" data-vuln-id="${v.id}" onchange="updateSelection(event)">
+    </span>
+    <div class="d-flex flex-column" style="margin-left: 28px;">
                                 <div>
                                     <code class="me-2">${v.cve_id || 'N/A'}</code>
                                     <span class="badge badge-${v.priorite}">${(v.priorite || 'N/A').charAt(0).toUpperCase() + (v.priorite || 'N/A').slice(1)}</span>
@@ -1328,24 +1390,68 @@
             }
         }
 
-        // Toggle pour les clients
+        // Déplie tous les enfants (sites, assets, vulns) de manière récursive
+        function expandAllChildren(clientKey, siteKey, assetKey) {
+            if (siteKey === null && assetKey === null) {
+                // Déplier tous les sites du client
+                const siteContents = document.querySelectorAll(`.site-content[id^="content-site-${clientKey}-"]`);
+                siteContents.forEach(siteContent => {
+                    siteContent.classList.add('show');
+                    const siteId = siteContent.id.replace('content-site-' + clientKey + '-', '');
+                    const chevron = document.getElementById(`chevron-site-${clientKey}-${siteId}`);
+                    if (chevron) chevron.classList.add('rotate');
+                    
+                    // Déplier tous les assets du site
+                    const assetVulnLists = document.querySelectorAll(`.vuln-list[id^="vuln-list-${clientKey}-${siteId}-"]`);
+                    assetVulnLists.forEach(vulnList => {
+                        vulnList.classList.add('show');
+                        const assetId = vulnList.id.replace('vuln-list-' + clientKey + '-' + siteId + '-', '');
+                        const assetChevron = document.getElementById(`chevron-${clientKey}-${siteId}-${assetId}`);
+                        if (assetChevron) assetChevron.classList.add('rotate');
+                    });
+                });
+            } else if (assetKey === null) {
+                // Déplier tous les assets du site
+                const assetVulnLists = document.querySelectorAll(`.vuln-list[id^="vuln-list-${clientKey}-${siteKey}-"]`);
+                assetVulnLists.forEach(vulnList => {
+                    vulnList.classList.add('show');
+                    const assetId = vulnList.id.replace('vuln-list-' + clientKey + '-' + siteKey + '-', '');
+                    const assetChevron = document.getElementById(`chevron-${clientKey}-${siteKey}-${assetId}`);
+                    if (assetChevron) assetChevron.classList.add('rotate');
+                });
+            }
+        }
+
+        // Toggle pour les clients avec dépliage en cascade
         function toggleClient(clientKey) {
             const content = document.getElementById(`content-client-${clientKey}`);
             const chevron = document.getElementById(`chevron-client-${clientKey}`);
             if (!content || !chevron) return;
 
+            const isExpanding = !content.classList.contains('show');
             content.classList.toggle('show');
             chevron.classList.toggle('rotate');
+            
+            // Déplier en cascade tous les sites et assets si on déplie le client
+            if (isExpanding) {
+                expandAllChildren(clientKey, null, null);
+            }
         }
 
-        // Toggle pour les sites
+        // Toggle pour les sites avec dépliage en cascade
         function toggleSite(clientKey, siteKey) {
             const content = document.getElementById(`content-site-${clientKey}-${siteKey}`);
             const chevron = document.getElementById(`chevron-site-${clientKey}-${siteKey}`);
             if (!content || !chevron) return;
 
+            const isExpanding = !content.classList.contains('show');
             content.classList.toggle('show');
             chevron.classList.toggle('rotate');
+            
+            // Déplier en cascade tous les assets si on déplie le site
+            if (isExpanding) {
+                expandAllChildren(clientKey, siteKey, null);
+            }
         }
 
         // ============================================================
@@ -1699,29 +1805,200 @@
         // ============================================================
         // INITIALISATION
         // ============================================================
-        document.addEventListener('DOMContentLoaded', () => {
+        
+        // ============================================================
+        // GESTION DES BULK ACTIONS
+        // ============================================================
+
+        // Met à jour l'état des cases à cocher et la barre d'actions
+        function updateSelection(event) {
+            // Si c'est un parent qui a été cliqué, propager aux enfants
+            const checkbox = event ? event.target : null;
+            if (checkbox && (checkbox.classList.contains('client-checkbox') || 
+                            checkbox.classList.contains('site-checkbox') || 
+                            checkbox.classList.contains('asset-checkbox'))) {
+                propagateCheckboxToChildren(checkbox);
+            }
+
+            const allCheckboxes = document.querySelectorAll('.vuln-checkbox:checked');
+            selectedVulns = new Set([...allCheckboxes].map(cb => parseInt(cb.dataset.vulnId)));
+
+            // Mettre à jour le compteur
+            document.getElementById('selectedCount').textContent = `${selectedVulns.size} sélectionné(s)`;
+
+            // Afficher/masquer la barre d'actions
+            const bulkActionBar = document.getElementById('bulkActionBar');
+            if (selectedVulns.size > 0) {
+                bulkActionBar.classList.add('show');
+            } else {
+                bulkActionBar.classList.remove('show');
+            }
+
+            // Mettre à jour l'état des cases parent (assets, sites, clients)
+            updateParentCheckboxes();
+        }
+
+        // Met à jour l'état des cases parent en fonction des enfants
+        function updateParentCheckboxes() {
+            // Mettre à jour les cases des assets
+            document.querySelectorAll('.asset-checkbox').forEach(checkbox => {
+                const clientKey = checkbox.dataset.client;
+                const siteKey = checkbox.dataset.site;
+                const assetKey = checkbox.dataset.asset;
+                const vulnCheckboxes = document.querySelectorAll(`.vuln-checkbox[data-client="${clientKey}"][data-site="${siteKey}"][data-asset="${assetKey}"]`);
+                const allChecked = [...vulnCheckboxes].every(cb => cb.checked);
+                const someChecked = [...vulnCheckboxes].some(cb => cb.checked);
+                checkbox.checked = allChecked;
+                checkbox.indeterminate = someChecked && !allChecked;
+            });
+
+            // Mettre à jour les cases des sites
+            document.querySelectorAll('.site-checkbox').forEach(checkbox => {
+                const clientKey = checkbox.dataset.client;
+                const siteKey = checkbox.dataset.site;
+                const assetCheckboxes = document.querySelectorAll(`.asset-checkbox[data-client="${clientKey}"][data-site="${siteKey}"]`);
+                const allChecked = [...assetCheckboxes].every(cb => cb.checked);
+                const someChecked = [...assetCheckboxes].some(cb => cb.checked || cb.indeterminate);
+                checkbox.checked = allChecked;
+                checkbox.indeterminate = someChecked && !allChecked;
+            });
+
+            // Mettre à jour les cases des clients
+            document.querySelectorAll('.client-checkbox').forEach(checkbox => {
+                const clientKey = checkbox.dataset.client;
+                const siteCheckboxes = document.querySelectorAll(`.site-checkbox[data-client="${clientKey}"]`);
+                const allChecked = [...siteCheckboxes].every(cb => cb.checked);
+                const someChecked = [...siteCheckboxes].some(cb => cb.checked || cb.indeterminate);
+                checkbox.checked = allChecked;
+                checkbox.indeterminate = someChecked && !allChecked;
+            });
+        }
+
+        // Propage l'état des checkboxes parents vers les enfants
+        function propagateCheckboxToChildren(checkbox) {
+            const clientKey = checkbox.dataset.client;
+            const siteKey = checkbox.dataset.site;
+            const assetKey = checkbox.dataset.asset;
+
+            if (clientKey && !siteKey && !assetKey) {
+                // C'est un client - propager à tous ses sites, assets et vulns
+                const siteCheckboxes = document.querySelectorAll(`.site-checkbox[data-client="${clientKey}"]`);
+                siteCheckboxes.forEach(siteCb => {
+                    siteCb.checked = checkbox.checked;
+                    siteCb.indeterminate = false;
+                    // Propager aux assets du site
+                    const assetCheckboxes = document.querySelectorAll(`.asset-checkbox[data-client="${clientKey}"][data-site="${siteCb.dataset.site}"]`);
+                    assetCheckboxes.forEach(assetCb => {
+                        assetCb.checked = checkbox.checked;
+                        assetCb.indeterminate = false;
+                        // Propager aux vulns de l'asset
+                        const vulnCheckboxes = document.querySelectorAll(`.vuln-checkbox[data-client="${clientKey}"][data-site="${siteCb.dataset.site}"][data-asset="${assetCb.dataset.asset}"]`);
+                        vulnCheckboxes.forEach(vulnCb => {
+                            vulnCb.checked = checkbox.checked;
+                        });
+                    });
+                });
+            } else if (clientKey && siteKey && !assetKey) {
+                // C'est un site - propager à tous ses assets et vulns
+                const assetCheckboxes = document.querySelectorAll(`.asset-checkbox[data-client="${clientKey}"][data-site="${siteKey}"]`);
+                assetCheckboxes.forEach(assetCb => {
+                    assetCb.checked = checkbox.checked;
+                    assetCb.indeterminate = false;
+                    // Propager aux vulns de l'asset
+                    const vulnCheckboxes = document.querySelectorAll(`.vuln-checkbox[data-client="${clientKey}"][data-site="${siteKey}"][data-asset="${assetCb.dataset.asset}"]`);
+                    vulnCheckboxes.forEach(vulnCb => {
+                        vulnCb.checked = checkbox.checked;
+                    });
+                });
+            } else if (clientKey && siteKey && assetKey) {
+                // C'est un asset - propager à toutes ses vulns
+                const vulnCheckboxes = document.querySelectorAll(`.vuln-checkbox[data-client="${clientKey}"][data-site="${siteKey}"][data-asset="${assetKey}"]`);
+                vulnCheckboxes.forEach(vulnCb => {
+                    vulnCb.checked = checkbox.checked;
+                });
+            }
+        }
+
+        // Sélectionne/désélectionne toutes les cases
+        function toggleAllCheckboxes() {
+            const allCheckboxes = document.querySelectorAll('.vuln-checkbox');
+            const isChecked = [...allCheckboxes].every(cb => cb.checked);
+            const newState = !isChecked;
+
+            allCheckboxes.forEach(cb => {
+                cb.checked = newState;
+            });
+
+            // Mettre à jour les cases parent et propager
+            document.querySelectorAll('.client-checkbox, .site-checkbox, .asset-checkbox').forEach(cb => {
+                cb.checked = newState;
+                cb.indeterminate = false;
+                // Propager aux enfants
+                propagateCheckboxToChildren(cb);
+            });
+
+            updateSelection(null);
+            document.getElementById('bulkSelectText').textContent = isChecked ? 'Tout sélectionner' : 'Tout désélectionner';
+        }
+
+        // Applique l'action en bulk
+        async function applyBulkAction() {
+            const statut = document.getElementById('bulkStatutSelect').value;
+            if (!statut || selectedVulns.size === 0) {
+                alert('Veuillez sélectionner un statut et au moins une vulnérabilité.');
+                return;
+            }
+
+            if (!confirm(`Êtes-vous sûr de vouloir mettre à jour ${selectedVulns.size} vulnérabilité(s) avec le statut "${formatStatut(statut)}" ?`)) {
+                return;
+            }
+
+            const etatAvant = sauvegarderEtatOuverture();
+
+            try {
+                // Appel à l'API pour chaque vulnérabilité sélectionnée
+                const promises = [...selectedVulns].map(vulnId => {
+                    return fetch(`/api/correlations/${vulnId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ statut })
+                    });
+                });
+
+                const results = await Promise.allSettled(promises);
+                const errors = results.filter(r => r.status === 'rejected');
+
+                if (errors.length > 0) {
+                    alert(`Erreur lors de la mise à jour de ${errors.length} vulnérabilité(s).`);
+                } else {
+                    alert(`${selectedVulns.size} vulnérabilité(s) mises à jour avec succès.`);
+                    await chargerToutesLesVulnerabilites();
+                    restaurerEtatOuverture(etatAvant);
+                    clearSelection();
+                }
+            } catch (e) {
+                console.error('Erreur:', e);
+                alert('Erreur lors de la mise à jour des vulnérabilités.');
+            }
+        }
+
+        // Désélectionne tout
+        function clearSelection() {
+            document.querySelectorAll('.vuln-checkbox, .client-checkbox, .site-checkbox, .asset-checkbox').forEach(cb => {
+                cb.checked = false;
+                cb.indeterminate = false;
+            });
+            selectedVulns = new Set();
+            document.getElementById('bulkActionBar').classList.remove('show');
+            document.getElementById('bulkSelectText').textContent = 'Tout sélectionner';
+            document.getElementById('selectedCount').textContent = '0 sélectionné(s)';
+        }
+
+document.addEventListener('DOMContentLoaded', () => {
             initFiltresTypeaheads();
             updateActiveFilters();
             chargerToutesLesVulnerabilites();
-            clearSelection();
-            
-            // FIX: Force le déclenchement de updateSelection() pour TOUTES les checkboxes
-            document.querySelectorAll('.client-checkbox, .site-checkbox, .asset-checkbox, .vuln-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    updateSelection();
-                });
-            });
         });
-        // ============================================================
-        // GLOBAL EVENT LISTENER - Block propagation from checkboxes to headers
-        // ============================================================
-        document.addEventListener('click', function(e) {
-            if (e.target.matches('input[type="checkbox"]') ||
-                e.target.closest('.checkbox-label')) {
-                e.stopPropagation();
-            }
-        }, true); // Mode capture
-        
     </script>
 </body>
 
