@@ -282,7 +282,8 @@
         .checkbox-container {
             position: absolute;
             left: 8px;
-            top: 10px;
+            top: 50%;
+            transform: translateY(-50%);
             z-index: 10;
             pointer-events: auto;
             width: 18px;
@@ -1397,39 +1398,7 @@ let correlationEnCours = null;
             }
         }
 
-        // Déplie tous les enfants (sites, assets, vulns) de manière récursive
-        function expandAllChildren(clientKey, siteKey, assetKey) {
-            if (siteKey === null && assetKey === null) {
-                // Déplier tous les sites du client
-                const siteContents = document.querySelectorAll(`.site-content[id^="content-site-${clientKey}-"]`);
-                siteContents.forEach(siteContent => {
-                    siteContent.classList.add('show');
-                    const siteId = siteContent.id.replace('content-site-' + clientKey + '-', '');
-                    const chevron = document.getElementById(`chevron-site-${clientKey}-${siteId}`);
-                    if (chevron) chevron.classList.add('rotate');
-                    
-                    // Déplier tous les assets du site
-                    const assetVulnLists = document.querySelectorAll(`.vuln-list[id^="vuln-list-${clientKey}-${siteId}-"]`);
-                    assetVulnLists.forEach(vulnList => {
-                        vulnList.classList.add('show');
-                        const assetId = vulnList.id.replace('vuln-list-' + clientKey + '-' + siteId + '-', '');
-                        const assetChevron = document.getElementById(`chevron-${clientKey}-${siteId}-${assetId}`);
-                        if (assetChevron) assetChevron.classList.add('rotate');
-                    });
-                });
-            } else if (assetKey === null) {
-                // Déplier tous les assets du site
-                const assetVulnLists = document.querySelectorAll(`.vuln-list[id^="vuln-list-${clientKey}-${siteKey}-"]`);
-                assetVulnLists.forEach(vulnList => {
-                    vulnList.classList.add('show');
-                    const assetId = vulnList.id.replace('vuln-list-' + clientKey + '-' + siteKey + '-', '');
-                    const assetChevron = document.getElementById(`chevron-${clientKey}-${siteKey}-${assetId}`);
-                    if (assetChevron) assetChevron.classList.add('rotate');
-                });
-            }
-        }
-
-        // Toggle pour les clients avec dépliage en cascade
+// Toggle pour les clients avec dépliage en cascade
         function toggleClient(clientKey) {
             const content = document.getElementById(`content-client-${clientKey}`);
             const chevron = document.getElementById(`chevron-client-${clientKey}`);
@@ -1445,20 +1414,14 @@ let correlationEnCours = null;
             }
         }
 
-        // Toggle pour les sites avec dépliage en cascade
+        // Toggle pour les sites
         function toggleSite(clientKey, siteKey) {
             const content = document.getElementById(`content-site-${clientKey}-${siteKey}`);
             const chevron = document.getElementById(`chevron-site-${clientKey}-${siteKey}`);
             if (!content || !chevron) return;
 
-            const isExpanding = !content.classList.contains('show');
             content.classList.toggle('show');
             chevron.classList.toggle('rotate');
-            
-            // Déplier en cascade tous les assets si on déplie le site
-            if (isExpanding) {
-                expandAllChildren(clientKey, siteKey, null);
-            }
         }
 
         // ============================================================
