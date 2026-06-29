@@ -183,7 +183,16 @@
             font-size: 0.85rem;
         }
 
-        /* ===== FINAL SOLUTION: Labels inside headers ===== */
+        /* ===== FINAL SOLUTION: Checkboxes as siblings (left of headers) ===== */
+        /* Card containers - flex to align checkbox + header */
+        .client-card,
+        .site-card,
+        .asset-card {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
         /* Checkbox label - simple inline-block */
         .checkbox-label {
             display: inline-block;
@@ -199,15 +208,17 @@
             margin: 0;
         }
 
-        /* Headers - simple inline-block */
+        /* Headers - flex, take remaining space */
         .client-header,
         .site-header,
         .asset-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
             cursor: pointer;
             padding: 10px 15px;
             border-radius: 6px;
+            flex: 1; /* Take all remaining space */
         }
 
         .client-header:hover,
@@ -380,8 +391,15 @@
 <body>
     <script>
         // ============================================================
-        // SOLUTION: pointer-events sur les headers gère tout
-        // Pas besoin de global event listener
+        // ============================================================
+        // GLOBAL EVENT LISTENER - Block propagation from checkboxes to headers
+        // ============================================================
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('input[type="checkbox"]') ||
+                e.target.closest('.checkbox-label')) {
+                e.stopPropagation();
+            }
+        }, true); // Mode capture
         // ============================================================
     </script>
     <!-- ─── NAVBAR ─────────────────────────────────────────── -->
@@ -1164,11 +1182,11 @@
 
                 html += `
             <div class="client-card p-3 mb-4">
-    <div class="client-header" onclick="toggleClient('${clientKey}')">
-        <label class="checkbox-label" onclick="event.stopPropagation()">
-            <input type="checkbox" class="client-checkbox" data-client="${clientKey}" onchange="updateSelection()">
-        </label>
-        <div class="d-flex align-items-center">
+                <label class="checkbox-label">
+                    <input type="checkbox" class="client-checkbox" data-client="${clientKey}" onchange="updateSelection()">
+                </label>
+                <div class="client-header" onclick="toggleClient('${clientKey}')">
+                    <div class="d-flex align-items-center">
             <span>👥 ${client.client}</span>
             <span class="badge bg-secondary ms-2">${clientTotalVulns} vulnérabilités</span>
         </div>
@@ -1185,11 +1203,11 @@
 
                     html += `
                 <div class="site-card p-3 mt-3 ms-3">
-    <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
-        <label class="checkbox-label" onclick="event.stopPropagation()">
-            <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}" onchange="updateSelection()">
-        </label>
-        <div class="d-flex align-items-center">
+                <label class="checkbox-label">
+                    <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}" onchange="updateSelection()">
+                </label>
+                <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
+                    <div class="d-flex align-items-center">
             <span>🏢 ${site.site}</span>
             <span class="badge bg-secondary ms-2">${siteTotalVulns} vulnérabilités</span>
         </div>
@@ -1208,11 +1226,11 @@
 
                         html += `
                     <div class="asset-card mt-2 ms-3">
-    <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
-        <label class="checkbox-label" onclick="event.stopPropagation()">
-            <input type="checkbox" class="asset-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" onchange="updateSelection()">
-        </label>
-        <div class="d-flex align-items-center">
+                <label class="checkbox-label">
+                    <input type="checkbox" class="asset-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" onchange="updateSelection()">
+                </label>
+                <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
+                    <div class="d-flex align-items-center">
             <span>💻 ${asset.asset}</span>
             <small class="text-muted ms-2">(${asset.type} - ${asset.ip})</small>
             <div class="ms-3">
