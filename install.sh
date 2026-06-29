@@ -3,7 +3,7 @@
 # =============================================================================
 # install_user_friendly.sh — Script d'installation pour AirGappedCVE
 # Auteur : Gvte-Kali / Vibe Code
-# Version : 6.4.0 (Détection MariaDB basée SUR TES TESTS : ss -tunlp | grep 3306 + sudo mysql)
+# Version : 6.5.0 (Détection MariaDB SANS sudo, basée sur le port 3306 uniquement)
 # Description : Installe et configure AirGappedCVE sur Ubuntu Server
 # Usage: sudo bash install.sh [--test-mode]
 # =============================================================================
@@ -149,120 +149,73 @@ command_exists() {
 }
 
 # =============================================================================
-# DÉTECTION MARIADB (BASÉE SUR TES TESTS : ss -tunlp | grep 3306 + sudo mysql)
+# DÉTECTION MARIADB (BASÉE UNIQUEMENT SUR LE PORT 3306 - comme tes tests)
 # =============================================================================
 
-# Vérifie si le port 3306 est utilisé (TON TEST : ss -tunlp | grep 3306)
-is_port_3306_in_use() {
+# Vérifie si le port 3306 est utilisé (TON TEST EXACT)
+is_port_3306_used() {
     ss -tunlp | grep -q ":3306"
 }
 
-# Vérifie si on peut se connecter à MariaDB (TON TEST : sudo mysql)
-check_mariadb_connection() {
-    local port="${1:-$DB_PORT_DEFAULT}"
-    
-    # Tester avec mysql (le plus courant sur Ubuntu)
-    if command_exists "mysql" && sudo mysql --port=$port -e "SELECT 1" >/dev/null 2>&1; then
-        return 0
-    fi
-    
-    # Tester avec mariadb (si mysql n'est pas disponible)
-    if command_exists "mariadb" && sudo mariadb --port=$port -e "SELECT 1" >/dev/null 2>&1; then
-        return 0
-    fi
-    
-    return 1
-}
-
-# Vérifie si MariaDB est opérationnel (port + connexion)
-is_mariadb_operational() {
-    local port="${1:-$DB_PORT_DEFAULT}"
-    
-    # 1. Vérifier le port 3306 (TON TEST EXACT)
-    if ! is_port_3306_in_use; then
-        return 1
-    fi
-    
-    # 2. Vérifier la connexion (TON TEST EXACT: sudo mysql)
-    if ! check_mariadb_connection $port; then
-        return 1
-    fi
-    
-    return 0
-}
-
-# Attend que MariaDB soit opérationnel
-wait_for_mariadb() {
-    local port="${1:-$DB_PORT_DEFAULT}"
-    local max_retries=30
-    local retries=0
-    
-    while [ $retries -lt $max_retries ]; do
-        if is_mariadb_operational $port; then
-            return 0
-        fi
-        retries=$((retries+1))
-        sleep 2
-        printf "\r${CYAN}  → Attente que MariaDB soit prêt... ($retries/$max_retries)${NC}"
-    done
-    return 1
-}
-
-# =============================================================================
-# GESTION DES CONFLITS DE PORT (simplifiée)
-# =============================================================================
-
-handle_mariadb_port_conflict() {
+# Vérifie si un service écoute sur un port donné
+get_service_on_port() {
     local port="$1"
+    ss -tunlp | grep ":$port " | awk '{print $7}' | cut -d'=' -f2 | xargs
+}
+
+# =============================================================================
+# GESTION DES CONFLITS DE PORT (simplifiée, sans sudo)
+# =============================================================================
+
+handle_port_3306_conflict() {
+    local port=3306
     
-    # Si MariaDB est déjà opérationnel sur ce port, on l'utilise
-    if is_mariadb_operational $port; then
-        read -rp "MariaDB est déjà opérationnel sur le port $port (détecté via ss + sudo mysql). Voulez-vous l'utiliser ? (O/n) : " use_existing
-        if [[ "$use_existing" =~ ^[OoYy]$ ]] || [ -z "$use_existing" ]; then
-            DB_PORT=$port
-            info "Utilisation de MariaDB existant sur le port $port"
-            return 0
-        fi
-    fi
-    
-    # Sinon, vérifier si UN service écoute sur le port
-    if ss -tunlp | grep -q ":$port"; then
-        local service_on_port
-        service_on_port=$(ss -tunlp | grep ":$port " | awk '{print $7}' | cut -d'=' -f2 | xargs)
-        
-        echo ""
-        echo "Un service écoute sur le port $port: $service_on_port"
-        echo "Choix disponibles:"
-        echo "  1) Supprimer le service actuel et installer MariaDB sur le port $port"
-        echo "  2) Laisser le service en place et installer MariaDB sur le port $DB_PORT_ALT"
-        echo "  3) Annuler"
-        read -rp "Votre choix [1-3] : " db_choice
-        
-        case "$db_choice" in
-            1)
-                # Arrêter le service actuel
-                if [ -n "$service_on_port" ]; then
-                    systemctl stop "$service_on_port" >> "$VERBOSE_LOG" 2>&1 || true
-                    systemctl disable "$service_on_port" >> "$VERBOSE_LOG" 2>&1 || true
-                fi
-                DB_PORT=$port
-                ;;
-            2)
-                DB_PORT=$DB_PORT_ALT
-                ;;
-            3)
-                error "Installation annulée" "" $ERROR_LEVEL_CRITICAL
-                ;;
-            *)
-                error "Choix invalide" "" $ERROR_LEVEL_ERROR
-                return 1
-                ;;
-        esac
-    else
-        # Aucun service sur le port, on peut l'utiliser
+    # Vérifier si le port est utilisé
+    if ! is_port_3306_used; then
         DB_PORT=$port
         return 0
     fi
+    
+    local service_on_port
+    service_on_port=$(get_service_on_port $port)
+    
+    echo ""
+    echo "Un service écoute sur le port $port: $service_on_port"
+    echo "Choix disponibles:"
+    echo "  1) Supprimer le service actuel et installer MariaDB sur le port $port"
+    echo "  2) Laisser le service en place et installer MariaDB sur le port $DB_PORT_ALT"
+    echo "  3) Annuler"
+    
+    # Lire la réponse avec un timeout pour éviter les blocages
+    read -t 30 -rp "Votre choix [1-3] : " db_choice
+    
+    # Si aucune réponse après 30 secondes, utiliser le choix par défaut (1)
+    if [ -z "$db_choice" ]; then
+        db_choice=1
+        echo "1"  # Afficher le choix par défaut
+    fi
+    
+    case "$db_choice" in
+        1)
+            # Arrêter le service actuel
+            if [ -n "$service_on_port" ]; then
+                info "Arrêt du service $service_on_port..."
+                systemctl stop "$service_on_port" >> "$VERBOSE_LOG" 2>&1 || true
+                systemctl disable "$service_on_port" >> "$VERBOSE_LOG" 2>&1 || true
+            fi
+            DB_PORT=$port
+            ;;
+        2)
+            DB_PORT=$DB_PORT_ALT
+            ;;
+        3)
+            error "Installation annulée" "" $ERROR_LEVEL_CRITICAL
+            ;;
+        *)
+            error "Choix invalide" "Veuillez entrer 1, 2 ou 3" $ERROR_LEVEL_ERROR
+            return 1
+            ;;
+    esac
     
     return 0
 }
@@ -371,22 +324,16 @@ if ss -tunlp | grep -q ":8000"; then
     error "Port 8000 occupé" "Libérez le port" $ERROR_LEVEL_ERROR
 fi
 
-# 7. Détection de MariaDB (BASÉE SUR TES TESTS EXACTS)
+# 7. Détection du port MariaDB (BASÉE UNIQUEMENT SUR LE PORT 3306)
 info "Détection de MariaDB..."
 DB_PORT=$DB_PORT_DEFAULT
 
-# Vérifier si MariaDB est opérationnel (port 3306 + connexion sudo mysql)
-if is_mariadb_operational $DB_PORT_DEFAULT; then
-    info "MariaDB est opérationnel sur le port $DB_PORT_DEFAULT (détecté via ss -tunlp | grep 3306 + sudo mysql)"
-    DB_PORT=$DB_PORT_DEFAULT
+# Vérifier SIMPLEMENT si le port 3306 est utilisé (comme ton test)
+if is_port_3306_used; then
+    info "Le port 3306 est utilisé (MariaDB ou autre service)"
+    handle_port_3306_conflict
 else
-    # Vérifier si un service écoute sur 3306 (mais connexion échouée)
-    if is_port_3306_in_use; then
-        warn "Le port 3306 est utilisé, mais la connexion à MariaDB échoue (sudo mysql)"
-        handle_mariadb_port_conflict $DB_PORT_DEFAULT
-    else
-        info "MariaDB n'est pas détecté (port 3306 non utilisé ou connexion échouée)"
-    fi
+    info "Le port 3306 est libre"
 fi
 
 # 8. Python
@@ -436,63 +383,67 @@ log "Système à jour"
 ask_continue
 
 # =============================================================================
-# ÉTAPE 1B: INSTALLATION DE MARIADB (si nécessaire)
+# ÉTAPE 1B: INSTALLATION DE MARIADB
 # =============================================================================
 step_header "1B" 5 "Installation de MariaDB sur le port $DB_PORT"
 
-# Installer MariaDB seulement si ce n'est pas déjà opérationnel
-if ! is_mariadb_operational $DB_PORT; then
-    info "Installation de MariaDB..."
-    if ! apt-get install -y -qq mariadb-server mariadb-client >> "$VERBOSE_LOG" 2>&1; then
-        error "Échec de l'installation de MariaDB" "Vérifiez APT" $ERROR_LEVEL_CRITICAL
-    fi
-    log "MariaDB installé"
-    
-    # Configuration du port si nécessaire
-    if [ "$DB_PORT" != "$DB_PORT_DEFAULT" ]; then
-        info "Configuration du port $DB_PORT..."
-        if ! sed -i "s/^port.*=.*3306/port = $DB_PORT/" /etc/mysql/mariadb.conf.d/50-server.cnf; then
-            error "Échec de la modification du port MariaDB" "Vérifiez le fichier" $ERROR_LEVEL_ERROR
-            ask_continue
-        fi
-        [ -f /etc/mysql/my.cnf ] && sed -i "s/^port.*=.*3306/port = $DB_PORT/" /etc/mysql/my.cnf
-        log "Port configuré"
-    fi
-    
-    # Démarrage de MariaDB
-    info "Démarrage de MariaDB..."
-    # Essayer de démarrer via systemctl (tous les noms de service possibles)
-    for svc in mariadb mariadb-server mysql mysqld; do
-        if systemctl enable "$svc" >> "$VERBOSE_LOG" 2>&1 && systemctl start "$svc" >> "$VERBOSE_LOG" 2>&1; then
-            break
-        fi
-    done
-    
-    if ! is_port_3306_in_use; then
-        error "Échec du démarrage de MariaDB" "Vérifiez: journalctl -u mariadb" $ERROR_LEVEL_ERROR
-        ask_continue
-    fi
-    log "MariaDB démarré"
-    
-    # Attente que MariaDB soit opérationnel
-    info "Attente que MariaDB soit opérationnel..."
-    if ! wait_for_mariadb $DB_PORT; then
-        error "MariaDB ne répond pas après 60 secondes" "Vérifiez: journalctl -u mariadb -n 50" $ERROR_LEVEL_ERROR
-        ask_continue
-    fi
-    log "MariaDB prêt"
-    
-    # Sécurisation
-    info "Sécurisation de MariaDB..."
-    for bin in mysql mariadb; do
-        if command_exists "$bin" && sudo "$bin" --port=$DB_PORT -e "DELETE FROM mysql.user WHERE User=''; DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1'); DROP DATABASE IF EXISTS test; DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'; FLUSH PRIVILEGES;" >> "$VERBOSE_LOG" 2>&1; then
-            break
-        fi
-    done
-    log "MariaDB sécurisé"
-else
-    info "MariaDB est déjà opérationnel sur le port $DB_PORT (détecté via tes tests: ss + sudo mysql)"
+# Installer MariaDB
+info "Installation de MariaDB..."
+if ! apt-get install -y -qq mariadb-server mariadb-client >> "$VERBOSE_LOG" 2>&1; then
+    error "Échec de l'installation de MariaDB" "Vérifiez APT" $ERROR_LEVEL_CRITICAL
 fi
+log "MariaDB installé"
+
+# Configuration du port si nécessaire
+if [ "$DB_PORT" != "$DB_PORT_DEFAULT" ]; then
+    info "Configuration du port $DB_PORT..."
+    if ! sed -i "s/^port.*=.*3306/port = $DB_PORT/" /etc/mysql/mariadb.conf.d/50-server.cnf; then
+        error "Échec de la modification du port MariaDB" "Vérifiez le fichier" $ERROR_LEVEL_ERROR
+        ask_continue
+    fi
+    [ -f /etc/mysql/my.cnf ] && sed -i "s/^port.*=.*3306/port = $DB_PORT/" /etc/mysql/my.cnf
+    log "Port configuré"
+fi
+
+# Démarrage de MariaDB
+info "Démarrage de MariaDB..."
+if ! systemctl enable mariadb >> "$VERBOSE_LOG" 2>&1; then
+    error "Échec de l'activation de MariaDB" "Vérifiez systemctl" $ERROR_LEVEL_ERROR
+    ask_continue
+fi
+
+if ! systemctl start mariadb >> "$VERBOSE_LOG" 2>&1; then
+    error "Échec du démarrage de MariaDB" "Vérifiez: journalctl -u mariadb" $ERROR_LEVEL_ERROR
+    ask_continue
+fi
+log "MariaDB démarré"
+
+# Attendre que le port 3306 soit utilisé
+info "Attente que MariaDB soit opérationnel sur le port $DB_PORT..."
+RETRIES=0
+MAX_RETRIES=30
+while ! is_port_3306_used; do
+    RETRIES=$((RETRIES+1))
+    if [ "$RETRIES" -ge "$MAX_RETRIES" ]; then
+        error "MariaDB ne répond pas après $((MAX_RETRIES * 2)) secondes" "Vérifiez: journalctl -u mariadb -n 50" $ERROR_LEVEL_ERROR
+        ask_continue
+        break
+    fi
+    sleep 2
+    printf "\r${CYAN}  → Attente... ($RETRIES/$MAX_RETRIES)${NC}"
+done
+if [ "$RETRIES" -lt "$MAX_RETRIES" ]; then
+    echo ""
+    log "MariaDB opérationnel sur le port $DB_PORT"
+fi
+
+# Sécurisation de MariaDB (sans sudo, car on est déjà root)
+info "Sécurisation de MariaDB..."
+if ! mariadb -u root -e "DELETE FROM mysql.user WHERE User=''; DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1'); DROP DATABASE IF EXISTS test; DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'; FLUSH PRIVILEGES;" >> "$VERBOSE_LOG" 2>&1; then
+    error "Échec de la sécurisation de MariaDB" "Vérifiez les permissions" $ERROR_LEVEL_ERROR
+    ask_continue
+fi
+log "MariaDB sécurisé"
 
 ask_continue
 
@@ -595,13 +546,12 @@ ask_continue
 # =============================================================================
 step_header 4 5 "Installation de l'application"
 
-# Création base et utilisateur
+# Création base et utilisateur (on est root, donc pas besoin de sudo)
 info "Création de la base $DB_NAME..."
-for bin in mysql mariadb; do
-    if command_exists "$bin" && sudo "$bin" --port=$DB_PORT -e "CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD'; CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' WITH GRANT OPTION; GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" >> "$VERBOSE_LOG" 2>&1; then
-        break
-    fi
-done
+if ! mariadb -u root -e "CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD'; CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' WITH GRANT OPTION; GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" >> "$VERBOSE_LOG" 2>&1; then
+    error "Échec création base/utilisateur" "Vérifiez MariaDB" $ERROR_LEVEL_ERROR
+    ask_continue
+fi
 log "Base et utilisateur créés"
 
 # Import schéma
@@ -611,11 +561,9 @@ if [ ! -f "$SCHEMA_FILE" ]; then
 fi
 
 info "Import du schéma..."
-if ! mariadb --port=$DB_PORT -u $DB_USER -p$DB_PASSWORD $DB_NAME < "$SCHEMA_FILE" >> "$VERBOSE_LOG" 2>&1; then
-    if ! mysql --port=$DB_PORT -u $DB_USER -p$DB_PASSWORD $DB_NAME < "$SCHEMA_FILE" >> "$VERBOSE_LOG" 2>&1; then
-        error "Échec import schéma" "Vérifiez schema.sql" $ERROR_LEVEL_ERROR
-        ask_continue
-    fi
+if ! mariadb -u $DB_USER -p$DB_PASSWORD $DB_NAME < "$SCHEMA_FILE" >> "$VERBOSE_LOG" 2>&1; then
+    error "Échec import schéma" "Vérifiez schema.sql" $ERROR_LEVEL_ERROR
+    ask_continue
 fi
 log "Schéma importé"
 
