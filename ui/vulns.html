@@ -1255,8 +1255,15 @@ let correlationEnCours = null;
             // ============================================
             document.querySelectorAll('.client-content, .site-content, .vuln-list').forEach(el => {
                 el.classList.remove('show');
-                const id = el.id.replace('content-', '').replace('vuln-list-', '');
-                const chevron = document.getElementById(`chevron-${id}`);
+                let chevronId = el.id;
+                if (chevronId.startsWith('content-client-')) {
+                    chevronId = chevronId.replace('content-client-', 'chevron-client-');
+                } else if (chevronId.startsWith('content-site-')) {
+                    chevronId = chevronId.replace('content-site-', 'chevron-site-');
+                } else if (chevronId.startsWith('vuln-list-')) {
+                    chevronId = chevronId.replace('vuln-list-', 'chevron-');
+                }
+                const chevron = document.getElementById(chevronId);
                 if (chevron) chevron.classList.remove('rotate');
             });
         }
