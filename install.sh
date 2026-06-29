@@ -316,29 +316,44 @@ log "✅ MariaDB sécurisé"
 
 header "🚀 Étape 3/8 - Clone du projet AirGappedCVE"
 
+SKIP_CLONE=false
+
 if [ -d "$INSTALL_DIR" ]; then
     info "🗑️ Le dossier $INSTALL_DIR existe déjà"
-    read -t 30 -rp "   Voulez-vous le supprimer ? (o/N) : " CLEAN_CHOICE
+    read -t 30 -rp "   Voulez-vous le supprimer et recloner ? (o/N) : " CLEAN_CHOICE
     if [[ "$CLEAN_CHOICE" =~ ^[oOyY]$ ]]; then
         run_with_spinner "🗑️ Suppression du dossier existant" "rm -rf $INSTALL_DIR"
         ask_continue_if_error $?
+    else
+        # Vérifier que le dépôt est déjà cloné et complet
+        if [ -f "$INSTALL_DIR/main.py" ] && [ -f "$INSTALL_DIR/requirements.txt" ] && [ -f "$INSTALL_DIR/sql/schema.sql" ]; then
+            info "✅ Dépôt déjà présent et complet dans $INSTALL_DIR"
+            SKIP_CLONE=true
+        else
+            error "❌ Dépôt incomplet ou corrompu dans $INSTALL_DIR" "Supprimez-le ou corrigez-le manuellement"
+            ask_continue
+            SKIP_CLONE=true
+        fi
     fi
 fi
 
-mkdir -p "$INSTALL_DIR" || { error "📁 Échec de la création du dossier" "$INSTALL_DIR"; ask_continue; }
+if [ "$SKIP_CLONE" = false ]; then
+    mkdir -p "$INSTALL_DIR" || { error "📁 Échec de la création du dossier" "$INSTALL_DIR"; ask_continue; }
 
-run_with_spinner "🚀 Clonage du dépôt" "git clone $REPO_URL $INSTALL_DIR"
-ask_continue_if_error $?
+    run_with_spinner "🚀 Clonage du dépôt" "git clone $REPO_URL $INSTALL_DIR"
+    ask_continue_if_error $?
 
-if [ ! -f "$INSTALL_DIR/main.py" ] || [ ! -f "$INSTALL_DIR/requirements.txt" ] || [ ! -f "$INSTALL_DIR/sql/schema.sql" ]; then
-    error "❌ Dépôt incomplet" "Vérifiez $REPO_URL"
-    ask_continue
+    if [ ! -f "$INSTALL_DIR/main.py" ] || [ ! -f "$INSTALL_DIR/requirements.txt" ] || [ ! -f "$INSTALL_DIR/sql/schema.sql" ]; then
+        error "❌ Dépôt incomplet" "Vérifiez $REPO_URL"
+        ask_continue
+    else
+        log "✅ Dépôt cloné avec succès"
+    fi
 else
-    log "✅ Dépôt cloné avec succès"
+    log "✅ Utilisation du dépôt existant"
 fi
 
 rm -rf "$INSTALL_DIR/.devcontainer" 2>/dev/null || warn "⚠️ Nettoyage échoué (ignoré)"
-
 # =============================================================================
 # ÉTAPE 4/8 : CONFIGURATION DU .ENV
 # =============================================================================
