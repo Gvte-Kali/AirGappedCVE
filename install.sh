@@ -1,19 +1,15 @@
 #!/bin/bash
 # =============================================================================
-# install.sh — Script d'installation pour AirGappedCVE
+# install.sh — Script d'installation pour AirGappedCVE (Correction Clone)
 # Auteur : Gvte-Kali / Vibe Code
-# Version : 5.0.0
-# Description : Installe et configure automatiquement AirGappedCVE sur Ubuntu Server
-# Usage: sudo bash install.sh
+# Version : 5.1.0
 # =============================================================================
 
 set +euo pipefail
 
 # =============================================================================
-# VARIABLES GLOBALES
+# VARIABLES GLOBALES (inchangées)
 # =============================================================================
-
-# Chemins et fichiers
 INSTALL_DIR="/opt/asset-manager"
 LOG_FILE="$INSTALL_DIR/installation.log"
 VERBOSE_LOG="/tmp/asset-manager-installation.log"
@@ -24,31 +20,26 @@ PATH_FILE="/etc/profile.d/asset-manager.sh"
 USER_BASHRC="$HOME/.bashrc"
 REPO_URL="https://github.com/Gvte-Kali/AirGappedCVE.git"
 
-# Couleurs
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'
 CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'; PURPLE='\033[0;35m'
 
-# Variables par défaut
 DB_HOST="127.0.0.1"
 DB_PORT=3306
 DB_NAME="asset_vuln_manager"
 SERVER_PORT=8000
 MISTRAL_MODEL="mistral-large-latest"
 
-# Compteurs
 ERRORS=0
 declare -a ERROR_MESSAGES=()
 START_TIME=$(date +%s)
 
-# Initialiser les logs
 mkdir -p "$INSTALL_DIR" "/tmp" 2>/dev/null
 > "$VERBOSE_LOG"
 > "$LOG_FILE"
 
 # =============================================================================
-# FONCTIONS DE SPINNER
+# FONCTIONS (inchangées : spinner, log, error, warn, info, header, ask_continue)
 # =============================================================================
-
 spinner_pid=""
 spinner_chars="|/-\\"
 spinner_delay=0.1
@@ -89,17 +80,11 @@ run_with_spinner() {
     shift
     local cmd="$*"
     local exit_code=0
-
     spinner_start "$msg"
     eval "$cmd" >> "$VERBOSE_LOG" 2>&1 || exit_code=$?
     spinner_stop "$msg" $exit_code
-
     return $exit_code
 }
-
-# =============================================================================
-# FONCTIONS DE LOG
-# =============================================================================
 
 log() {
     echo -e "${GREEN}[✅]${NC} $1"
@@ -112,7 +97,6 @@ error() {
     local solution="${2:-}"
     ERRORS=$((ERRORS+1))
     ERROR_MESSAGES+=("$msg → $solution")
-
     echo -e "${RED}[❌ ERREUR $ERRORS]${NC} $msg"
     [ -n "$solution" ] && echo -e "         ${YELLOW}→ $solution${NC}"
     echo "$(date '+%Y-%m-%d %H:%M:%S') - [ERROR] $msg" >> "$LOG_FILE"
@@ -162,19 +146,16 @@ ask_continue_if_error() {
 }
 
 # =============================================================================
-# VÉRIFICATIONS PRÉLIMINAIRES
+# VÉRIFICATIONS PRÉLIMINAIRES (inchangées)
 # =============================================================================
-
 header "🔍 Vérifications préliminaires"
 
-# 1. Root (SEULE ERREUR CRITIQUE)
 if [ "$EUID" -ne 0 ]; then
     echo -e "${RED}${BOLD}❌ ERREUR CRITIQUE: Ce script doit être lancé en root.${NC}"
     echo -e "${YELLOW}→ Relancez avec: sudo bash $0${NC}"
     exit 1
 fi
 
-# 2. Vérifications non bloquantes
 check_disk_space() {
     MIN_SPACE_GB=5
     AVAILABLE_SPACE_KB=$(df /opt --output=avail | tail -1 2>/dev/null || echo "0")
@@ -221,9 +202,8 @@ check_internet
 check_ports
 
 # =============================================================================
-# ÉTAPE 1/8 : INSTALLATION DES DÉPENDANCES
+# ÉTAPE 1/8 : INSTALLATION DES DÉPENDANCES (inchangée)
 # =============================================================================
-
 header "📦 Étape 1/8 - Installation des dépendances"
 
 REQUIRED_COMMANDS=("curl" "wget" "git" "bc" "ss" "pgrep" "add-apt-repository" "ip")
@@ -237,7 +217,6 @@ done
 
 if [ ${#MISSING_COMMANDS[@]} -gt 0 ]; then
     info "🔍 Commandes manquantes détectées: ${MISSING_COMMANDS[*]}"
-
     declare -A CMD_TO_PKG=(
         [curl]="curl"
         [wget]="wget"
@@ -248,10 +227,8 @@ if [ ${#MISSING_COMMANDS[@]} -gt 0 ]; then
         [add-apt-repository]="software-properties-common"
         [ip]="iproute2"
     )
-
     run_with_spinner "🔄 Mise à jour APT" "apt-get update -qq"
     ask_continue_if_error $?
-
     for cmd in "${MISSING_COMMANDS[@]}"; do
         pkg="${CMD_TO_PKG[$cmd]}"
         run_with_spinner "📦 Installation de $pkg" "apt-get install -y -qq $pkg"
@@ -267,25 +244,16 @@ ask_continue_if_error $?
 log "✅ Dépendances Python installées"
 
 # =============================================================================
-# ÉTAPE 2/8 : INSTALLATION DE MARIADB
+# ÉTAPE 2/8 : INSTALLATION DE MARIADB (inchangée)
 # =============================================================================
-
 header "🐘 Étape 2/8 - Installation de MariaDB"
 
 if ! ss -tunlp | grep -q ":3306 " 2>/dev/null; then
     info "🔍 MariaDB non détecté sur le port 3306"
-
     run_with_spinner "📦 Installation de MariaDB" "apt-get install -y -qq mariadb-server mariadb-client"
     ask_continue_if_error $?
-
-    if [ "$DB_PORT" != "3306" ]; then
-        run_with_spinner "⚙️ Configuration du port $DB_PORT" "sed -i 's/^port.*=.*3306/port = $DB_PORT/' /etc/mysql/mariadb.conf.d/50-server.cnf"
-        ask_continue_if_error $?
-    fi
-
     run_with_spinner "🔄 Démarrage de MariaDB" "systemctl enable mariadb && systemctl start mariadb"
     ask_continue_if_error $?
-
     info "⏳ Attente que MariaDB soit opérationnel..."
     RETRIES=0
     while ! ss -tunlp | grep -q ":3306 " 2>/dev/null; do
@@ -311,26 +279,40 @@ ask_continue_if_error $?
 log "✅ MariaDB sécurisé"
 
 # =============================================================================
-# ÉTAPE 3/8 : CLONE DU PROJET
+# ÉTAPE 3/8 : CLONE DU PROJET (CORRIGÉE)
 # =============================================================================
-
 header "🚀 Étape 3/8 - Clone du projet AirGappedCVE"
 
 SKIP_CLONE=false
 
 if [ -d "$INSTALL_DIR" ]; then
     info "🗑️ Le dossier $INSTALL_DIR existe déjà"
-    read -t 30 -rp "   Voulez-vous le supprimer et recloner ? (o/N) : " CLEAN_CHOICE
-    if [[ "$CLEAN_CHOICE" =~ ^[oOyY]$ ]]; then
-        run_with_spinner "🗑️ Suppression du dossier existant" "rm -rf $INSTALL_DIR"
-        ask_continue_if_error $?
+    
+    # Vérifier si git est accessible
+    if ! command -v git >/dev/null 2>&1; then
+        error "❌ Git n'est pas installé" "Installez git avec: apt-get install -y git"
+        ask_continue
+    fi
+    
+    # Vérifier si le dépôt est déjà cloné et complet
+    MISSING_FILES=()
+    for file in "main.py" "requirements.txt" "sql/schema.sql"; do
+        if [ ! -f "$INSTALL_DIR/$file" ]; then
+            MISSING_FILES+=("$file")
+        fi
+    done
+    
+    if [ ${#MISSING_FILES[@]} -eq 0 ]; then
+        info "✅ Dépôt déjà présent et complet dans $INSTALL_DIR"
+        SKIP_CLONE=true
     else
-        # Vérifier que le dépôt est déjà cloné et complet
-        if [ -f "$INSTALL_DIR/main.py" ] && [ -f "$INSTALL_DIR/requirements.txt" ] && [ -f "$INSTALL_DIR/sql/schema.sql" ]; then
-            info "✅ Dépôt déjà présent et complet dans $INSTALL_DIR"
-            SKIP_CLONE=true
+        info "⚠️ Dépôt incomplet dans $INSTALL_DIR (fichiers manquants: ${MISSING_FILES[*]})"
+        read -t 30 -rp "   Voulez-vous le supprimer et recloner ? (o/N) : " CLEAN_CHOICE
+        if [[ "$CLEAN_CHOICE" =~ ^[oOyY]$ ]]; then
+            run_with_spinner "🗑️ Suppression du dossier existant" "rm -rf $INSTALL_DIR"
+            ask_continue_if_error $?
         else
-            error "❌ Dépôt incomplet ou corrompu dans $INSTALL_DIR" "Supprimez-le ou corrigez-le manuellement"
+            error "❌ Dépôt incomplet ou corrompu dans $INSTALL_DIR" "Supprimez-le manuellement ou corrigez les fichiers manquants: ${MISSING_FILES[*]}"
             ask_continue
             SKIP_CLONE=true
         fi
@@ -339,20 +321,55 @@ fi
 
 if [ "$SKIP_CLONE" = false ]; then
     mkdir -p "$INSTALL_DIR" || { error "📁 Échec de la création du dossier" "$INSTALL_DIR"; ask_continue; }
-
-    run_with_spinner "🚀 Clonage du dépôt" "git clone $REPO_URL $INSTALL_DIR"
-    ask_continue_if_error $?
-
-    if [ ! -f "$INSTALL_DIR/main.py" ] || [ ! -f "$INSTALL_DIR/requirements.txt" ] || [ ! -f "$INSTALL_DIR/sql/schema.sql" ]; then
-        error "❌ Dépôt incomplet" "Vérifiez $REPO_URL"
+    
+    # Vérifier que git est installé avant de cloner
+    if ! command -v git >/dev/null 2>&1; then
+        error "❌ Git n'est pas installé" "Impossible de cloner le dépôt. Installez git avec: apt-get install -y git"
+        ask_continue
+    fi
+    
+    # Tester la connexion à GitHub avant le clone
+    info "🔍 Test de la connexion à GitHub..."
+    if ! curl -sSf "https://github.com" >/dev/null 2>&1; then
+        error "❌ Impossible de contacter GitHub" "Vérifiez votre connexion internet ou le DNS"
         ask_continue
     else
-        log "✅ Dépôt cloné avec succès"
+        info "✅ Connexion à GitHub OK"
     fi
+    
+    # Cloner le dépôt avec gestion d'erreur détaillée
+    run_with_spinner "🚀 Clonage du dépôt ($REPO_URL)" "git clone $REPO_URL $INSTALL_DIR 2>&1"
+    CLONE_EXIT_CODE=$?
+    
+    if [ $CLONE_EXIT_CODE -ne 0 ]; then
+        error "❌ Échec du clonage du dépôt" "Vérifiez:"
+        error "   - La connexion internet (curl -sSf https://github.com)" ""
+        error "   - L'URL du dépôt: $REPO_URL" ""
+        error "   - Les permissions sur $INSTALL_DIR" ""
+        error "   - Les logs détaillés dans $VERBOSE_LOG" ""
+        ask_continue
+    fi
+    
+    # Vérifier que le clone a réussi
+    if [ ! -d "$INSTALL_DIR/.git" ]; then
+        error "❌ Le dossier cloné ne contient pas de dépôt git" "Vérifiez l'URL: $REPO_URL"
+        ask_continue
+    fi
+    
+    # Vérifier les fichiers critiques
+    for file in "main.py" "requirements.txt" "sql/schema.sql"; do
+        if [ ! -f "$INSTALL_DIR/$file" ]; then
+            error "❌ Fichier manquant après clone: $file" "Le dépôt est peut-être corrompu"
+            ask_continue
+        fi
+    done
+    
+    log "✅ Dépôt cloné avec succès depuis $REPO_URL"
 else
-    log "✅ Utilisation du dépôt existant"
+    log "✅ Utilisation du dépôt existant dans $INSTALL_DIR"
 fi
 
+# Nettoyer les fichiers inutiles
 rm -rf "$INSTALL_DIR/.devcontainer" 2>/dev/null || warn "⚠️ Nettoyage échoué (ignoré)"
 # =============================================================================
 # ÉTAPE 4/8 : CONFIGURATION DU .ENV
