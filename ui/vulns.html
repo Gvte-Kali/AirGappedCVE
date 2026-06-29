@@ -1939,6 +1939,14 @@
             updateActiveFilters();
             chargerToutesLesVulnerabilites();
             clearSelection();
+            
+            // FIX: Force le déclenchement de updateSelection() pour TOUTES les checkboxes
+            // (car les attributs onchange HTML ne sont pas déclenchés par .click())
+            document.querySelectorAll('.client-checkbox, .site-checkbox, .asset-checkbox, .vuln-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateSelection();
+                });
+            });
         });
     </script>
 </body>
