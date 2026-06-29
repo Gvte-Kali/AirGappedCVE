@@ -183,12 +183,13 @@
             font-size: 0.85rem;
         }
 
-        /* ===== FINAL SOLUTION: Simple and Robust ===== */
+        /* ===== FINAL SOLUTION: pointer-events on headers ===== */
         /* Checkbox label - simple inline-block */
         .checkbox-label {
             display: inline-block;
             margin-right: 8px;
             cursor: pointer;
+            pointer-events: auto; /* Assure que le label est cliquable */
         }
 
         .checkbox-label input[type="checkbox"] {
@@ -199,7 +200,7 @@
             margin: 0;
         }
 
-        /* Headers - simple inline-block */
+        /* Headers - pointer-events: none mais enfants cliquables */
         .client-header,
         .site-header,
         .asset-header {
@@ -207,6 +208,14 @@
             cursor: pointer;
             padding: 10px 15px;
             border-radius: 6px;
+            pointer-events: none; /* Le header lui-même ne répond pas aux clics */
+        }
+
+        /* Réactive pointer-events pour TOUS les enfants des headers */
+        .client-header *,
+        .site-header *,
+        .asset-header * {
+            pointer-events: auto; /* Les enfants (chevrons, badges, etc.) sont cliquables */
         }
 
         .client-header:hover,
@@ -379,16 +388,9 @@
 <body>
     <script>
         // ============================================================
-        // GLOBAL EVENT LISTENER - ROBUST SOLUTION
-        // Prevents checkbox clicks from triggering header fold/unfold
+        // SOLUTION: pointer-events sur les headers gère tout
+        // Pas besoin de global event listener
         // ============================================================
-        document.addEventListener('click', function(e) {
-            // Si le clic est sur une checkbox ou son label, on bloque la propagation vers le header
-            if (e.target.matches('input[type="checkbox"]') ||
-                e.target.closest('.checkbox-label')) {
-                e.stopPropagation();
-            }
-        }, true); // Mode capture pour intercepter avant le header
     </script>
     <!-- ─── NAVBAR ─────────────────────────────────────────── -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
