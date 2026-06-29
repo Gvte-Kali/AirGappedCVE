@@ -1138,7 +1138,7 @@ let correlationEnCours = null;
                 html += `
             <div class="client-card p-3 mb-4">
                 <span class="checkbox-container">
-                    <input type="checkbox" class="client-checkbox" data-client="${clientKey}" onchange="updateSelection()">
+                    <input type="checkbox" class="client-checkbox" data-client="${clientKey}" onchange="updateSelection(event)">
                 </span>
                 <div class="client-header" onclick="toggleClient('${clientKey}')">
                     <div class="d-flex align-items-center">
@@ -1159,7 +1159,7 @@ let correlationEnCours = null;
                     html += `
                 <div class="site-card p-3 mt-3 ms-3">
                 <span class="checkbox-container">
-                    <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}" onchange="updateSelection()">
+                    <input type="checkbox" class="site-checkbox" data-client="${clientKey}" data-site="${siteKey}" onchange="updateSelection(event)">
                 </span>
                 <div class="site-header" onclick="toggleSite('${clientKey}', '${siteKey}')">
                         <div class="d-flex align-items-center">
@@ -1182,7 +1182,7 @@ let correlationEnCours = null;
                         html += `
                     <div class="asset-card mt-2 ms-3">
                 <span class="checkbox-container">
-                    <input type="checkbox" class="asset-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" onchange="updateSelection()">
+                    <input type="checkbox" class="asset-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" onchange="updateSelection(event)">
                 </span>
                 <div class="asset-header" onclick="toggleAssetVulns('${clientKey}-${siteKey}-${assetKey}')">
                             <div class="d-flex align-items-center">
@@ -1211,7 +1211,7 @@ let correlationEnCours = null;
                             html += `
                         <div class="vuln-item">
     <span class="checkbox-container">
-        <input type="checkbox" class="vuln-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" data-vuln-id="${v.id}" onchange="updateSelection()">
+        <input type="checkbox" class="vuln-checkbox" data-client="${clientKey}" data-site="${siteKey}" data-asset="${assetKey}" data-vuln-id="${v.id}" onchange="updateSelection(event)">
     </span>
     <div class="d-flex flex-column" style="margin-left: 28px;">
                                 <div>
@@ -1390,24 +1390,68 @@ let correlationEnCours = null;
             }
         }
 
-        // Toggle pour les clients
+        // Déplie tous les enfants (sites, assets, vulns) de manière récursive
+        function expandAllChildren(clientKey, siteKey, assetKey) {
+            if (siteKey === null && assetKey === null) {
+                // Déplier tous les sites du client
+                const siteContents = document.querySelectorAll(`.site-content[id^="content-site-${clientKey}-"]`);
+                siteContents.forEach(siteContent => {
+                    siteContent.classList.add('show');
+                    const siteId = siteContent.id.replace('content-site-' + clientKey + '-', '');
+                    const chevron = document.getElementById(`chevron-site-${clientKey}-${siteId}`);
+                    if (chevron) chevron.classList.add('rotate');
+                    
+                    // Déplier tous les assets du site
+                    const assetVulnLists = document.querySelectorAll(`.vuln-list[id^="vuln-list-${clientKey}-${siteId}-"]`);
+                    assetVulnLists.forEach(vulnList => {
+                        vulnList.classList.add('show');
+                        const assetId = vulnList.id.replace('vuln-list-' + clientKey + '-' + siteId + '-', '');
+                        const assetChevron = document.getElementById(`chevron-${clientKey}-${siteId}-${assetId}`);
+                        if (assetChevron) assetChevron.classList.add('rotate');
+                    });
+                });
+            } else if (assetKey === null) {
+                // Déplier tous les assets du site
+                const assetVulnLists = document.querySelectorAll(`.vuln-list[id^="vuln-list-${clientKey}-${siteKey}-"]`);
+                assetVulnLists.forEach(vulnList => {
+                    vulnList.classList.add('show');
+                    const assetId = vulnList.id.replace('vuln-list-' + clientKey + '-' + siteKey + '-', '');
+                    const assetChevron = document.getElementById(`chevron-${clientKey}-${siteKey}-${assetId}`);
+                    if (assetChevron) assetChevron.classList.add('rotate');
+                });
+            }
+        }
+
+        // Toggle pour les clients avec dépliage en cascade
         function toggleClient(clientKey) {
             const content = document.getElementById(`content-client-${clientKey}`);
             const chevron = document.getElementById(`chevron-client-${clientKey}`);
             if (!content || !chevron) return;
 
+            const isExpanding = !content.classList.contains('show');
             content.classList.toggle('show');
             chevron.classList.toggle('rotate');
+            
+            // Déplier en cascade tous les sites et assets si on déplie le client
+            if (isExpanding) {
+                expandAllChildren(clientKey, null, null);
+            }
         }
 
-        // Toggle pour les sites
+        // Toggle pour les sites avec dépliage en cascade
         function toggleSite(clientKey, siteKey) {
             const content = document.getElementById(`content-site-${clientKey}-${siteKey}`);
             const chevron = document.getElementById(`chevron-site-${clientKey}-${siteKey}`);
             if (!content || !chevron) return;
 
+            const isExpanding = !content.classList.contains('show');
             content.classList.toggle('show');
             chevron.classList.toggle('rotate');
+            
+            // Déplier en cascade tous les assets si on déplie le site
+            if (isExpanding) {
+                expandAllChildren(clientKey, siteKey, null);
+            }
         }
 
         // ============================================================
@@ -1767,7 +1811,15 @@ let correlationEnCours = null;
         // ============================================================
 
         // Met à jour l'état des cases à cocher et la barre d'actions
-        function updateSelection() {
+        function updateSelection(event) {
+            // Si c'est un parent qui a été cliqué, propager aux enfants
+            const checkbox = event ? event.target : null;
+            if (checkbox && (checkbox.classList.contains('client-checkbox') || 
+                            checkbox.classList.contains('site-checkbox') || 
+                            checkbox.classList.contains('asset-checkbox'))) {
+                propagateCheckboxToChildren(checkbox);
+            }
+
             const allCheckboxes = document.querySelectorAll('.vuln-checkbox:checked');
             selectedVulns = new Set([...allCheckboxes].map(cb => parseInt(cb.dataset.vulnId)));
 
@@ -1822,22 +1874,70 @@ let correlationEnCours = null;
             });
         }
 
+        // Propage l'état des checkboxes parents vers les enfants
+        function propagateCheckboxToChildren(checkbox) {
+            const clientKey = checkbox.dataset.client;
+            const siteKey = checkbox.dataset.site;
+            const assetKey = checkbox.dataset.asset;
+
+            if (clientKey && !siteKey && !assetKey) {
+                // C'est un client - propager à tous ses sites, assets et vulns
+                const siteCheckboxes = document.querySelectorAll(`.site-checkbox[data-client="${clientKey}"]`);
+                siteCheckboxes.forEach(siteCb => {
+                    siteCb.checked = checkbox.checked;
+                    siteCb.indeterminate = false;
+                    // Propager aux assets du site
+                    const assetCheckboxes = document.querySelectorAll(`.asset-checkbox[data-client="${clientKey}"][data-site="${siteCb.dataset.site}"]`);
+                    assetCheckboxes.forEach(assetCb => {
+                        assetCb.checked = checkbox.checked;
+                        assetCb.indeterminate = false;
+                        // Propager aux vulns de l'asset
+                        const vulnCheckboxes = document.querySelectorAll(`.vuln-checkbox[data-client="${clientKey}"][data-site="${siteCb.dataset.site}"][data-asset="${assetCb.dataset.asset}"]`);
+                        vulnCheckboxes.forEach(vulnCb => {
+                            vulnCb.checked = checkbox.checked;
+                        });
+                    });
+                });
+            } else if (clientKey && siteKey && !assetKey) {
+                // C'est un site - propager à tous ses assets et vulns
+                const assetCheckboxes = document.querySelectorAll(`.asset-checkbox[data-client="${clientKey}"][data-site="${siteKey}"]`);
+                assetCheckboxes.forEach(assetCb => {
+                    assetCb.checked = checkbox.checked;
+                    assetCb.indeterminate = false;
+                    // Propager aux vulns de l'asset
+                    const vulnCheckboxes = document.querySelectorAll(`.vuln-checkbox[data-client="${clientKey}"][data-site="${siteKey}"][data-asset="${assetCb.dataset.asset}"]`);
+                    vulnCheckboxes.forEach(vulnCb => {
+                        vulnCb.checked = checkbox.checked;
+                    });
+                });
+            } else if (clientKey && siteKey && assetKey) {
+                // C'est un asset - propager à toutes ses vulns
+                const vulnCheckboxes = document.querySelectorAll(`.vuln-checkbox[data-client="${clientKey}"][data-site="${siteKey}"][data-asset="${assetKey}"]`);
+                vulnCheckboxes.forEach(vulnCb => {
+                    vulnCb.checked = checkbox.checked;
+                });
+            }
+        }
+
         // Sélectionne/désélectionne toutes les cases
         function toggleAllCheckboxes() {
             const allCheckboxes = document.querySelectorAll('.vuln-checkbox');
             const isChecked = [...allCheckboxes].every(cb => cb.checked);
+            const newState = !isChecked;
 
             allCheckboxes.forEach(cb => {
-                cb.checked = !isChecked;
+                cb.checked = newState;
             });
 
-            // Mettre à jour les cases parent
+            // Mettre à jour les cases parent et propager
             document.querySelectorAll('.client-checkbox, .site-checkbox, .asset-checkbox').forEach(cb => {
-                cb.checked = !isChecked;
+                cb.checked = newState;
                 cb.indeterminate = false;
+                // Propager aux enfants
+                propagateCheckboxToChildren(cb);
             });
 
-            updateSelection();
+            updateSelection(null);
             document.getElementById('bulkSelectText').textContent = isChecked ? 'Tout sélectionner' : 'Tout désélectionner';
         }
 
