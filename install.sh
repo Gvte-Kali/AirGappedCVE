@@ -3,8 +3,8 @@
 # =============================================================================
 # install_user_friendly.sh — Script d'installation pour AirGappedCVE
 # Auteur : Gvte-Kali / Vibe Code
-# Version : 5.5.0 (Version finale : spinner corrigé, détection commandes, gestion erreurs)
-# Description : Installe et configure automatiquement AirGappedCVE sur Ubuntu Server
+# Version : 6.0.0 (SANS SPINNER - Version ultra-robuste qui ne bloque jamais)
+# Description : Installe et configure AirGappedCVE sur Ubuntu Server
 # Usage: sudo bash install.sh [--test-mode]
 # =============================================================================
 
@@ -14,7 +14,6 @@ set -euo pipefail
 # CONFIGURATION GLOBALE
 # =============================================================================
 
-# Chemins et fichiers
 INSTALL_DIR="/opt/asset-manager"
 LOG_FILE="$INSTALL_DIR/installation.log"
 VERBOSE_LOG="/tmp/asset-manager-installation.log"
@@ -27,10 +26,6 @@ REPO_URL="https://github.com/Gvte-Kali/AirGappedCVE.git"
 # Couleurs
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 PURPLE='\033[0;35m'
-
-# Spinner
-SPINNER_CHARS="|/-\\"
-SPINNER_DELAY=0.1
 
 # Ports par défaut
 DB_PORT_DEFAULT=3306
@@ -45,91 +40,20 @@ ERROR_LEVEL_CRITICAL=3
 ERRORS=0
 declare -a ERROR_MESSAGES=()
 
-# Variable globale pour le PID du spinner
-SPINNER_PID=""
-
-# Mode test (pour éviter les actions destructives)
+# Mode test
 TEST_MODE=false
 if [[ "${1:-}" == "--test-mode" ]]; then
     TEST_MODE=true
     echo "[TEST MODE] Aucune modification ne sera appliquée."
 fi
 
-# Temps de début
-START_TIME=$(date +%s)
-
-# Initialiser les fichiers de log
+# Initialiser les logs
 mkdir -p "$INSTALL_DIR"
 > "$VERBOSE_LOG"
 > "$LOG_FILE"
 
 # =============================================================================
-# FONCTIONS SPINNER (corrigées et simplifiées)
-# =============================================================================
-
-spinner_start() {
-    local msg="$1"
-    printf "[%s] %s" "${SPINNER_CHARS:0:1}" "$msg" >&2
-    (
-        local i=0
-        while true; do
-            i=$(( (i + 1) % 4 ))
-            printf "\r[%s] %s" "${SPINNER_CHARS:$i:1}" "$msg" >&2
-            sleep $SPINNER_DELAY
-        done
-    ) &
-    SPINNER_PID=$!
-    disown
-}
-
-spinner_stop() {
-    local msg="$1"
-    local exit_code="$2"
-    
-    # Tuer le spinner s'il tourne
-    if [ -n "$SPINNER_PID" ] && kill -0 "$SPINNER_PID" 2>/dev/null; then
-        kill "$SPINNER_PID" 2>/dev/null
-        wait "$SPINNER_PID" 2>/dev/null || true
-    fi
-    
-    # Effacer la ligne et afficher le résultat
-    printf "\r" >&2
-    if [ "$exit_code" -eq 0 ]; then
-        printf "[${GREEN}✓${NC}] %s\n" "$msg" >&2
-    else
-        printf "[${RED}✗${NC}] %s\n" "$msg" >&2
-    fi
-    SPINNER_PID=""
-}
-
-# Fonction pour exécuter une commande avec spinner
-run_with_spinner() {
-    local msg="$1"
-    shift
-    local cmd="$*"
-    local exit_code=0
-    
-    # Démarrer le spinner
-    spinner_start "$msg"
-    
-    # Exécuter la commande
-    # En mode test, on simule juste un délai
-    if [ "$TEST_MODE" = true ]; then
-        sleep 2
-    else
-        # Exécuter la commande et capturer le code de sortie
-        if ! eval "$cmd" >> "$VERBOSE_LOG" 2>&1; then
-            exit_code=1
-        fi
-    fi
-    
-    # Arrêter le spinner et afficher le résultat
-    spinner_stop "$msg" $exit_code
-    return $exit_code
-}
-
-# =============================================================================
-# FONCTIONS DE LOG
+# FONCTIONS DE LOG (simplifiées, sans spinner)
 # =============================================================================
 
 log() {
@@ -157,11 +81,6 @@ error() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - [$level] $1" >> "$LOG_FILE"
     [ -n "${2:-}" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') - [$level] Solution: $2" >> "$LOG_FILE"
 
-    # Tuer le spinner s'il tourne encore
-    if [ -n "$SPINNER_PID" ] && kill -0 "$SPINNER_PID" 2>/dev/null; then
-        kill "$SPINNER_PID" 2>/dev/null
-    fi
-
     if [ "$level" -eq "$ERROR_LEVEL_CRITICAL" ]; then
         echo ""
         echo -e "${RED}${BOLD}❌ Installation arrêtée à cause d'une erreur critique.${NC}"
@@ -183,10 +102,10 @@ info() {
 }
 
 header() {
-    echo "" | tee -a "$VERBOSE_LOG"
-    echo -e "${BLUE}${BOLD}==============================================================================${NC}" | tee -a "$VERBOSE_LOG"
-    echo -e "${BLUE}${BOLD}  $1${NC}" | tee -a "$VERBOSE_LOG"
-    echo -e "${BLUE}${BOLD}==============================================================================${NC}" | tee -a "$VERBOSE_LOG"
+    echo ""
+    echo -e "${BLUE}${BOLD}==============================================================================${NC}"
+    echo -e "${BLUE}${BOLD}  $1${NC}"
+    echo -e "${BLUE}${BOLD}==============================================================================${NC}"
     echo "$(date '+%Y-%m-%d %H:%M:%S') - [HEADER] $1" >> "$LOG_FILE"
 }
 
@@ -196,9 +115,9 @@ step_header() {
     local total_steps=$3
 
     echo ""
-    echo -e "${BLUE}${BOLD}==============================================================================${NC}" | tee -a "$VERBOSE_LOG"
-    echo -e "${BLUE}${BOLD}  Étape ${step_num}/${total_steps} — ${step_name}${NC}" | tee -a "$VERBOSE_LOG"
-    echo -e "${BLUE}${BOLD}==============================================================================${NC}" | tee -a "$VERBOSE_LOG"
+    echo -e "${BLUE}${BOLD}==============================================================================${NC}"
+    echo -e "${BLUE}${BOLD}  Étape ${step_num}/${total_steps} — ${step_name}${NC}"
+    echo -e "${BLUE}${BOLD}==============================================================================${NC}"
     echo "$(date '+%Y-%m-%d %H:%M:%S') - [STEP] Étape ${step_num}/${total_steps}: ${step_name}" >> "$LOG_FILE"
 }
 
@@ -214,7 +133,6 @@ ask_continue() {
         echo ""
         read -rp "Voulez-vous continuer l'installation ? (o/N) : " CONTINUE
         if [[ ! "$CONTINUE" =~ ^[oOyY]$ ]]; then
-            echo ""
             error "Installation annulée par l'utilisateur" "Corrigez les erreurs et relancez le script" $ERROR_LEVEL_CRITICAL
         fi
         echo ""
@@ -286,6 +204,7 @@ handle_mariadb_conflict() {
             DB_PORT=$port
             return 0
         else
+            info "Suppression du service MariaDB existant..."
             if ! systemctl stop mariadb >> "$VERBOSE_LOG" 2>&1; then
                 error "Échec de l'arrêt de MariaDB" "Vérifiez systemctl" $ERROR_LEVEL_ERROR
                 return 1
@@ -382,21 +301,28 @@ if [ ${#MISSING_COMMANDS[@]} -gt 0 ]; then
         [add-apt-repository]="software-properties-common"
     )
     
+    # Construire la liste des paquets à installer
     PKGS_TO_INSTALL=()
     for cmd in "${MISSING_COMMANDS[@]}"; do
         PKGS_TO_INSTALL+=("${CMD_TO_PKG[$cmd]}")
     done
     
-    run_with_spinner "Mise à jour APT" "apt-get update -qq"
-    if [ $? -ne 0 ]; then
-        error "Échec de la mise à jour APT" "Vérifiez votre connexion" $ERROR_LEVEL_ERROR
+    # Installer les paquets MANQUE PAR MANQUE pour éviter les erreurs de syntaxe
+    info "Mise à jour APT..."
+    if ! apt-get update -qq >> "$VERBOSE_LOG" 2>&1; then
+        error "Échec de la mise à jour APT" "Vérifiez votre connexion" $ERROR_LEVEL_CRITICAL
     fi
+    log "Mise à jour APT terminée"
     
-    run_with_spinner "Installation des paquets manquants" "apt-get install -y -qq \"${PKGS_TO_INSTALL[*]}\""
-    if [ $? -ne 0 ]; then
-        error "Échec de l'installation des commandes requises" "Vérifiez APT" $ERROR_LEVEL_ERROR
-    fi
-    log "Commandes manquantes installées"
+    for pkg in "${PKGS_TO_INSTALL[@]}"; do
+        info "Installation de $pkg..."
+        if ! apt-get install -y -qq "$pkg" >> "$VERBOSE_LOG" 2>&1; then
+            error "Échec de l'installation de $pkg" "Vérifiez APT" $ERROR_LEVEL_ERROR
+        else
+            log "$pkg installé"
+        fi
+    done
+    
 else
     info "Toutes les commandes requises sont disponibles"
 fi
@@ -437,7 +363,7 @@ if is_port_in_use 8000; then
     error "Port 8000 occupé par $(get_service_on_port 8000)" "Libérez le port" $ERROR_LEVEL_ERROR
 fi
 
-# 7. MariaDB
+# 7. Détection de MariaDB
 info "Détection de MariaDB..."
 DB_PORT=$DB_PORT_DEFAULT
 if is_mariadb_installed; then
@@ -486,26 +412,30 @@ ask_continue
 # =============================================================================
 step_header 1 5 "Mise à jour système et installation des dépendances"
 
-run_with_spinner "Mise à jour APT" "apt-get update -qq"
-if [ $? -ne 0 ]; then
-    error "Échec de la mise à jour APT" "Vérifiez votre connexion" $ERROR_LEVEL_ERROR
+info "Mise à jour APT..."
+if ! apt-get update -qq >> "$VERBOSE_LOG" 2>&1; then
+    error "Échec de la mise à jour APT" "Vérifiez votre connexion" $ERROR_LEVEL_CRITICAL
 fi
 log "Mise à jour APT terminée"
 
-run_with_spinner "Mise à niveau des paquets" "apt-get upgrade -y -qq"
-if [ $? -ne 0 ]; then
+info "Mise à niveau des paquets..."
+if ! apt-get upgrade -y -qq >> "$VERBOSE_LOG" 2>&1; then
     error "Échec de la mise à niveau" "Vérifiez APT" $ERROR_LEVEL_ERROR
 fi
 log "Système à jour"
 
-# Dépendances système (hors MariaDB)
-SYSTEM_DEPS=("python3" "python3-pip" "python3-venv" "python3-dev" "build-essential")
-run_with_spinner "Installation des dépendances système" "apt-get install -y -qq \"${SYSTEM_DEPS[*]}\""
-if [ $? -ne 0 ]; then
-    error "Échec de l'installation des dépendances système" "Vérifiez APT" $ERROR_LEVEL_ERROR
-else
-    log "Dépendances système installées"
-fi
+# Installation des dépendances système UNE PAR UNE pour éviter les erreurs
+info "Installation des dépendances système..."
+SYSTEM_DEPS=("python3-dev" "build-essential")
+
+for dep in "${SYSTEM_DEPS[@]}"; do
+    info "Installation de $dep..."
+    if ! apt-get install -y -qq "$dep" >> "$VERBOSE_LOG" 2>&1; then
+        error "Échec de l'installation de $dep" "Vérifiez APT" $ERROR_LEVEL_ERROR
+    else
+        log "$dep installé"
+    fi
+done
 
 ask_continue
 
@@ -515,9 +445,9 @@ ask_continue
 step_header "1B" 5 "Installation de MariaDB sur le port $DB_PORT"
 
 if ! is_mariadb_installed; then
-    run_with_spinner "Installation de MariaDB" "apt-get install -y -qq mariadb-server mariadb-client"
-    if [ $? -ne 0 ]; then
-        error "Échec de l'installation de MariaDB" "Vérifiez APT" $ERROR_LEVEL_ERROR
+    info "Installation de MariaDB..."
+    if ! apt-get install -y -qq mariadb-server mariadb-client >> "$VERBOSE_LOG" 2>&1; then
+        error "Échec de l'installation de MariaDB" "Vérifiez APT" $ERROR_LEVEL_CRITICAL
     fi
     log "MariaDB installé"
 else
@@ -527,16 +457,24 @@ fi
 # Configuration du port si nécessaire
 if [ "$DB_PORT" != "$DB_PORT_DEFAULT" ]; then
     info "Configuration du port $DB_PORT..."
-    sed -i "s/^port.*=.*3306/port = $DB_PORT/" /etc/mysql/mariadb.conf.d/50-server.cnf
+    if ! sed -i "s/^port.*=.*3306/port = $DB_PORT/" /etc/mysql/mariadb.conf.d/50-server.cnf; then
+        error "Échec de la modification du port MariaDB" "Vérifiez le fichier" $ERROR_LEVEL_ERROR
+        ask_continue
+    fi
     [ -f /etc/mysql/my.cnf ] && sed -i "s/^port.*=.*3306/port = $DB_PORT/" /etc/mysql/my.cnf
     log "Port configuré"
 fi
 
 # Démarrage de MariaDB
 if ! is_mariadb_running; then
-    run_with_spinner "Démarrage de MariaDB" "systemctl enable mariadb && systemctl start mariadb"
-    if [ $? -ne 0 ]; then
+    info "Démarrage de MariaDB..."
+    if ! systemctl enable mariadb >> "$VERBOSE_LOG" 2>&1; then
+        error "Échec de l'activation de MariaDB" "Vérifiez systemctl" $ERROR_LEVEL_ERROR
+        ask_continue
+    fi
+    if ! systemctl start mariadb >> "$VERBOSE_LOG" 2>&1; then
         error "Échec du démarrage de MariaDB" "Vérifiez: journalctl -u mariadb" $ERROR_LEVEL_ERROR
+        ask_continue
     fi
     log "MariaDB démarré"
 else
@@ -546,14 +484,16 @@ fi
 # Attente que MariaDB soit prêt
 info "Attente que MariaDB soit opérationnel..."
 if ! wait_for_mariadb $DB_PORT; then
-    error "MariaDB ne répond pas" "Vérifiez: journalctl -u mariadb -n 50" $ERROR_LEVEL_ERROR
+    error "MariaDB ne répond pas après 60 secondes" "Vérifiez: journalctl -u mariadb -n 50" $ERROR_LEVEL_ERROR
+    ask_continue
 fi
 log "MariaDB prêt"
 
 # Sécurisation
-run_with_spinner "Sécurisation de MariaDB" "sudo mariadb --port=$DB_PORT -e \"DELETE FROM mysql.user WHERE User=''; DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1'); DROP DATABASE IF EXISTS test; DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'; FLUSH PRIVILEGES;\""
-if [ $? -ne 0 ]; then
+info "Sécurisation de MariaDB..."
+if ! sudo mariadb --port=$DB_PORT -e "DELETE FROM mysql.user WHERE User=''; DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1'); DROP DATABASE IF EXISTS test; DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%'; FLUSH PRIVILEGES;" >> "$VERBOSE_LOG" 2>&1; then
     error "Échec de la sécurisation de MariaDB" "Vérifiez les permissions" $ERROR_LEVEL_ERROR
+    ask_continue
 fi
 log "MariaDB sécurisé"
 
@@ -565,21 +505,23 @@ ask_continue
 step_header 2 5 "Clone du projet AirGappedCVE"
 
 if [ -d "$INSTALL_DIR/.git" ]; then
+    info "Mise à jour du dépôt..."
     cd "$INSTALL_DIR"
-    run_with_spinner "Mise à jour du dépôt" "git pull origin main"
-    if [ $? -ne 0 ]; then
-        error "Échec de la mise à jour" "Vérifiez Git" $ERROR_LEVEL_ERROR
+    if ! git pull origin main >> "$VERBOSE_LOG" 2>&1; then
+        error "Échec de la mise à jour du dépôt" "Vérifiez Git" $ERROR_LEVEL_ERROR
+        ask_continue
     fi
     log "Dépôt mis à jour"
 else
-    run_with_spinner "Clonage du dépôt" "git clone \"$REPO_URL\" \"$INSTALL_DIR\""
-    if [ $? -ne 0 ]; then
-        error "Échec du clonage" "Vérifiez $REPO_URL" $ERROR_LEVEL_ERROR
+    info "Clonage du dépôt..."
+    if ! git clone "$REPO_URL" "$INSTALL_DIR" >> "$VERBOSE_LOG" 2>&1; then
+        error "Échec du clonage du dépôt" "Vérifiez $REPO_URL" $ERROR_LEVEL_ERROR
+        ask_continue
     fi
     log "Dépôt cloné"
 fi
 
-# Vérification du dépôt
+# Vérification
 if [ ! -f "$INSTALL_DIR/main.py" ] || [ ! -f "$INSTALL_DIR/requirements.txt" ]; then
     error "Dépôt incomplet" "Vérifiez $REPO_URL" $ERROR_LEVEL_CRITICAL
 fi
@@ -597,17 +539,16 @@ ask_continue
 # =============================================================================
 step_header 3 5 "Configuration des variables d'environnement"
 
-# Sauvegarde .env existant
+# Sauvegarde .env
 if [ -f "$ENV_FILE" ]; then
     cp "$ENV_FILE" "$ENV_FILE.backup-$(date +%Y%m%d-%H%M%S)"
     log ".env sauvegardé"
 fi
 
-# Demander les clés API
+# Demander les infos
 read -rp "Clé API NVD (optionnel) : " NVD_API_KEY
 read -rp "Clé API Mistral (optionnel) : " MISTRAL_API_KEY
 
-# Demander DB_USER
 while true; do
     read -rp "Utilisateur MariaDB : " DB_USER
     [[ -z "$DB_USER" ]] && { echo "  → Obligatoire"; continue; }
@@ -616,17 +557,14 @@ while true; do
     break
 done
 
-# Générer mot de passe
 DB_PASSWORD=$(generate_password)
 echo "  → Mot de passe généré pour $DB_USER"
 
-# Valeurs par défaut
 SERVER_IP=$(hostname -I | awk '{print $1}' || echo "127.0.0.1")
 MISTRAL_MODEL="mistral-large-latest"
 DB_HOST="127.0.0.1"
 DB_NAME="asset_vuln_manager"
 
-# Résumé
 echo ""
 echo "=== CONFIGURATION ==="
 echo "FastAPI: http://$SERVER_IP:8000"
@@ -661,9 +599,10 @@ ask_continue
 step_header 4 5 "Installation de l'application"
 
 # Création base et utilisateur
-run_with_spinner "Création de la base $DB_NAME" "sudo mariadb --port=$DB_PORT -e \"CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD'; CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' WITH GRANT OPTION; GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;\""
-if [ $? -ne 0 ]; then
+info "Création de la base $DB_NAME..."
+if ! sudo mariadb --port=$DB_PORT -e "CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD'; CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' WITH GRANT OPTION; GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" >> "$VERBOSE_LOG" 2>&1; then
     error "Échec création base/utilisateur" "Vérifiez MariaDB" $ERROR_LEVEL_ERROR
+    ask_continue
 fi
 log "Base et utilisateur créés"
 
@@ -673,32 +612,38 @@ if [ ! -f "$SCHEMA_FILE" ]; then
     error "schema.sql introuvable" "" $ERROR_LEVEL_CRITICAL
 fi
 
-run_with_spinner "Import du schéma" "mariadb --port=$DB_PORT -u $DB_USER -p$DB_PASSWORD $DB_NAME < \"$SCHEMA_FILE\""
-if [ $? -ne 0 ]; then
+info "Import du schéma..."
+if ! mariadb --port=$DB_PORT -u $DB_USER -p$DB_PASSWORD $DB_NAME < "$SCHEMA_FILE" >> "$VERBOSE_LOG" 2>&1; then
     error "Échec import schéma" "Vérifiez schema.sql" $ERROR_LEVEL_ERROR
+    ask_continue
 fi
 log "Schéma importé"
 
 # Virtualenv
-run_with_spinner "Création virtualenv" "python3 -m venv \"$INSTALL_DIR/venv\""
-if [ $? -ne 0 ]; then
-    error "Échec virtualenv" "Vérifiez python3-venv" $ERROR_LEVEL_ERROR
+info "Création du virtualenv..."
+if ! python3 -m venv "$INSTALL_DIR/venv" >> "$VERBOSE_LOG" 2>&1; then
+    error "Échec création virtualenv" "Vérifiez python3-venv" $ERROR_LEVEL_ERROR
+    ask_continue
 fi
 log "Virtualenv créé"
 
 # Dépendances Python
-run_with_spinner "Installation dépendances Python" "$INSTALL_DIR/venv/bin/pip install --upgrade pip"
-if [ $? -ne 0 ]; then
+info "Installation des dépendances Python..."
+if ! "$INSTALL_DIR/venv/bin/pip" install --upgrade pip >> "$VERBOSE_LOG" 2>&1; then
     error "Échec mise à jour pip" "" $ERROR_LEVEL_ERROR
+    ask_continue
 fi
+log "pip mis à jour"
 
-run_with_spinner "Installation requirements" "$INSTALL_DIR/venv/bin/pip install -r \"$INSTALL_DIR/requirements.txt\""
-if [ $? -ne 0 ]; then
+info "Installation des requirements..."
+if ! "$INSTALL_DIR/venv/bin/pip" install -r "$INSTALL_DIR/requirements.txt" >> "$VERBOSE_LOG" 2>&1; then
     error "Échec installation dépendances" "Vérifiez requirements.txt" $ERROR_LEVEL_ERROR
+    ask_continue
 fi
 log "Dépendances Python installées"
 
 # Service systemd
+info "Configuration du service systemd..."
 cat > "/etc/systemd/system/$SERVICE_NAME.service" << EOF
 [Unit]
 After=network.target mariadb.service
@@ -717,14 +662,31 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
-run_with_spinner "Rechargement systemd" "systemctl daemon-reload"
-run_with_spinner "Activation service" "systemctl enable $SERVICE_NAME"
-run_with_spinner "Démarrage service" "systemctl start $SERVICE_NAME"
+info "Rechargement de systemd..."
+if ! systemctl daemon-reload >> "$VERBOSE_LOG" 2>&1; then
+    error "Échec rechargement systemd" "" $ERROR_LEVEL_ERROR
+    ask_continue
+fi
+log "systemd rechargé"
+
+info "Activation du service..."
+if ! systemctl enable $SERVICE_NAME >> "$VERBOSE_LOG" 2>&1; then
+    error "Échec activation service" "" $ERROR_LEVEL_ERROR
+    ask_continue
+fi
+log "Service activé"
+
+info "Démarrage du service..."
+if ! systemctl start $SERVICE_NAME >> "$VERBOSE_LOG" 2>&1; then
+    error "Échec démarrage service" "Vérifiez: journalctl -u $SERVICE_NAME" $ERROR_LEVEL_ERROR
+    ask_continue
+fi
+log "Service démarré"
 
 # Attente FastAPI
 info "Attente FastAPI..."
 RETRIES=0
-while ! curl -sf http://localhost:8000/health >/dev/null 2>&1; do
+while ! curl -sf http://localhost:8000/health > /dev/null 2>&1; do
     RETRIES=$((RETRIES+1))
     [ $RETRIES -ge 30 ] && error "FastAPI ne répond pas" "Vérifiez: journalctl -u $SERVICE_NAME" $ERROR_LEVEL_ERROR
     sleep 2
@@ -734,6 +696,7 @@ echo ""
 log "FastAPI opérationnel"
 
 # PATH
+info "Ajout au PATH..."
 cat > "$PATH_FILE" << 'EOF'
 #!/bin/bash
 export PATH="$PATH:/opt/asset-manager/scripts"
@@ -749,7 +712,6 @@ ask_continue
 # =============================================================================
 step_header 5 5 "Vérifications finales"
 
-# Vérifications
 for cmd in "status" "sys ports" "sys check-db" "sys check-env" "db check"; do
     printf "  → Vérification: %s... " "$cmd"
     if bash "$SCRIPTS_DIR/asset-manager.sh" $cmd >> "$VERBOSE_LOG" 2>&1; then
@@ -782,8 +744,3 @@ echo "FastAPI: http://$SERVER_IP:8000"
 echo "MariaDB: $DB_HOST:$DB_PORT (user: $DB_USER)"
 echo "Logs: $LOG_FILE / $VERBOSE_LOG"
 echo "Temps: ${ELAPSED_MIN}m"
-
-# Nettoyage final
-if [ -n "$SPINNER_PID" ] && kill -0 "$SPINNER_PID" 2>/dev/null; then
-    kill "$SPINNER_PID" 2>/dev/null
-fi
