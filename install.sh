@@ -3,7 +3,7 @@
 # =============================================================================
 # install_user_friendly.sh — Script d'installation pour AirGappedCVE
 # Auteur : Gvte-Kali / Vibe Code
-# Version : 6.5.0 (Détection MariaDB SANS sudo, basée sur le port 3306 uniquement)
+# Version : 6.6.0 (Gestion du dossier existant : suppression avant clonage)
 # Description : Installe et configure AirGappedCVE sur Ubuntu Server
 # Usage: sudo bash install.sh [--test-mode]
 # =============================================================================
@@ -48,7 +48,7 @@ if [[ "${1:-}" == "--test-mode" ]]; then
 fi
 
 # Initialiser les logs
-mkdir -p "$INSTALL_DIR"
+mkdir -p "$(dirname "$LOG_FILE")"
 > "$VERBOSE_LOG"
 > "$LOG_FILE"
 
@@ -130,7 +130,7 @@ ask_continue() {
         echo -e "${YELLOW}${BOLD}⚠️  $ERRORS erreur(s) détectée(s)${NC}"
         echo "Détails dans $VERBOSE_LOG"
         echo ""
-        read -rp "Voulez-vous continuer l'installation ? (o/N) : " CONTINUE
+        read -t 30 -rp "Voulez-vous continuer l'installation ? (o/N) : " CONTINUE
         if [[ ! "$CONTINUE" =~ ^[oOyY]$ ]]; then
             error "Installation annulée par l'utilisateur" "Corrigez les erreurs et relancez le script" $ERROR_LEVEL_CRITICAL
         fi
@@ -149,28 +149,25 @@ command_exists() {
 }
 
 # =============================================================================
-# DÉTECTION MARIADB (BASÉE UNIQUEMENT SUR LE PORT 3306 - comme tes tests)
+# DÉTECTION MARIADB (BASÉE SUR LE PORT 3306)
 # =============================================================================
 
-# Vérifie si le port 3306 est utilisé (TON TEST EXACT)
 is_port_3306_used() {
     ss -tunlp | grep -q ":3306"
 }
 
-# Vérifie si un service écoute sur un port donné
 get_service_on_port() {
     local port="$1"
     ss -tunlp | grep ":$port " | awk '{print $7}' | cut -d'=' -f2 | xargs
 }
 
 # =============================================================================
-# GESTION DES CONFLITS DE PORT (simplifiée, sans sudo)
+# GESTION DES CONFLITS DE PORT
 # =============================================================================
 
 handle_port_3306_conflict() {
     local port=3306
     
-    # Vérifier si le port est utilisé
     if ! is_port_3306_used; then
         DB_PORT=$port
         return 0
@@ -179,6 +176,9 @@ handle_port_3306_conflict() {
     local service_on_port
     service_on_port=$(get_service_on_port $port)
     
+    # Nettoyer le nom du service (enlever les virgules, etc.)
+    service_on_port=$(echo "$service_on_port" | tr -d ',' | xargs)
+    
     echo ""
     echo "Un service écoute sur le port $port: $service_on_port"
     echo "Choix disponibles:"
@@ -186,22 +186,22 @@ handle_port_3306_conflict() {
     echo "  2) Laisser le service en place et installer MariaDB sur le port $DB_PORT_ALT"
     echo "  3) Annuler"
     
-    # Lire la réponse avec un timeout pour éviter les blocages
     read -t 30 -rp "Votre choix [1-3] : " db_choice
     
-    # Si aucune réponse après 30 secondes, utiliser le choix par défaut (1)
     if [ -z "$db_choice" ]; then
         db_choice=1
-        echo "1"  # Afficher le choix par défaut
+        echo "1"
     fi
     
     case "$db_choice" in
         1)
-            # Arrêter le service actuel
-            if [ -n "$service_on_port" ]; then
+            # Arrêter le service actuel (si c'est un service systemd valide)
+            if [ -n "$service_on_port" ] && [[ "$service_on_port" =~ ^[a-zA-Z0-9_-]+$ ]]; then
                 info "Arrêt du service $service_on_port..."
                 systemctl stop "$service_on_port" >> "$VERBOSE_LOG" 2>&1 || true
                 systemctl disable "$service_on_port" >> "$VERBOSE_LOG" 2>&1 || true
+            else
+                warn "Nom de service invalide: $service_on_port (ne peut pas être arrêté)"
             fi
             DB_PORT=$port
             ;;
@@ -257,7 +257,6 @@ done
 if [ ${#MISSING_COMMANDS[@]} -gt 0 ]; then
     info "Installation des commandes manquantes: ${MISSING_COMMANDS[*]}"
     
-    # Mapping commande → paquet
     declare -A CMD_TO_PKG=(
         [curl]="curl"
         [wget]="wget"
@@ -268,7 +267,6 @@ if [ ${#MISSING_COMMANDS[@]} -gt 0 ]; then
         [add-apt-repository]="software-properties-common"
     )
     
-    # Installer un par un
     info "Mise à jour APT..."
     if ! apt-get update -qq >> "$VERBOSE_LOG" 2>&1; then
         error "Échec de la mise à jour APT" "Vérifiez votre connexion" $ERROR_LEVEL_CRITICAL
@@ -324,11 +322,10 @@ if ss -tunlp | grep -q ":8000"; then
     error "Port 8000 occupé" "Libérez le port" $ERROR_LEVEL_ERROR
 fi
 
-# 7. Détection du port MariaDB (BASÉE UNIQUEMENT SUR LE PORT 3306)
+# 7. Détection du port MariaDB
 info "Détection de MariaDB..."
 DB_PORT=$DB_PORT_DEFAULT
 
-# Vérifier SIMPLEMENT si le port 3306 est utilisé (comme ton test)
 if is_port_3306_used; then
     info "Le port 3306 est utilisé (MariaDB ou autre service)"
     handle_port_3306_conflict
@@ -387,7 +384,6 @@ ask_continue
 # =============================================================================
 step_header "1B" 5 "Installation de MariaDB sur le port $DB_PORT"
 
-# Installer MariaDB
 info "Installation de MariaDB..."
 if ! apt-get install -y -qq mariadb-server mariadb-client >> "$VERBOSE_LOG" 2>&1; then
     error "Échec de l'installation de MariaDB" "Vérifiez APT" $ERROR_LEVEL_CRITICAL
@@ -437,7 +433,7 @@ if [ "$RETRIES" -lt "$MAX_RETRIES" ]; then
     log "MariaDB opérationnel sur le port $DB_PORT"
 fi
 
-# Sécurisation de MariaDB (sans sudo, car on est déjà root)
+# Sécurisation de MariaDB (on est root, pas besoin de sudo)
 info "Sécurisation de MariaDB..."
 if ! mariadb -u root -e "DELETE FROM mysql.user WHERE User=''; DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1'); DROP DATABASE IF EXISTS test; DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'; FLUSH PRIVILEGES;" >> "$VERBOSE_LOG" 2>&1; then
     error "Échec de la sécurisation de MariaDB" "Vérifiez les permissions" $ERROR_LEVEL_ERROR
@@ -448,26 +444,27 @@ log "MariaDB sécurisé"
 ask_continue
 
 # =============================================================================
-# ÉTAPE 2: CLONE DU PROJET
+# ÉTAPE 2: CLONE DU PROJET (GESTION DU DOSSIER EXISTANT)
 # =============================================================================
 step_header 2 5 "Clone du projet AirGappedCVE"
 
-if [ -d "$INSTALL_DIR/.git" ]; then
-    info "Mise à jour du dépôt..."
-    cd "$INSTALL_DIR"
-    if ! git pull origin main >> "$VERBOSE_LOG" 2>&1; then
-        error "Échec de la mise à jour du dépôt" "Vérifiez Git" $ERROR_LEVEL_ERROR
-        ask_continue
-    fi
-    log "Dépôt mis à jour"
-else
-    info "Clonage du dépôt..."
-    if ! git clone "$REPO_URL" "$INSTALL_DIR" >> "$VERBOSE_LOG" 2>&1; then
-        error "Échec du clonage du dépôt" "Vérifiez $REPO_URL" $ERROR_LEVEL_ERROR
-        ask_continue
-    fi
-    log "Dépôt cloné"
+# NOUVEAU: Supprimer le dossier s'il existe déjà (pour éviter l'erreur git clone)
+if [ -d "$INSTALL_DIR" ]; then
+    info "Suppression du dossier existant $INSTALL_DIR..."
+    rm -rf "$INSTALL_DIR"
+    log "Dossier existant supprimé"
 fi
+
+# Créer le dossier
+mkdir -p "$INSTALL_DIR"
+
+# Cloner le dépôt
+info "Clonage du dépôt..."
+if ! git clone "$REPO_URL" "$INSTALL_DIR" >> "$VERBOSE_LOG" 2>&1; then
+    error "Échec du clonage du dépôt" "Vérifiez $REPO_URL" $ERROR_LEVEL_ERROR
+    ask_continue
+fi
+log "Dépôt cloné"
 
 # Vérification
 if [ ! -f "$INSTALL_DIR/main.py" ] || [ ! -f "$INSTALL_DIR/requirements.txt" ]; then
@@ -546,7 +543,7 @@ ask_continue
 # =============================================================================
 step_header 4 5 "Installation de l'application"
 
-# Création base et utilisateur (on est root, donc pas besoin de sudo)
+# Création base et utilisateur
 info "Création de la base $DB_NAME..."
 if ! mariadb -u root -e "CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD'; CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' WITH GRANT OPTION; GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;" >> "$VERBOSE_LOG" 2>&1; then
     error "Échec création base/utilisateur" "Vérifiez MariaDB" $ERROR_LEVEL_ERROR
