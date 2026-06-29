@@ -3,7 +3,7 @@
 # =============================================================================
 # install_user_friendly.sh — Script d'installation pour AirGappedCVE
 # Auteur : Gvte-Kali / Vibe Code
-# Version : 5.0.0 (avec gestion des conflits MariaDB, détection des outils, et couleurs)
+# Version : 5.1.0 (corrigé : toutes les fonctions définies avant utilisation)
 # Description : Installe et configure automatiquement AirGappedCVE sur Ubuntu Server
 # Usage: sudo bash install.sh
 # =============================================================================
@@ -51,7 +51,7 @@ mkdir -p "$INSTALL_DIR"
 > "$LOG_FILE"
 
 # =============================================================================
-# FONCTIONS DE LOG
+# FONCTIONS DE LOG (définies en premier pour éviter les erreurs)
 # =============================================================================
 
 log() {
@@ -78,8 +78,6 @@ error() {
   [ -n "${2:-}" ] && echo -e "         ${YELLOW}→ $2${NC}" | tee -a "$VERBOSE_LOG"
   echo "$(date '+%Y-%m-%d %H:%M:%S') - [$level] $1" >> "$LOG_FILE"
   [ -n "${2:-}" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') - [$level] Solution: $2" >> "$LOG_FILE"
-  echo "$(date '+%Y-%m-%d %H:%M:%S') - [$level] $1" >> "$VERBOSE_LOG"
-  [ -n "${2:-}" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') - [$level] Solution: $2" >> "$VERBOSE_LOG"
 
   if [ "$level" -eq "$ERROR_LEVEL_CRITICAL" ]; then
     echo ""
@@ -107,7 +105,19 @@ header() {
   echo -e "${BLUE}${BOLD}  $1${NC}" | tee -a "$VERBOSE_LOG"
   echo -e "${BLUE}${BOLD}==============================================================================${NC}" | tee -a "$VERBOSE_LOG"
   echo "$(date '+%Y-%m-%d %H:%M:%S') - [HEADER] $1" >> "$LOG_FILE"
-  echo "$(date '+%Y-%m-%d %H:%M:%S') - [HEADER] $1" >> "$VERBOSE_LOG"
+}
+
+# Fonction pour les étapes (définie avant toute utilisation)
+step_header() {
+  local step_num=$1
+  local step_name="$2"
+  local total_steps=$3
+
+  echo ""
+  echo -e "${BLUE}${BOLD}==============================================================================${NC}" | tee -a "$VERBOSE_LOG"
+  echo -e "${BLUE}${BOLD}  Étape ${step_num}/${total_steps} — ${step_name}${NC}" | tee -a "$VERBOSE_LOG"
+  echo -e "${BLUE}${BOLD}==============================================================================${NC}" | tee -a "$VERBOSE_LOG"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - [STEP] Étape ${step_num}/${total_steps}: ${step_name}" >> "$LOG_FILE"
 }
 
 # =============================================================================
@@ -249,7 +259,11 @@ run_command() {
 # VÉRIFICATION ROOT
 # =============================================================================
 if [ "$EUID" -ne 0 ]; then
-  error "Ce script doit être lancé en root." "Relancez avec : sudo bash $0" $ERROR_LEVEL_CRITICAL
+  echo -e "${RED}${BOLD}[ERREUR CRITIQUE 1]${NC}"
+  echo -e "Ce script doit être lancé en root."
+  echo -e "${YELLOW}→ Relancez avec : sudo bash $0${NC}"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - [ERROR] Ce script doit être lancé en root. Relancez avec : sudo bash $0" >> "$VERBOSE_LOG"
+  exit 1
 fi
 
 # =============================================================================
@@ -597,9 +611,9 @@ DB_HOST="127.0.0.1"
 DB_NAME="asset_vuln_manager"
 
 echo ""
-echo "======================================="
+echo "========================================"
 echo "  RÉSUMÉ DE LA CONFIGURATION"
-echo "======================================="
+echo "========================================"
 echo ""
 echo "  SERVER_IP       : $SERVER_IP"
 echo "  DB_HOST         : $DB_HOST"
@@ -992,6 +1006,6 @@ echo "  asset-manager help"
 echo "  cat $INSTALL_DIR/INSTALL_INFO.txt"
 echo ""
 echo "📄 Fichier de log complet : $LOG_FILE"
-echo "📄 Fichier de log détaillé : $VERBOSE_LOG"
+echo "📄 Fichier de log détaillée : $VERBOSE_LOG"
 
 header "Fin de l'installation - $(date '+%Y-%m-%d %H:%M:%S')"
