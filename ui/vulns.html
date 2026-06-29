@@ -271,35 +271,38 @@
 
         
         /* ===== FINAL SOLUTION v2: Checkboxes as siblings ===== */
-        /* Headers - position relative for absolute checkboxes */
-        .client-header,
-        .site-header,
-        .asset-header,
+        /* Card containers - position relative for absolute checkboxes */
+        .client-card,
+        .site-card,
+        .asset-card {
+            position: relative;
+        }
+
+        /* Vuln item - position relative for absolute checkboxes */
         .vuln-item {
             position: relative;
-            pointer-events: none;
-            padding-left: 28px;
-            cursor: pointer;
         }
 
-        /* Re-enable pointer-events for header children */
-        .client-header *,
-        .site-header *,
-        .asset-header *,
-        .vuln-item * {
-            pointer-events: auto;
-        }
-
-        /* Checkbox container - absolutely positioned relative to HEADER */
+        /* Checkbox container - absolutely positioned relative to CARD */
         .checkbox-container {
             position: absolute;
             left: 8px;
-            top: 50%;
-            transform: translateY(-50%);
             z-index: 10;
             pointer-events: auto;
             width: 18px;
             height: 18px;
+        }
+
+        /* Specific top positioning for each checkbox type */
+        .client-card > .checkbox-container,
+        .site-card > .checkbox-container {
+            top: 24px;
+        }
+
+        .asset-card > .checkbox-container,
+        .vuln-item > .checkbox-container {
+            top: 50%;
+            transform: translateY(-50%);
         }
 
         /* Checkbox input - STATIC position (normal flow within container) */
@@ -313,9 +316,20 @@
             pointer-events: auto;
         }
 
-        /* Vuln item - remove duplicate position: relative */
-        .vuln-item {
-            margin-bottom: 8px;
+        /* Headers - have pointer-events: none, padding-left for checkbox space */
+        .client-header,
+        .site-header,
+        .asset-header {
+            pointer-events: none;
+            padding-left: 28px;
+            cursor: pointer;
+        }
+
+        /* Re-enable pointer-events for header children */
+        .client-header *,
+        .site-header *,
+        .asset-header * {
+            pointer-events: auto;
         }
 
         /* Re-enable pointer-events for header children */
