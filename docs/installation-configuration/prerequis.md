@@ -1,74 +1,74 @@
 ---
-title: Pr\u00e9requis
+title: Prérequis
 nav_order: 1
 parent: Installation & Configuration
 ---
 
-# \ud83d\udccb Pr\u00e9requis
+# 📋 Prérequis
 
-**Configuration syst\u00e8me requise avant l'installation**
+**Configuration système requise avant l'installation**
 
 ---
 
-## Exigences mat\u00e9rielles et logicielles
+## Exigences matérielles et logicielles
 
-### Syst\u00e8me d'exploitation
+### Système d'exploitation
 
-- **OS** : Ubuntu Server 22.04 LTS (ou sup\u00e9rieur) / Debian 11+
+- **OS** : Ubuntu Server 22.04 LTS (ou supérieur) / Debian 11+
 - **Architecture** : x86_64 (AMD64) ou ARM64
 - **Utilisateur** : Root (ou `sudo`) obligatoire
 
 ### Ressources minimales
 
-| Ressource | Minimum | Recommand\u00e9 |
+| Ressource | Minimum | Recommandé |
 |----------|---------|------------|
 | Espace disque | 5 Go | 10 Go |
-| M\u00e9moire RAM | 2 Go | 4 Go |
-| CPU | 2 c\u0153urs | 4 c\u0153urs |
+| Mémoire RAM | 2 Go | 4 Go |
+| CPU | 2 cœurs | 4 cœurs |
 
-### Ports r\u00e9seau
+### Ports réseau
 
 | Port | Service | Utilisation |
 |------|---------|-------------|
-| 3306 | MariaDB | Base de donn\u00e9es locale |
+| 3306 | MariaDB | Base de données locale |
 | 8000 | FastAPI | API REST du gestionnaire |
 
 ---
 
-## D\u00e9pendances syst\u00e8me
+## Dépendances système
 
 ### Outils requis
 
-Les outils suivants doivent \u00eatre install\u00e9s avant de lancer l'installation :
+Les outils suivants doivent être installés avant de lancer l'installation :
 
-- `curl` - T\u00e9l\u00e9chargement de fichiers
-- `wget` - T\u00e9l\u00e9chargement alternatif
-- `git` - Clone du d\u00e9p\u00f4t GitHub
-- `bc` - Calculs arithm\u00e9tiques
-- `ss` / `ip` - V\u00e9rification des ports et gestion r\u00e9seau (paquet `iproute2`)
+- `curl` - Téléchargement de fichiers
+- `wget` - Téléchargement alternatif
+- `git` - Clone du dépôt GitHub
+- `bc` - Calculs arithmétiques
+- `ss` / `ip` - Vérification des ports et gestion réseau (paquet `iproute2`)
 - `pgrep` - Gestion des processus (paquet `procps`)
-- `add-apt-repository` - Ajout de d\u00e9p\u00f4ts APT (paquet `software-properties-common`)
+- `add-apt-repository` - Ajout de dépôts APT (paquet `software-properties-common`)
 
-### D\u00e9pendances Python
+### Dépendances Python
 
-Python 3.10 ou sup\u00e9rieur est requis. Les d\u00e9pendances Python sont install\u00e9es automatiquement via `pip` dans un virtualenv.
+Python 3.10 ou supérieur est requis. Les dépendances Python sont installées automatiquement via `pip` dans un virtualenv.
 
 ---
 
-## Acc\u00e8s et permissions
+## Accès et permissions
 
-### Acc\u00e8s root
+### Accès root
 
-Le script d'installation doit \u00eatre ex\u00e9cut\u00e9 en root :
+Le script d'installation doit être exécuté en root :
 
 ```bash
 sudo bash install.sh
 ```
 
-### Acc\u00e8s MariaDB
+### Accès MariaDB
 
-- Le script configure automatiquement un utilisateur MariaDB d\u00e9di\u00e9
-- Mot de passe root MariaDB : Non modifi\u00e9 par d\u00e9faut (utilise celui du syst\u00e8me)
+- Le script configure automatiquement un utilisateur MariaDB dédié
+- Mot de passe root MariaDB : Non modifié par défaut (utilise celui du système)
 
 ---
 
@@ -76,14 +76,14 @@ sudo bash install.sh
 
 ### Requis pour l'installation
 
-Une connexion Internet active est n\u00e9cessaire pour :
-- T\u00e9l\u00e9charger les d\u00e9pendances (`apt-get`, `pip`)
-- Cloner le d\u00e9p\u00f4t GitHub
-- T\u00e9l\u00e9charger les fichiers NVD (si `NVD_API_KEY` est configur\u00e9e)
+Une connexion Internet active est nécessaire pour :
+- Télécharger les dépendances (`apt-get`, `pip`)
+- Cloner le dépôt GitHub
+- Télécharger les fichiers NVD (si `NVD_API_KEY` est configurée)
 
-### V\u00e9rification
+### Vérification
 
-Avant de lancer l'installation, v\u00e9rifiez que :
+Avant de lancer l'installation, vérifiez que :
 
 ```bash
 ping -c 1 github.com
