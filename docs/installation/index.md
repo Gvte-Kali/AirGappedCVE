@@ -1,40 +1,22 @@
 ---
-title: AirGappedCVE - Documentation
+title: Installation
+nav_order: 2
+has_children: true
 ---
 
-# 🏠 **AirGappedCVE - Documentation**
-*Gestion des actifs et vulnérabilités en environnement isolé*
+# \ud83d\udce5 Installation
 
----
-
-## **📚 Sommaire**
-   Page | Description |
- |------|-------------|
- | **[Prérequis](prerequis.html)** | Configuration système requise avant l'installation |
- | **[Installation](installation.html)** | Guide d'installation étape par étape avec commandes |
+**Guide complet pour d\u00e9ployer AirGappedCVE**
 
 ---
 
-## **📌 À propos**
+## \ud83d\udccb **Pr\u00e9sentation**
 
-**AirGappedCVE** (ou **AVEA-SSI**) est une solution conçue pour gérer les **actifs informatiques** et les **vulnérabilités de sécurité** (CVEs) dans des environnements **air-gapped** (physiquement isolés d'Internet).
-
-### **🎯 Public cible**
-- Prestataires informatiques gérant des équipements pour plusieurs clients.
-- Environnements **sans accès Internet** (réseaux isolés, sites sensibles).
-- Opérateurs cherchant une solution **centralisée** pour le suivi des vulnérabilités.
-
-### **🔒 Principes clés**
-- **Pas d'agents déployés** : Toutes les données sont saisies manuellement ou importées.
-- **Base de données locale** : MariaDB pour stocker les actifs, vulnérabilités et corrélations.
-- **Analyse hors ligne** : Synchronisation des CVEs via des fichiers NVD téléchargés manuellement.
-- **Génération de rapports** : Export PDF des vulnérabilités par client/site.
+Cette section vous guide \u00e0 travers tout le processus d'installation, des pr\u00e9requis \u00e0 la configuration finale.
 
 ---
 
-## **🚀 Pour commencer**
+## \ud83d\udcd6 **Documentation**
 
-1. **Vérifiez les [prérequis](prerequis.html)** avant toute installation.
-2. **Suivez le [guide d'installation](installation.html)** étape par étape.
-
----
+- [\ud83d\udccb Pr\u00e9requis]({{ site.baseurl }}/installation/prerequis) \u2014 Configuration syst\u00e8me requise avant l'installation
+- [\ud83d\udee0\ufe0f Guide d'installation]({{ site.baseurl }}/installation/installation) \u2014 Proc\u00e9dure d'installation \u00e9tape par \u00e9tape

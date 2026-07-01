@@ -1,87 +1,101 @@
 ---
-title: Installation
+title: Guide d'installation
+nav_order: 2
+parent: Installation
 ---
 
-# 🛠️ **Installation - AirGappedCVE**
-*Guide étape par étape avec commandes one-liner*
+# \ud83d\udee0\ufe0f Guide d'installation
 
----
-
-## **⚠️ Avant de commencer**
-
-1. **Vérifiez les [prérequis](prerequis.html)**.
-2. **Exécutez toutes les commandes en root** (`sudo -i` ou `sudo` devant chaque commande).
-3. **Ne sautez aucune étape** : Chaque commande dépend des précédentes.
+**Proc\u00e9dure d'installation \u00e9tape par \u00e9tape avec commandes one-liner**
 
 ---
 
-## **📌 Étape 0 : Préparation de l'environnement**
+## \u26a0\ufe0f Avant de commencer
 
-### **1. Mise à jour du système**
+1. **V\u00e9rifiez les [pr\u00e9requis]({{ site.baseurl }}/installation/prerequis)**.
+2. **Ex\u00e9cutez toutes les commandes en root** (`sudo -i` ou `sudo` devant chaque commande).
+3. **Ne sautez aucune \u00e9tape** : Chaque commande d\u00e9pend des pr\u00e9c\u00e9dentes.
+
+---
+
+## \ud83d\udccc \u00c9tape 0 : Pr\u00e9paration de l'environnement
+
+### 1. Mise \u00e0 jour du syst\u00e8me
+
 ```bash
 apt-get update && apt-get upgrade -y
 ```
 
-### **2. Installation des outils de base**
+### 2. Installation des outils de base
+
 ```bash
 apt-get install -y curl wget git bc iproute2 procps software-properties-common
 ```
 
-### **3. Installation des dépendances Python**
+### 3. Installation des d\u00e9pendances Python
+
 ```bash
 apt-get install -y python3-venv python3-pip python3-dev build-essential
 ```
 
 ---
 
-## **📌 Étape 1 : Installation de MariaDB**
+## \ud83d\udccc \u00c9tape 1 : Installation de MariaDB
 
-### **1. Installation de MariaDB**
+### 1. Installation de MariaDB
+
 ```bash
 apt-get install -y mariadb-server mariadb-client
 ```
 
-### **2. Démarrage et activation du service**
+### 2. D\u00e9marrage et activation du service
+
 ```bash
 systemctl enable mariadb && systemctl start mariadb
 ```
 
-### **3. Sécurisation de MariaDB**
+### 3. S\u00e9curisation de MariaDB
+
 ```bash
 mariadb -u root -e "DELETE FROM mysql.user WHERE User=''; DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1'); DROP DATABASE IF EXISTS test; DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'; FLUSH PRIVILEGES;"
 ```
 
-### **4. Vérification**
+### 4. V\u00e9rification
+
 ```bash
-ss -tunlp | grep 3306  # Doit afficher MariaDB en écoute
+ss -tunlp | grep 3306  # Doit afficher MariaDB en \u00e9coute
 mariadb -u root -e "SELECT 1;"  # Doit retourner 1
 ```
 
 ---
 
-## **📌 Étape 2 : Clone du dépôt**
+## \ud83d\udccc \u00c9tape 2 : Clone du d\u00e9p\u00f4t
 
-### **1. Suppression du dossier existant (si nécessaire)**
+### 1. Suppression du dossier existant (si n\u00e9cessaire)
+
 ```bash
 rm -rf /opt/asset-manager
 ```
 
-### **2. Clone du dépôt GitHub**
+### 2. Clone du d\u00e9p\u00f4t GitHub
+
 ```bash
 mkdir -p /opt/asset-manager && git clone https://github.com/Gvte-Kali/AirGappedCVE.git /opt/asset-manager
 ```
 
-### **3. Vérification du clone**
+### 3. V\u00e9rification du clone
+
 ```bash
 ls /opt/asset-manager/main.py /opt/asset-manager/requirements.txt /opt/asset-manager/sql/schema.sql
 ```
 
 ---
 
-## **📌 Étape 3 : Configuration de l'environnement (.env)**
+## \ud83d\udccc \u00c9tape 3 : Configuration de l'environnement (.env)
 
-### **1. Création du fichier .env**
-> **⚠️ Remplacez `avea_user` par votre nom d'utilisateur MariaDB !**
+### 1. Cr\u00e9ation du fichier .env
+
+> **\u26a0\ufe0f Remplacez `avea_user` par votre nom d'utilisateur MariaDB !**
 
 ```bash
 cat > /opt/asset-manager/.env << 'EOF'
@@ -97,8 +111,8 @@ SERVER_PORT=8000
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_NAME=asset_vuln_manager
-DB_USER=avea_user  # ← À personnaliser
-DB_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)  # Généré automatiquement
+DB_USER=avea_user  # \u2190 \u00c0 personnaliser
+DB_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)  # G\u00e9n\u00e9r\u00e9 automatiquement
 
 # --- API KEYS (optionnelles) ---
 NVD_API_KEY=
@@ -110,41 +124,47 @@ LOG_LEVEL=info
 EOF
 ```
 
-### **2. Sécurisation du fichier .env**
+### 2. S\u00e9curisation du fichier .env
+
 ```bash
 chmod 600 /opt/asset-manager/.env
 ```
 
 ---
 
-## **📌 Étape 4 : Création du virtualenv et installation des dépendances Python**
+## \ud83d\udccc \u00c9tape 4 : Cr\u00e9ation du virtualenv et installation des d\u00e9pendances Python
 
-### **1. Création du virtualenv**
+### 1. Cr\u00e9ation du virtualenv
+
 ```bash
 python3 -m venv /opt/asset-manager/venv
 ```
 
-### **2. Mise à jour de pip**
+### 2. Mise \u00e0 jour de pip
+
 ```bash
 /opt/asset-manager/venv/bin/pip install --upgrade pip
 ```
 
-### **3. Installation des dépendances**
+### 3. Installation des d\u00e9pendances
+
 ```bash
 /opt/asset-manager/venv/bin/pip install -r /opt/asset-manager/requirements.txt
 ```
 
-### **4. Vérification des dépendances critiques**
+### 4. V\u00e9rification des d\u00e9pendances critiques
+
 ```bash
-/opt/asset-manager/venv/bin/pip show fastapi pymysql reportlab uvicorn python-dotenv >/dev/null && echo "✅ Toutes les dépendances sont installées" || echo "❌ Dépendances manquantes"
+/opt/asset-manager/venv/bin/pip show fastapi pymysql reportlab uvicorn python-dotenv >/dev/null && echo "\u2705 Toutes les d\u00e9pendances sont install\u00e9es" || echo "\u274c D\u00e9pendances manquantes"
 ```
 
 ---
 
-## **📌 Étape 5 : Configuration de la base de données**
+## \ud83d\udccc \u00c9tape 5 : Configuration de la base de donn\u00e9es
 
-### **1. Création de la base et de l'utilisateur**
-> **⚠️ Remplacez `avea_user` et `DB_PASSWORD` par vos valeurs !**
+### 1. Cr\u00e9ation de la base et de l'utilisateur
+
+> **\u26a0\ufe0f Remplacez `avea_user` et `DB_PASSWORD` par vos valeurs !**
 
 ```bash
 DB_USER=avea_user
@@ -152,21 +172,24 @@ DB_PASSWORD=$(grep DB_PASSWORD /opt/asset-manager/.env | cut -d'=' -f2)
 mariadb -u root -e "CREATE DATABASE IF NOT EXISTS asset_vuln_manager CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD'; CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON asset_vuln_manager.* TO '$DB_USER'@'localhost' WITH GRANT OPTION; GRANT ALL PRIVILEGES ON asset_vuln_manager.* TO '$DB_USER'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;"
 ```
 
-### **2. Import du schéma SQL**
+### 2. Import du sch\u00e9ma SQL
+
 ```bash
 mariadb -u avea_user -p"$DB_PASSWORD" asset_vuln_manager < /opt/asset-manager/sql/schema.sql
 ```
 
-### **3. Test de connexion**
+### 3. Test de connexion
+
 ```bash
-mariadb -u avea_user -p"$DB_PASSWORD" -e "SELECT 1;" && echo "✅ Connexion réussie" || echo "❌ Échec de la connexion"
+mariadb -u avea_user -p"$DB_PASSWORD" -e "SELECT 1;" && echo "\u2705 Connexion r\u00e9ussie" || echo "\u274c \u00c9chec de la connexion"
 ```
 
 ---
 
-## **📌 Étape 6 : Configuration du service systemd**
+## \ud83d\udccc \u00c9tape 6 : Configuration du service systemd
 
-### **1. Création du fichier de service**
+### 1. Cr\u00e9ation du fichier de service
+
 ```bash
 cat > /etc/systemd/system/asset-manager.service << 'EOF'
 [Unit]
@@ -190,17 +213,20 @@ WantedBy=multi-user.target
 EOF
 ```
 
-### **2. Rechargement de systemd**
+### 2. Rechargement de systemd
+
 ```bash
 systemctl daemon-reload
 ```
 
-### **3. Activation et démarrage du service**
+### 3. Activation et d\u00e9marrage du service
+
 ```bash
 systemctl enable asset-manager && systemctl start asset-manager
 ```
 
-### **4. Vérification du service**
+### 4. V\u00e9rification du service
+
 ```bash
 systemctl status asset-manager
 journalctl -u asset-manager -n 20  # Affiche les derniers logs
@@ -208,9 +234,10 @@ journalctl -u asset-manager -n 20  # Affiche les derniers logs
 
 ---
 
-## **📌 Étape 7 : Ajout au PATH**
+## \ud83d\udccc \u00c9tape 7 : Ajout au PATH
 
-### **1. Création du fichier pour /etc/profile.d/**
+### 1. Cr\u00e9ation du fichier pour /etc/profile.d/
+
 ```bash
 cat > /etc/profile.d/asset-manager.sh << 'EOF'
 #!/bin/bash
@@ -219,66 +246,71 @@ EOF
 chmod +x /etc/profile.d/asset-manager.sh
 ```
 
-### **2. Ajout au .bashrc de l'utilisateur actuel**
+### 2. Ajout au .bashrc de l'utilisateur actuel
+
 ```bash
 if ! grep -q "asset-manager" ~/.bashrc; then
     echo "" >> ~/.bashrc
-    echo "# Ajouté par install.sh - AirGappedCVE" >> ~/.bashrc
+    echo "# Ajout\u00e9 par install.sh - AirGappedCVE" >> ~/.bashrc
     echo 'export PATH="$PATH:/opt/asset-manager/scripts"' >> ~/.bashrc
 fi
 ```
 
-### **3. Application immédiate**
+### 3. Application imm\u00e9diate
+
 ```bash
 export PATH="$PATH:/opt/asset-manager/scripts"
 ```
 
 ---
 
-## **📌 Étape 8 : Vérifications finales**
+## \ud83d\udccc \u00c9tape 8 : V\u00e9rifications finales
 
-### **1. Test du health endpoint FastAPI**
+### 1. Test du health endpoint FastAPI
+
 ```bash
-curl -sf http://localhost:8000/health && echo "✅ FastAPI est opérationnel" || echo "❌ FastAPI ne répond pas"
+curl -sf http://localhost:8000/health && echo "\u2705 FastAPI est op\u00e9rationnel" || echo "\u274c FastAPI ne r\u00e9pond pas"
 ```
 
-### **2. Vérification des fichiers critiques**
+### 2. V\u00e9rification des fichiers critiques
+
 ```bash
-[ -f /opt/asset-manager/main.py ] && [ -f /opt/asset-manager/.env ] && [ -d /opt/asset-manager/venv ] && echo "✅ Installation complète" || echo "❌ Fichiers manquants"
+[ -f /opt/asset-manager/main.py ] && [ -f /opt/asset-manager/.env ] && [ -d /opt/asset-manager/venv ] && echo "\u2705 Installation compl\u00e8te" || echo "\u274c Fichiers manquants"
 ```
 
 ---
 
-## **🎉 Résumé de l'installation**
+## \ud83c\udf89 R\u00e9sum\u00e9 de l'installation
 
-| Élément | Chemin | Commande de test |
+| \u00c9l\u00e9ment | Chemin | Commande de test |
 |---------|--------|-------------------|
 | **Application** | `/opt/asset-manager` | `ls /opt/asset-manager` |
 | **Virtualenv** | `/opt/asset-manager/venv` | `ls /opt/asset-manager/venv/bin/python` |
 | **Fichier .env** | `/opt/asset-manager/.env` | `cat /opt/asset-manager/.env` |
 | **Service** | `asset-manager` | `systemctl status asset-manager` |
 | **API** | `http://<IP>:8000` | `curl -sf http://localhost:8000/health` |
-| **Base de données** | MariaDB (`asset_vuln_manager`) | `mariadb -u avea_user -p -e "SHOW TABLES;" asset_vuln_manager` |
+| **Base de donn\u00e9es** | MariaDB (`asset_vuln_manager`) | `mariadb -u avea_user -p -e "SHOW TABLES;" asset_vuln_manager` |
 
 ---
 
-## **📌 Dépannage**
+## \ud83d\udccc D\u00e9pannage
 
-| Problème | Solution |
+| Probl\u00e8me | Solution |
 |----------|----------|
-| **Port 8000 occupé** | `ss -tunlp \| grep 8000` → Tuez le processus avec `kill -9 <PID>` |
-| **MariaDB ne démarre pas** | `journalctl -u mariadb -n 50` |
-| **FastAPI ne répond pas** | `journalctl -u asset-manager -n 50` |
-| **Dépendances Python manquantes** | `/opt/asset-manager/venv/bin/pip install -r /opt/asset-manager/requirements.txt` |
-| **Permission refusée** | Exécutez les commandes en `sudo` |
+| **Port 8000 occup\u00e9** | `ss -tunlp \| grep 8000` \u2192 Tuez le processus avec `kill -9 <PID>` |
+| **MariaDB ne d\u00e9marre pas** | `journalctl -u mariadb -n 50` |
+| **FastAPI ne r\u00e9pond pas** | `journalctl -u asset-manager -n 50` |
+| **D\u00e9pendances Python manquantes** | `/opt/asset-manager/venv/bin/pip install -r /opt/asset-manager/requirements.txt` |
+| **Permission refus\u00e9e** | Ex\u00e9cutez les commandes en `sudo` |
 
 ---
 
-## **🗑️ Désinstallation**
+## \ud83d\uddd1\ufe0f D\u00e9sinstallation
 
-Si vous devez tout désinstaller, exécutez :
+Si vous devez tout d\u00e9sinstaller, ex\u00e9cutez :
+
 ```bash
-# Arrêt du service
+# Arr\u00eat du service
 systemctl stop asset-manager && systemctl disable asset-manager
 
 # Suppression du service
@@ -287,7 +319,7 @@ rm -f /etc/systemd/system/asset-manager.service && systemctl daemon-reload
 # Suppression du dossier
 rm -rf /opt/asset-manager
 
-# Suppression des entrées PATH
+# Suppression des entr\u00e9es PATH
 rm -f /etc/profile.d/asset-manager.sh
-sed -i '/# Ajouté par install.sh - AirGappedCVE/,/export PATH.*asset-manager/d' ~/.bashrc
+sed -i '/# Ajout\u00e9 par install.sh - AirGappedCVE/,/export PATH.*asset-manager/d' ~/.bashrc
 ```
