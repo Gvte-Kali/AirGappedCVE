@@ -1,7 +1,7 @@
 ---
 title: Guide d'installation
 nav_order: 2
-parent: Installation
+parent: Installation & Configuration
 ---
 
 # \ud83d\udee0\ufe0f Guide d'installation
@@ -12,13 +12,13 @@ parent: Installation
 
 ## \u26a0\ufe0f Avant de commencer
 
-1. **V\u00e9rifiez les [pr\u00e9requis]({{ site.baseurl }}/installation/prerequis)**.
-2. **Ex\u00e9cutez toutes les commandes en root** (`sudo -i` ou `sudo` devant chaque commande).
-3. **Ne sautez aucune \u00e9tape** : Chaque commande d\u00e9pend des pr\u00e9c\u00e9dentes.
+1. V\u00e9rifiez les [pr\u00e9requis]({{ site.baseurl }}/installation-configuration/prerequis)
+2. Ex\u00e9cutez toutes les commandes en root (`sudo -i` ou `sudo` devant chaque commande)
+3. Ne sautez aucune \u00e9tape : Chaque commande d\u00e9pend des pr\u00e9c\u00e9dentes
 
 ---
 
-## \ud83d\udccc \u00c9tape 0 : Pr\u00e9paration de l'environnement
+## \ud83d\udccc Etape 0 : Pr\u00e9paration de l'environnement
 
 ### 1. Mise \u00e0 jour du syst\u00e8me
 
@@ -40,7 +40,7 @@ apt-get install -y python3-venv python3-pip python3-dev build-essential
 
 ---
 
-## \ud83d\udccc \u00c9tape 1 : Installation de MariaDB
+## \ud83d\udccc Etape 1 : Installation de MariaDB
 
 ### 1. Installation de MariaDB
 
@@ -63,13 +63,13 @@ mariadb -u root -e "DELETE FROM mysql.user WHERE User=''; DELETE FROM mysql.user
 ### 4. V\u00e9rification
 
 ```bash
-ss -tunlp | grep 3306  # Doit afficher MariaDB en \u00e9coute
-mariadb -u root -e "SELECT 1;"  # Doit retourner 1
+ss -tunlp | grep 3306
+mariadb -u root -e "SELECT 1;"
 ```
 
 ---
 
-## \ud83d\udccc \u00c9tape 2 : Clone du d\u00e9p\u00f4t
+## \ud83d\udccc Etape 2 : Clone du d\u00e9p\u00f4t
 
 ### 1. Suppression du dossier existant (si n\u00e9cessaire)
 
@@ -91,11 +91,11 @@ ls /opt/asset-manager/main.py /opt/asset-manager/requirements.txt /opt/asset-man
 
 ---
 
-## \ud83d\udccc \u00c9tape 3 : Configuration de l'environnement (.env)
+## \ud83d\udccc Etape 3 : Configuration de l'environnement (.env)
 
 ### 1. Cr\u00e9ation du fichier .env
 
-> **\u26a0\ufe0f Remplacez `avea_user` par votre nom d'utilisateur MariaDB !**
+> \u26a0\ufe0f Remplacez `avea_user` par votre nom d'utilisateur MariaDB !
 
 ```bash
 cat > /opt/asset-manager/.env << 'EOF'
@@ -111,8 +111,8 @@ SERVER_PORT=8000
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_NAME=asset_vuln_manager
-DB_USER=avea_user  # \u2190 \u00c0 personnaliser
-DB_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)  # G\u00e9n\u00e9r\u00e9 automatiquement
+DB_USER=avea_user
+DB_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
 
 # --- API KEYS (optionnelles) ---
 NVD_API_KEY=
@@ -132,7 +132,7 @@ chmod 600 /opt/asset-manager/.env
 
 ---
 
-## \ud83d\udccc \u00c9tape 4 : Cr\u00e9ation du virtualenv et installation des d\u00e9pendances Python
+## \ud83d\udccc Etape 4 : Cr\u00e9ation du virtualenv et installation des d\u00e9pendances Python
 
 ### 1. Cr\u00e9ation du virtualenv
 
@@ -155,16 +155,16 @@ python3 -m venv /opt/asset-manager/venv
 ### 4. V\u00e9rification des d\u00e9pendances critiques
 
 ```bash
-/opt/asset-manager/venv/bin/pip show fastapi pymysql reportlab uvicorn python-dotenv >/dev/null && echo "\u2705 Toutes les d\u00e9pendances sont install\u00e9es" || echo "\u274c D\u00e9pendances manquantes"
+/opt/asset-manager/venv/bin/pip show fastapi pymysql reportlab uvicorn python-dotenv >/dev/null && echo "OK - Toutes les dependances sont installees" || echo "ERREUR - Dependances manquantes"
 ```
 
 ---
 
-## \ud83d\udccc \u00c9tape 5 : Configuration de la base de donn\u00e9es
+## \ud83d\udccc Etape 5 : Configuration de la base de donn\u00e9es
 
 ### 1. Cr\u00e9ation de la base et de l'utilisateur
 
-> **\u26a0\ufe0f Remplacez `avea_user` et `DB_PASSWORD` par vos valeurs !**
+> \u26a0\ufe0f Remplacez `avea_user` et `DB_PASSWORD` par vos valeurs !
 
 ```bash
 DB_USER=avea_user
@@ -181,12 +181,12 @@ mariadb -u avea_user -p"$DB_PASSWORD" asset_vuln_manager < /opt/asset-manager/sq
 ### 3. Test de connexion
 
 ```bash
-mariadb -u avea_user -p"$DB_PASSWORD" -e "SELECT 1;" && echo "\u2705 Connexion r\u00e9ussie" || echo "\u274c \u00c9chec de la connexion"
+mariadb -u avea_user -p"$DB_PASSWORD" -e "SELECT 1;" && echo "OK - Connexion reussie" || echo "ERREUR - Echec de la connexion"
 ```
 
 ---
 
-## \ud83d\udccc \u00c9tape 6 : Configuration du service systemd
+## \ud83d\udccc Etape 6 : Configuration du service systemd
 
 ### 1. Cr\u00e9ation du fichier de service
 
@@ -229,12 +229,12 @@ systemctl enable asset-manager && systemctl start asset-manager
 
 ```bash
 systemctl status asset-manager
-journalctl -u asset-manager -n 20  # Affiche les derniers logs
+journalctl -u asset-manager -n 20
 ```
 
 ---
 
-## \ud83d\udccc \u00c9tape 7 : Ajout au PATH
+## \ud83d\udccc Etape 7 : Ajout au PATH
 
 ### 1. Cr\u00e9ation du fichier pour /etc/profile.d/
 
@@ -251,7 +251,7 @@ chmod +x /etc/profile.d/asset-manager.sh
 ```bash
 if ! grep -q "asset-manager" ~/.bashrc; then
     echo "" >> ~/.bashrc
-    echo "# Ajout\u00e9 par install.sh - AirGappedCVE" >> ~/.bashrc
+    echo "# Ajoute par install.sh - AirGappedCVE" >> ~/.bashrc
     echo 'export PATH="$PATH:/opt/asset-manager/scripts"' >> ~/.bashrc
 fi
 ```
@@ -264,44 +264,44 @@ export PATH="$PATH:/opt/asset-manager/scripts"
 
 ---
 
-## \ud83d\udccc \u00c9tape 8 : V\u00e9rifications finales
+## \ud83d\udccc Etape 8 : V\u00e9rifications finales
 
 ### 1. Test du health endpoint FastAPI
 
 ```bash
-curl -sf http://localhost:8000/health && echo "\u2705 FastAPI est op\u00e9rationnel" || echo "\u274c FastAPI ne r\u00e9pond pas"
+curl -sf http://localhost:8000/health && echo "OK - FastAPI est operationnel" || echo "ERREUR - FastAPI ne repond pas"
 ```
 
 ### 2. V\u00e9rification des fichiers critiques
 
 ```bash
-[ -f /opt/asset-manager/main.py ] && [ -f /opt/asset-manager/.env ] && [ -d /opt/asset-manager/venv ] && echo "\u2705 Installation compl\u00e8te" || echo "\u274c Fichiers manquants"
+[ -f /opt/asset-manager/main.py ] && [ -f /opt/asset-manager/.env ] && [ -d /opt/asset-manager/venv ] && echo "OK - Installation complete" || echo "ERREUR - Fichiers manquants"
 ```
 
 ---
 
 ## \ud83c\udf89 R\u00e9sum\u00e9 de l'installation
 
-| \u00c9l\u00e9ment | Chemin | Commande de test |
+| Element | Chemin | Commande de test |
 |---------|--------|-------------------|
-| **Application** | `/opt/asset-manager` | `ls /opt/asset-manager` |
-| **Virtualenv** | `/opt/asset-manager/venv` | `ls /opt/asset-manager/venv/bin/python` |
-| **Fichier .env** | `/opt/asset-manager/.env` | `cat /opt/asset-manager/.env` |
-| **Service** | `asset-manager` | `systemctl status asset-manager` |
-| **API** | `http://<IP>:8000` | `curl -sf http://localhost:8000/health` |
-| **Base de donn\u00e9es** | MariaDB (`asset_vuln_manager`) | `mariadb -u avea_user -p -e "SHOW TABLES;" asset_vuln_manager` |
+| Application | /opt/asset-manager | ls /opt/asset-manager |
+| Virtualenv | /opt/asset-manager/venv | ls /opt/asset-manager/venv/bin/python |
+| Fichier .env | /opt/asset-manager/.env | cat /opt/asset-manager/.env |
+| Service | asset-manager | systemctl status asset-manager |
+| API | http://<IP>:8000 | curl -sf http://localhost:8000/health |
+| Base de donn\u00e9es | MariaDB (asset_vuln_manager) | mariadb -u avea_user -p -e "SHOW TABLES;" asset_vuln_manager |
 
 ---
 
 ## \ud83d\udccc D\u00e9pannage
 
-| Probl\u00e8me | Solution |
+| Probleme | Solution |
 |----------|----------|
-| **Port 8000 occup\u00e9** | `ss -tunlp \| grep 8000` \u2192 Tuez le processus avec `kill -9 <PID>` |
-| **MariaDB ne d\u00e9marre pas** | `journalctl -u mariadb -n 50` |
-| **FastAPI ne r\u00e9pond pas** | `journalctl -u asset-manager -n 50` |
-| **D\u00e9pendances Python manquantes** | `/opt/asset-manager/venv/bin/pip install -r /opt/asset-manager/requirements.txt` |
-| **Permission refus\u00e9e** | Ex\u00e9cutez les commandes en `sudo` |
+| Port 8000 occup\u00e9 | ss -tunlp | grep 8000 -> Tuez le processus avec kill -9 <PID> |
+| MariaDB ne d\u00e9marre pas | journalctl -u mariadb -n 50 |
+| FastAPI ne r\u00e9pond pas | journalctl -u asset-manager -n 50 |
+| D\u00e9pendances Python manquantes | /opt/asset-manager/venv/bin/pip install -r /opt/asset-manager/requirements.txt |
+| Permission refus\u00e9e | Ex\u00e9cutez les commandes en sudo |
 
 ---
 
@@ -310,7 +310,7 @@ curl -sf http://localhost:8000/health && echo "\u2705 FastAPI est op\u00e9ration
 Si vous devez tout d\u00e9sinstaller, ex\u00e9cutez :
 
 ```bash
-# Arr\u00eat du service
+# Arret du service
 systemctl stop asset-manager && systemctl disable asset-manager
 
 # Suppression du service
@@ -319,7 +319,7 @@ rm -f /etc/systemd/system/asset-manager.service && systemctl daemon-reload
 # Suppression du dossier
 rm -rf /opt/asset-manager
 
-# Suppression des entr\u00e9es PATH
+# Suppression des entrees PATH
 rm -f /etc/profile.d/asset-manager.sh
-sed -i '/# Ajout\u00e9 par install.sh - AirGappedCVE/,/export PATH.*asset-manager/d' ~/.bashrc
+sed -i '/# Ajoute par install.sh - AirGappedCVE/,/export PATH.*asset-manager/d' ~/.bashrc
 ```

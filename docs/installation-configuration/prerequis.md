@@ -1,7 +1,7 @@
 ---
-title: Prrequis
+title: Pr\u00e9requis
 nav_order: 1
-parent: Installation
+parent: Installation & Configuration
 ---
 
 # \ud83d\udccb Pr\u00e9requis
@@ -16,13 +16,13 @@ parent: Installation
 
 - **OS** : Ubuntu Server 22.04 LTS (ou sup\u00e9rieur) / Debian 11+
 - **Architecture** : x86_64 (AMD64) ou ARM64
-- **Utilisateur** : **Root** (ou `sudo`) **obligatoire**
+- **Utilisateur** : Root (ou `sudo`) obligatoire
 
 ### Ressources minimales
 
 | Ressource | Minimum | Recommand\u00e9 |
 |----------|---------|------------|
-| Espace disque | 5 Go | 10 Go (pour les logs et bases de donn\u00e9es) |
+| Espace disque | 5 Go | 10 Go |
 | M\u00e9moire RAM | 2 Go | 4 Go |
 | CPU | 2 c\u0153urs | 4 c\u0153urs |
 
@@ -30,8 +30,8 @@ parent: Installation
 
 | Port | Service | Utilisation |
 |------|---------|-------------|
-| **3306** | MariaDB | Base de donn\u00e9es locale |
-| **8000** | FastAPI | API REST du gestionnaire |
+| 3306 | MariaDB | Base de donn\u00e9es locale |
+| 8000 | FastAPI | API REST du gestionnaire |
 
 ---
 
@@ -39,7 +39,7 @@ parent: Installation
 
 ### Outils requis
 
-Les outils suivants doivent \u00eatre install\u00e9s **avant** de lancer l'installation :
+Les outils suivants doivent \u00eatre install\u00e9s avant de lancer l'installation :
 
 - `curl` - T\u00e9l\u00e9chargement de fichiers
 - `wget` - T\u00e9l\u00e9chargement alternatif
@@ -51,7 +51,7 @@ Les outils suivants doivent \u00eatre install\u00e9s **avant** de lancer l'insta
 
 ### D\u00e9pendances Python
 
-Python **3.10 ou sup\u00e9rieur** est requis. Les d\u00e9pendances Python sont install\u00e9es automatiquement via `pip` dans un *virtualenv*.
+Python 3.10 ou sup\u00e9rieur est requis. Les d\u00e9pendances Python sont install\u00e9es automatiquement via `pip` dans un virtualenv.
 
 ---
 
@@ -59,7 +59,7 @@ Python **3.10 ou sup\u00e9rieur** est requis. Les d\u00e9pendances Python sont i
 
 ### Acc\u00e8s root
 
-Le script d'installation **doit \u00eatre ex\u00e9cut\u00e9 en root** :
+Le script d'installation doit \u00eatre ex\u00e9cut\u00e9 en root :
 
 ```bash
 sudo bash install.sh
@@ -67,8 +67,8 @@ sudo bash install.sh
 
 ### Acc\u00e8s MariaDB
 
-- Le script configure automatiquement un utilisateur MariaDB d\u00e9di\u00e9.
-- **Mot de passe root MariaDB** : Non modifi\u00e9 par d\u00e9faut (utilise celui du syst\u00e8me).
+- Le script configure automatiquement un utilisateur MariaDB d\u00e9di\u00e9
+- Mot de passe root MariaDB : Non modifi\u00e9 par d\u00e9faut (utilise celui du syst\u00e8me)
 
 ---
 
@@ -76,16 +76,16 @@ sudo bash install.sh
 
 ### Requis pour l'installation
 
-Une **connexion Internet active** est n\u00e9cessaire pour :
-- T\u00e9l\u00e9charger les d\u00e9pendances (`apt-get`, `pip`).
-- Cloner le d\u00e9p\u00f4t GitHub.
-- T\u00e9l\u00e9charger les fichiers NVD (si `NVD_API_KEY` est configur\u00e9e).
+Une connexion Internet active est n\u00e9cessaire pour :
+- T\u00e9l\u00e9charger les d\u00e9pendances (`apt-get`, `pip`)
+- Cloner le d\u00e9p\u00f4t GitHub
+- T\u00e9l\u00e9charger les fichiers NVD (si `NVD_API_KEY` est configur\u00e9e)
 
 ### V\u00e9rification
 
 Avant de lancer l'installation, v\u00e9rifiez que :
 
 ```bash
-ping -c 1 github.com  # Test de connectivit\u00e9
-curl -sSf https://github.com >/dev/null && echo "OK" || echo "KO"  # Test HTTPS
+ping -c 1 github.com
+curl -sSf https://github.com >/dev/null && echo "OK" || echo "KO"
 ```
