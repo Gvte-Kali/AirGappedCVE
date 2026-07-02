@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
-import pymysql
+import subprocess
 from dotenv import load_dotenv
 
 # =============================================================================
@@ -31,83 +31,48 @@ if missing_vars:
     sys.exit(1)
 
 DB_HOST = os.getenv("DB_HOST")
-DB_PORT = int(os.getenv("DB_PORT"))
+DB_PORT = os.getenv("DB_PORT")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 
 # =============================================================================
-# 🗃️ VÉRIFIER LA CONNEXION ROOT VIA SOCKET UNIX
+# 🛠️ EXÉCUTER LES COMMANDES SQL VIA sudo mysql
 # =============================================================================
-print("\n🔌 Tentative de connexion à MariaDB (root via socket Unix)...")
-try:
-    conn = pymysql.connect(
-        host="localhost",
-        user="root",
-        charset="utf8mb4",
-        cursorclass=pymysql.cursors.DictCursor,
-        ssl_disabled=True,
-        unix_socket="/var/run/mysqld/mysqld.sock"
-    )
-    print("✅ Connexion root réussie via socket Unix.")
-except pymysql.MySQLError as e:
-    print(f"❌ Échec de la connexion root : {e}")
-    print("   → Vérifiez que MariaDB est démarré (`sudo systemctl status mariadb`).")
-    print("   → Vérifiez que l'utilisateur système a accès au socket Unix (`ls -l /var/run/mysqld/mysqld.sock`).")
-    sys.exit(1)
+commands = [
+    f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;",
+    f"CREATE USER IF NOT EXISTS '{DB_USER}'@'localhost' IDENTIFIED BY '{DB_PASSWORD}';",
+    f"CREATE USER IF NOT EXISTS '{DB_USER}'@'%' IDENTIFIED BY '{DB_PASSWORD}';",
+    f"GRANT ALL PRIVILEGES ON `{DB_NAME}`.* TO '{DB_USER}'@'localhost' WITH GRANT OPTION;",
+    f"GRANT ALL PRIVILEGES ON `{DB_NAME}`.* TO '{DB_USER}'@'%' WITH GRANT OPTION;",
+    "FLUSH PRIVILEGES;"
+]
 
-# =============================================================================
-# 🛠️ EXÉCUTER LES COMMANDES SQL (AVEC VÉRIFICATIONS)
-# =============================================================================
-try:
-    cursor = conn.cursor()
-
-    # 1. Créer la base de données
-    print(f"\n📦 Création de la base '{DB_NAME}'...")
-    cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
-    print(f"✅ Base '{DB_NAME}' créée ou existante.")
-
-    # 2. Créer l'utilisateur local
-    print(f"\n👤 Création de l'utilisateur '{DB_USER}'@'localhost'...")
-    cursor.execute(f"CREATE USER IF NOT EXISTS '{DB_USER}'@'localhost' IDENTIFIED BY '{DB_PASSWORD}';")
-    print(f"✅ Utilisateur '{DB_USER}'@'localhost' créé ou existant.")
-
-    # 3. Créer l'utilisateur distant
-    print(f"\n🌍 Création de l'utilisateur '{DB_USER}'@'%'...")
-    cursor.execute(f"CREATE USER IF NOT EXISTS '{DB_USER}'@'%' IDENTIFIED BY '{DB_PASSWORD}';")
-    print(f"✅ Utilisateur '{DB_USER}'@'%' créé ou existant.")
-
-    # 4. Donner les permissions
-    print(f"\n🔑 Attribution des permissions sur '{DB_NAME}'...")
-    cursor.execute(f"GRANT ALL PRIVILEGES ON `{DB_NAME}`.* TO '{DB_USER}'@'localhost' WITH GRANT OPTION;")
-    cursor.execute(f"GRANT ALL PRIVILEGES ON `{DB_NAME}`.* TO '{DB_USER}'@'%' WITH GRANT OPTION;")
-    cursor.execute("FLUSH PRIVILEGES;")
-    print(f"✅ Permissions attribuées à '{DB_USER}'.")
-
-    conn.commit()
-    print("\n🎉 Configuration terminée avec succès !")
-
-except pymysql.MySQLError as e:
-    conn.rollback()
-    print(f"\n❌ Erreur SQL : {e}")
-    sys.exit(1)
-except Exception as e:
-    conn.rollback()
-    print(f"\n❌ Erreur inattendue : {e}")
-    sys.exit(1)
-finally:
-    if 'conn' in locals() and conn.open:
-        conn.close()
-        print("\n🔌 Connexion fermée.")
+print("\n🔧 Exécution des commandes SQL via sudo mysql...")
+for i, cmd in enumerate(commands, 1):
+    print(f"\n{i}. Exécution : {cmd.split()[0]}...")
+    try:
+        result = subprocess.run(
+            ["sudo", "mysql", "-e", cmd],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        print(f"   ✅ Succès.")
+    except subprocess.CalledProcessError as e:
+        print(f"   ❌ Échec : {e.stderr.strip()}")
+        sys.exit(1)
 
 # =============================================================================
 # ✅ VÉRIFIER LA CONNEXION AVEC L'UTILISATEUR CRÉÉ
 # =============================================================================
 print(f"\n🔍 Vérification de la connexion avec '{DB_USER}'...")
 try:
+    import pymysql
     test_conn = pymysql.connect(
         host=DB_HOST,
-        port=DB_PORT,
+        port=int(DB_PORT),
         user=DB_USER,
         password=DB_PASSWORD,
         database=DB_NAME,
@@ -119,5 +84,9 @@ try:
     test_conn.close()
 except pymysql.MySQLError as e:
     print(f"❌ Échec de la connexion avec '{DB_USER}' : {e}")
-    print("   → Vérifiez DB_USER, DB_PASSWORD, DB_NAME et DB_HOST dans votre .env.")
     sys.exit(1)
+except ImportError:
+    print("❌ Le module pymysql n'est pas installé. Installez-le avec : pip install pymysql")
+    sys.exit(1)
+
+print("\n🎉 Configuration terminée avec succès !")
