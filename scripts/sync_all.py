@@ -161,11 +161,21 @@ def count_existing_full_pages():
 
 def download_cve_page(start_index, params, logger):
     import requests
+    import urllib.parse
     headers = {"apiKey": NVD_API_KEY} if NVD_API_KEY else {}
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            resp = requests.get(NVD_API_URL, params={**params, "startIndex": start_index, "resultsPerPage": PAGE_SIZE},
-                              headers=headers, timeout=60)
+            full_params = {**params, "startIndex": start_index, "resultsPerPage": PAGE_SIZE}
+            resp = requests.get(
+                NVD_API_URL,
+                params=full_params,
+                headers=headers,
+                timeout=60
+            )
+            # Debug: Afficher l'URL complète en cas d'erreur
+            if resp.status_code != 200:
+                full_url = f"{NVD_API_URL}?{urllib.parse.urlencode(full_params)}"
+                logger.warning(f"HTTP {resp.status_code} | URL: {full_url}")
             if resp.status_code == 200:
                 data = resp.json()
                 logger.log(f"Page OK: {len(data.get('vulnerabilities',[]))} CVE, total={data.get('totalResults','?')}")
@@ -173,7 +183,6 @@ def download_cve_page(start_index, params, logger):
             elif resp.status_code in (403, 503):
                 time.sleep(RETRY_DELAY * attempt * (2 if resp.status_code == 403 else 1))
             else:
-                logger.error(f"HTTP {resp.status_code}")
                 time.sleep(RETRY_DELAY)
         except Exception as e:
             logger.warning(f"Attempt {attempt}/{MAX_RETRIES}: {e}")
@@ -247,8 +256,19 @@ def download_cve_incremental(last_sync, logger):
     for f in glob.glob(str(RAW_DIR / "cve_delta_page_*.json")):
         os.remove(f)
 
-    params = {"lastModStartDate": last_sync,
-              "lastModEndDate": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000+00:00")}
+    # Corriger le format de date pour l'API NVD (ajouter les millisecondes)
+    last_sync_dt = datetime.fromisoformat(last_sync.replace("Z", "+00:00")) if "Z" in last_sync else datetime.fromisoformat(last_sync)
+    last_mod_end_date = datetime.now(timezone.utc)
+    # Limiter la plage à 120 jours max (limite de l'API NVD)
+    if (last_mod_end_date - last_sync_dt).days > 120:
+        last_sync_dt = last_mod_end_date - timedelta(days=120)
+        logger.warning(f"Limiting start date to 120 days ago: {last_sync_dt}")
+
+    params = {
+        "lastModStartDate": last_sync_dt.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",  # Format ISO 8601 avec Z
+        "lastModEndDate": last_mod_end_date.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+    }
+    logger.log(f"Requesting CVE modified between {params['lastModStartDate']} and {params['lastModEndDate']}")  # Debug
     data = download_cve_page(0, params, logger)
     if not data:
         return False
@@ -256,8 +276,9 @@ def download_cve_incremental(last_sync, logger):
     total_results = data.get("totalResults", 0)
     if total_results == 0:
         state = load_state()
-        state.update({"last_cve_sync":datetime.now(timezone.utc).isoformat(), "last_update":datetime.now(timezone.utc).isoformat()})
+        state.update({"last_cve_sync": datetime.now(timezone.utc).isoformat(), "last_update": datetime.now(timezone.utc).isoformat()})
         save_state(state)
+        logger.log("No new CVE found in the date range.")
         return True
 
     total_downloaded = 0
@@ -270,8 +291,7 @@ def download_cve_incremental(last_sync, logger):
             total_downloaded += len(vulns)
             pbar.update(total_downloaded, f"Page {page}")
             state = load_state()
-            state.update({"delta_pages":page, "delta_downloaded":total_downloaded,
-                         "last_update":datetime.now(timezone.utc).isoformat()})
+            state.update({"delta_pages": page, "delta_downloaded": total_downloaded, "last_update": datetime.now(timezone.utc).isoformat()})
             save_state(state)
             if len(vulns) < PAGE_SIZE:
                 break
@@ -282,7 +302,7 @@ def download_cve_incremental(last_sync, logger):
                 return False
 
     state = load_state()
-    state.update({"last_cve_sync":datetime.now(timezone.utc).isoformat(), "last_update":datetime.now(timezone.utc).isoformat()})
+    state.update({"last_cve_sync": datetime.now(timezone.utc).isoformat(), "last_update": datetime.now(timezone.utc).isoformat()})
     save_state(state)
     logger.success(f"INCREMENTAL SYNC COMPLETE! {total_downloaded:,} CVE")
     return True
