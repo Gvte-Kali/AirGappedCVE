@@ -74,15 +74,16 @@ for cmd in commands:
         sys.exit(1)
 
 # =============================================================================
-# 📥 IMPORTER LE SCHÉMA SQL (SI LE FICHIER EXISTE)
+# 📥 IMPORTER LE SCHÉMA SQL VIA SOCKET UNIX
 # =============================================================================
 if os.path.exists(schema_file):
     print(f"\n📥 Import du schéma SQL depuis {schema_file}...")
     try:
+        cmd = f"sudo mysql --socket=/var/run/mysqld/mysqld.sock {DB_NAME} < {schema_file}"
         subprocess.run(
-            ["sudo", "mysql", DB_NAME, f"< {schema_file}"],
-            check=True,
+            cmd,
             shell=True,
+            check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
