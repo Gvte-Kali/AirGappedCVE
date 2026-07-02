@@ -35,10 +35,13 @@ DB_PORT = os.getenv("DB_PORT")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
+PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SCHEMA_FILE = os.path.join(PROJECT_DIR, "sql", "schema.sql")
 
 # =============================================================================
-# 🛠️ EXÉCUTER LES COMMANDES SQL VIA sudo mysql
+# 🛠️ CRÉER LA BASE ET L'UTILISATEUR VIA sudo mysql
 # =============================================================================
+print("\n🛠️ Création de la base et de l'utilisateur...")
 commands = [
     f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;",
     f"CREATE USER IF NOT EXISTS '{DB_USER}'@'localhost' IDENTIFIED BY '{DB_PASSWORD}';",
@@ -48,21 +51,42 @@ commands = [
     "FLUSH PRIVILEGES;"
 ]
 
-print("\n🔧 Exécution des commandes SQL via sudo mysql...")
-for i, cmd in enumerate(commands, 1):
-    print(f"\n{i}. Exécution : {cmd.split()[0]}...")
+for cmd in commands:
     try:
-        result = subprocess.run(
+        subprocess.run(
             ["sudo", "mysql", "-e", cmd],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
         )
-        print(f"   ✅ Succès.")
+        print(f"   ✅ {cmd.split()[0]}...")
     except subprocess.CalledProcessError as e:
         print(f"   ❌ Échec : {e.stderr.strip()}")
         sys.exit(1)
+
+# =============================================================================
+# 📥 IMPORTER LE SCHÉMA SQL (SI LE FICHIER EXISTE)
+# =============================================================================
+if os.path.exists(SCHEMA_FILE):
+    print(f"\n📥 Import du schéma SQL depuis {SCHEMA_FILE}...")
+    try:
+        subprocess.run(
+            ["sudo", "mysql", f"{DB_NAME}", f"< {SCHEMA_FILE}"],
+            check=True,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        print("   ✅ Schéma importé avec succès.")
+    except subprocess.CalledProcessError as e:
+        print(f"   ❌ Échec de l'import du schéma : {e.stderr.strip()}")
+        print(f"   → Vérifiez que le fichier {SCHEMA_FILE} existe et est valide.")
+        sys.exit(1)
+else:
+    print(f"\n⚠️  Fichier {SCHEMA_FILE} introuvable. Aucune table ne sera créée.")
+    print("   → Exécutez 'asset-manager db import-schema' plus tard pour importer le schéma.")
 
 # =============================================================================
 # ✅ VÉRIFIER LA CONNEXION AVEC L'UTILISATEUR CRÉÉ
@@ -80,13 +104,20 @@ try:
         cursorclass=pymysql.cursors.DictCursor,
         ssl_disabled=True,
     )
-    print(f"✅ Connexion réussie avec '{DB_USER}' sur '{DB_NAME}' !")
+    cursor = test_conn.cursor()
+    cursor.execute("SHOW TABLES;")
+    tables = cursor.fetchall()
+    print(f"   ✅ Connexion réussie avec '{DB_USER}' sur '{DB_NAME}' !")
+    if tables:
+        print(f"   Tables présentes : {', '.join([t[0] for t in tables])}")
+    else:
+        print("   ⚠️  Aucune table trouvée (le schéma n'a pas été importé).")
     test_conn.close()
 except pymysql.MySQLError as e:
-    print(f"❌ Échec de la connexion avec '{DB_USER}' : {e}")
+    print(f"   ❌ Échec de la connexion : {e}")
     sys.exit(1)
 except ImportError:
-    print("❌ Le module pymysql n'est pas installé. Installez-le avec : pip install pymysql")
-    sys.exit(1)
+    print("   ⚠️  pymysql non installé. Impossible de vérifier les tables.")
+    print("   → Installez-le avec : pip install pymysql")
 
 print("\n🎉 Configuration terminée avec succès !")
