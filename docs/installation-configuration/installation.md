@@ -262,7 +262,7 @@ curl -sf http://localhost:8000/health && echo "OK - FastAPI est operationnel" ||
 | Fichier .env | /opt/asset-manager/.env | cat /opt/asset-manager/.env |
 | Service | asset-manager | systemctl status asset-manager |
 | API | http://<IP>:8000 | curl -sf http://localhost:8000/health |
-| Base de données | MariaDB (asset_vuln_manager) | mariadb -u avea_user -p -e "SHOW TABLES;" asset_vuln_manager |
+| Base de données | MariaDB (asset_vuln_manager) | sudo mysql |
 
 ---
 
