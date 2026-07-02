@@ -7,14 +7,14 @@ from dotenv import load_dotenv
 # =============================================================================
 # 🔍 VÉRIFIER LE CHARGEMENT DU .ENV
 # =============================================================================
-env_path = os.path.join(os.path.dirname(__file__), ".env")
+env_path = os.path.join(os.getcwd(), ".env")  # <-- Utilise le répertoire courant
 if not os.path.exists(env_path):
     print(f"❌ Fichier .env introuvable à : {env_path}")
     sys.exit(1)
 
 load_dotenv(env_path)
 
-# Afficher les variables chargées (pour débogage)
+# Afficher les variables chargées
 print("🔑 Variables chargées depuis .env :")
 required_vars = ["DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME"]
 missing_vars = []
@@ -39,12 +39,11 @@ DB_NAME = os.getenv("DB_NAME")
 # =============================================================================
 # 📂 CHEMIN VERS LE FICHIER SCHEMA.SQL (CORRIGÉ)
 # =============================================================================
-# On part du répertoire du script (setup_database.py) pour trouver le projet
-script_dir = os.path.dirname(os.path.abspath(__file__))
-project_dir = os.path.dirname(script_dir)  # /opt/asset-manager
-schema_file = os.path.join(project_dir, "sql", "schema.sql")
+# On utilise le répertoire courant (d'où le script est lancé)
+current_dir = os.getcwd()  # /opt/asset-manager
+schema_file = os.path.join(current_dir, "sql", "schema.sql")
 
-print(f"\n📂 Chemin du projet : {project_dir}")
+print(f"\n📂 Répertoire courant : {current_dir}")
 print(f"📄 Chemin du schéma : {schema_file}")
 
 # =============================================================================
@@ -93,7 +92,7 @@ if os.path.exists(schema_file):
         print(f"   ❌ Échec de l'import du schéma : {e.stderr.strip()}")
         sys.exit(1)
 else:
-    print(f"\n⚠️  Fichier {schema_file} introuvable.")
+    print(f"\n❌ Fichier {schema_file} introuvable.")
     sys.exit(1)
 
 # =============================================================================
@@ -126,6 +125,6 @@ except pymysql.MySQLError as e:
     sys.exit(1)
 except ImportError:
     print("   ⚠️  pymysql non installé. Impossible de vérifier les tables.")
-    print("   → Installez-le avec : pip install pymysql")
+    sys.exit(1)
 
 print("\n🎉 Configuration terminée avec succès !")
