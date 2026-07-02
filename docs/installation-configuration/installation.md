@@ -63,27 +63,32 @@ mariadb -u root -e "DELETE FROM mysql.user WHERE User=''; DELETE FROM mysql.user
 ### 4. Vérification
 
 ```bash
-ss -tunlp | grep 3306
-mariadb -u root -e "SELECT 1;"
+sudo systemctl status mariadb
 ```
-
+Si vous voyez "active" c'est que le service tourne. ( fermer en appuyant sur 'q' )
 ---
 
 ## 📌 Etape 2 : Clone du dépôt
 
-### 1. Suppression du dossier existant (si nécessaire)
+### 1. Suppression du dossier existant (si précédente installation présente sur le système)
 
 ```bash
 rm -rf /opt/asset-manager
 ```
 
-### 2. Clone du dépôt GitHub
+### 2. Création du dossier cible pour le projet et attribution des droits pour le user actuel
 
 ```bash
-mkdir -p /opt/asset-manager && git clone https://github.com/Gvte-Kali/AirGappedCVE.git /opt/asset-manager
+sudo mkdir -p /opt/asset-manager && sudo chown $USER:$USER /opt/asset-manager
 ```
 
-### 3. Vérification du clone
+### 3. Clone du projet github
+
+```bash
+git clone https://github.com/Gvte-Kali/AirGappedCVE.git /opt/asset-manager
+```
+
+### 4. Vérification du clone
 
 ```bash
 ls /opt/asset-manager/main.py /opt/asset-manager/requirements.txt /opt/asset-manager/sql/schema.sql
@@ -93,39 +98,29 @@ ls /opt/asset-manager/main.py /opt/asset-manager/requirements.txt /opt/asset-man
 
 ## 📌 Etape 3 : Configuration de l'environnement (.env)
 
-### 1. Création du fichier .env
+### 1. Configuration du fichier .env
 
-> ⚠️ Remplacez `avea_user` par votre nom d'utilisateur MariaDB !
-
+> ⚠️ Il est important que le fichier .env soit rempli avec toutes ses variables avant la suite de l'installation !
 ```bash
-cat > /opt/asset-manager/.env << 'EOF'
-# =============================================================================
-# Fichier de configuration - AirGappedCVE
-# =============================================================================
+# SERVER INFOS
+SERVER_IP=LAN_ip_of_the_server
 
-# --- SERVER ---
-SERVER_IP=$(hostname -I | awk '{print $1}' || echo "127.0.0.1")
-SERVER_PORT=8000
-
-# --- DATABASE ---
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_NAME=asset_vuln_manager
-DB_USER=avea_user
-DB_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
-
-# --- API KEYS (optionnelles) ---
-NVD_API_KEY=
-MISTRAL_API_KEY=
+# API Keys
+NVD_API_KEY=your_nvd_api_key_here
+MISTRAL_API_KEY=your_mistral_api_key_here
 MISTRAL_MODEL=mistral-large-latest
 
-# --- LOGGING ---
-LOG_LEVEL=info
-EOF
+# Database Infos
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=your_user
+DB_PASSWORD=your_db_password_here
+DB_NAME=asset_vuln_manager
 ```
 
-### 2. Sécurisation du fichier .env
 
+### 2. Sécurisation du fichier .env
+Donne l'accès au fichier uniquement à l'utilisateur ayant fait l'installation.
 ```bash
 chmod 600 /opt/asset-manager/.env
 ```
@@ -162,55 +157,43 @@ python3 -m venv /opt/asset-manager/venv
 
 ## 📌 Etape 5 : Configuration de la base de données
 
-### 1. Création de la base et de l'utilisateur
+> ⚠️ Si le fichier `.env` n'est pas correctement rempli, allez le remplir maintenant
 
-> ⚠️ Remplacez `avea_user` et `DB_PASSWORD` par vos valeurs !
+### 1. Intégrer les variables du .env dans les prochaines commandes
+```bash 
+source /opt/asset-manager/.env
+```
+
 
 ```bash
-DB_USER=avea_user
-DB_PASSWORD=$(grep DB_PASSWORD /opt/asset-manager/.env | cut -d'=' -f2)
-mariadb -u root -e "CREATE DATABASE IF NOT EXISTS asset_vuln_manager CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD'; CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD'; GRANT ALL PRIVILEGES ON asset_vuln_manager.* TO '$DB_USER'@'localhost' WITH GRANT OPTION; GRANT ALL PRIVILEGES ON asset_vuln_manager.* TO '$DB_USER'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+mariadb -u root -e "CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; \
+CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD'; \
+CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD'; \
+GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' WITH GRANT OPTION; \
+GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' WITH GRANT OPTION; \
+FLUSH PRIVILEGES;"
 ```
 
 ### 2. Import du schéma SQL
 
 ```bash
-mariadb -u avea_user -p"$DB_PASSWORD" asset_vuln_manager < /opt/asset-manager/sql/schema.sql
+mariadb -u $DB_USER -p"$DB_PASSWORD" $DB_NAME < /opt/asset-manager/sql/schema.sql
 ```
 
 ### 3. Test de connexion
 
 ```bash
-mariadb -u avea_user -p"$DB_PASSWORD" -e "SELECT 1;" && echo "OK - Connexion reussie" || echo "ERREUR - Echec de la connexion"
+mariadb -u $DB_USER -p"$DB_PASSWORD" -e "SELECT 1;" && echo "OK - Connexion reussie" || echo "ERREUR - Echec de la connexion"
 ```
 
 ---
 
 ## 📌 Etape 6 : Configuration du service systemd
 
-### 1. Création du fichier de service
+### 1. Copie du service dans le système de services du serveur
 
 ```bash
-cat > /etc/systemd/system/asset-manager.service << 'EOF'
-[Unit]
-Description=AirGappedCVE - Asset & Vulnerability Manager
-After=network.target mariadb.service
-Wants=mariadb.service
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/asset-manager
-EnvironmentFile=/opt/asset-manager/.env
-ExecStart=/opt/asset-manager/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --log-level info
-Restart=on-failure
-RestartSec=5
-StandardOutput=append:/opt/asset-manager/logs/FastAPI.log
-StandardError=append:/opt/asset-manager/logs/FastAPI.log
-
-[Install]
-WantedBy=multi-user.target
-EOF
+cp /opt/asset-manager/asset-manager.service /etc/systemd/system/asset-manager.service
 ```
 
 ### 2. Rechargement de systemd
@@ -236,31 +219,21 @@ journalctl -u asset-manager -n 20
 
 ## 📌 Etape 7 : Ajout au PATH
 
-### 1. Création du fichier pour /etc/profile.d/
+### 1. Création d'un lien du script asset-manager vers /usr/local/bin/
 
 ```bash
-cat > /etc/profile.d/asset-manager.sh << 'EOF'
-#!/bin/bash
-export PATH="$PATH:/opt/asset-manager/scripts"
-EOF
-chmod +x /etc/profile.d/asset-manager.sh
+sudo ln -sf /opt/asset-manager/scripts/asset-manager.sh /usr/local/bin/asset-manager
 ```
 
-### 2. Ajout au .bashrc de l'utilisateur actuel
+### 2. Solution de repli en cas de non fonctionnement
 
-```bash
-if ! grep -q "asset-manager" ~/.bashrc; then
-    echo "" >> ~/.bashrc
-    echo "# Ajoute par install.sh - AirGappedCVE" >> ~/.bashrc
-    echo 'export PATH="$PATH:/opt/asset-manager/scripts"' >> ~/.bashrc
-fi
-```
+Ajouter un alias dans votre fichier ~/.bashrc : 
+Il faudra ajouter une ligne à la fin du fichier 
+Cette ligne est `alias asset-manager='bash /opt/asset-manager/scripts/asset-manager.sh'`
 
-### 3. Application immédiate
-
-```bash
-export PATH="$PATH:/opt/asset-manager/scripts"
-```
+Pour modifier le fichier : 
+`nano ~/.bashrc` 
+Pour sortir de l'éditeur et sauvegarder le fichier, faire "CTRL + X" puis "CTRL + Y" ( ou "CTRL + O" pour les configurations françaises)
 
 ---
 

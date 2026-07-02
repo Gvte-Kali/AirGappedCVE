@@ -14,7 +14,7 @@ parent: Installation & Configuration
 
 ### Système d'exploitation
 
-- **OS** : Ubuntu Server 22.04 LTS (ou supérieur) / Debian 11+
+- **OS** : Ubuntu Server 22.04 LTS (ou supérieur) / Debian 11+ (Tests uniquement sur Ubuntu 24.04 LTS)
 - **Architecture** : x86_64 (AMD64) ou ARM64
 - **Utilisateur** : Root (ou `sudo`) obligatoire
 
@@ -22,8 +22,8 @@ parent: Installation & Configuration
 
 | Ressource | Minimum | Recommandé |
 |----------|---------|------------|
-| Espace disque | 5 Go | 10 Go |
-| Mémoire RAM | 2 Go | 4 Go |
+| Espace disque | 20 Go | 500 Go |
+| Mémoire RAM | 4 Go | 8 Go |
 | CPU | 2 cœurs | 4 cœurs |
 
 ### Ports réseau
@@ -52,23 +52,15 @@ Les outils suivants doivent être installés avant de lancer l'installation :
 ### Dépendances Python
 
 Python 3.10 ou supérieur est requis. Les dépendances Python sont installées automatiquement via `pip` dans un virtualenv.
+Le virtualenv est utilisé pour isoler le projet et ne pas casser python sur le système en cas de souci sur l'installation des paquets.
 
 ---
 
-## Accès et permissions
-
-### Accès root
-
-Le script d'installation doit être exécuté en root :
-
-```bash
-sudo bash install.sh
-```
 
 ### Accès MariaDB
 
-- Le script configure automatiquement un utilisateur MariaDB dédié
-- Mot de passe root MariaDB : Non modifié par défaut (utilise celui du système)
+- Dans le fichier de configuration `.env`, on configurera les variables nécessaires à la configuration de mariadb.
+- Mot de passe root MariaDB : Non modifié par défaut (utilise celui du système car connexion en `sudo mysql`)
 
 ---
 
