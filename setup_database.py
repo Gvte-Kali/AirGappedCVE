@@ -35,8 +35,17 @@ DB_PORT = os.getenv("DB_PORT")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
-PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SCHEMA_FILE = os.path.join(PROJECT_DIR, "sql", "schema.sql")
+
+# =============================================================================
+# 📂 CHEMIN VERS LE FICHIER SCHEMA.SQL (CORRIGÉ)
+# =============================================================================
+# On part du répertoire du script (setup_database.py) pour trouver le projet
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.dirname(script_dir)  # /opt/asset-manager
+schema_file = os.path.join(project_dir, "sql", "schema.sql")
+
+print(f"\n📂 Chemin du projet : {project_dir}")
+print(f"📄 Chemin du schéma : {schema_file}")
 
 # =============================================================================
 # 🛠️ CRÉER LA BASE ET L'UTILISATEUR VIA sudo mysql
@@ -68,11 +77,11 @@ for cmd in commands:
 # =============================================================================
 # 📥 IMPORTER LE SCHÉMA SQL (SI LE FICHIER EXISTE)
 # =============================================================================
-if os.path.exists(SCHEMA_FILE):
-    print(f"\n📥 Import du schéma SQL depuis {SCHEMA_FILE}...")
+if os.path.exists(schema_file):
+    print(f"\n📥 Import du schéma SQL depuis {schema_file}...")
     try:
         subprocess.run(
-            ["sudo", "mysql", f"{DB_NAME}", f"< {SCHEMA_FILE}"],
+            ["sudo", "mysql", DB_NAME, f"< {schema_file}"],
             check=True,
             shell=True,
             stdout=subprocess.PIPE,
@@ -82,11 +91,10 @@ if os.path.exists(SCHEMA_FILE):
         print("   ✅ Schéma importé avec succès.")
     except subprocess.CalledProcessError as e:
         print(f"   ❌ Échec de l'import du schéma : {e.stderr.strip()}")
-        print(f"   → Vérifiez que le fichier {SCHEMA_FILE} existe et est valide.")
         sys.exit(1)
 else:
-    print(f"\n⚠️  Fichier {SCHEMA_FILE} introuvable. Aucune table ne sera créée.")
-    print("   → Exécutez 'asset-manager db import-schema' plus tard pour importer le schéma.")
+    print(f"\n⚠️  Fichier {schema_file} introuvable.")
+    sys.exit(1)
 
 # =============================================================================
 # ✅ VÉRIFIER LA CONNEXION AVEC L'UTILISATEUR CRÉÉ
@@ -111,7 +119,7 @@ try:
     if tables:
         print(f"   Tables présentes : {', '.join([t[0] for t in tables])}")
     else:
-        print("   ⚠️  Aucune table trouvée (le schéma n'a pas été importé).")
+        print("   ⚠️  Aucune table trouvée.")
     test_conn.close()
 except pymysql.MySQLError as e:
     print(f"   ❌ Échec de la connexion : {e}")
