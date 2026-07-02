@@ -71,6 +71,7 @@ declare -A COMMANDS=(
     ["db:connect"]="cmd_db_connect"      # <-- "db:connect" au lieu de "db:db-connect"
     ["db:backup"]="cmd_db_backup"
     ["db:import"]="cmd_db_import"
+    ["db:import-schema"]="cmd_db_import_schema"
     ["db:schema"]="cmd_db_schema"
     ["db:size"]="cmd_db_size"
     ["db:vacuum"]="cmd_db_vacuum"
@@ -170,6 +171,7 @@ show_category_help() {
                 "cmd_db_connect") desc="Se connecte directement à MariaDB" ;;
                 "cmd_db_backup") desc="Effectue un dump complet de la BDD" ;;
                 "cmd_db_import") desc="Importe un fichier SQL vers la BDD" ;;
+                "cmd_db_import_schema") desc="Importe le schéma SQL par défaut" ;;
                 "cmd_db_schema") desc="Génère le schéma SQL de la BDD" ;;
                 "cmd_db_size") desc="Affiche la taille des tables en Mo" ;;
                 "cmd_db_vacuum") desc="Optimise les tables corrélations et cve" ;;
@@ -489,6 +491,24 @@ cmd_db_import() {
     fi
 
     rm -f "$temp_file"
+}
+
+cmd_db_import_schema() {
+    clear
+    local schema_file="${1:-$PROJECT_DIR/sql/schema.sql}"
+
+    if [ ! -f "$schema_file" ]; then
+        echo "❌ Fichier schema.sql introuvable : $schema_file"
+        echo "   Utilisation : asset-manager db import-schema [/chemin/vers/schema.sql]"
+        exit 1
+    fi
+
+    if ! check_mariadb; then
+        exit 1
+    fi
+
+    echo "📥 Import du schéma SQL ($schema_file) vers $DB_NAME..."
+    cmd_db_import "$schema_file"
 }
 
 # --- COMMANDES CORRÉLATIONS ---
