@@ -143,13 +143,13 @@ python3 -m venv /opt/asset-manager/venv
 /opt/asset-manager/venv/bin/pip install --upgrade pip
 ```
 
-### 3. Installation des dépendances
+### 3. Installation des dépendances dans le venv
 
 ```bash
 source /opt/asset-manager/venv/bin/activate && /opt/asset-manager/venv/bin/pip install -r /opt/asset-manager/requirements.txt
 ```
 
-### 4. Vérification des dépendances critiques
+### 4. Vérification des dépendances critiques du venv
 
 ```bash
 source /opt/asset-manager/venv/bin/activate && /opt/asset-manager/venv/bin/pip show fastapi pymysql reportlab uvicorn python-dotenv >/dev/null && echo "OK - Toutes les dependances sont installees" || echo "ERREUR - Dependances manquantes"

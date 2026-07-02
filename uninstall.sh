@@ -22,5 +22,5 @@ sudo systemctl disable asset-manager asset-manager-dev 2>/dev/null || true
 sudo rm -f /etc/systemd/system/asset-manager.service
 sudo rm -f /etc/systemd/system/asset-manager-dev.service
 sudo systemctl daemon-reload
-
+clear
 echo "Désinstallation terminée. Veuillez redémarrer votre système pour finaliser la suppression des services."
