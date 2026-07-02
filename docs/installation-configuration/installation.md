@@ -101,6 +101,7 @@ ls /opt/asset-manager/main.py /opt/asset-manager/requirements.txt /opt/asset-man
 ### 1. Configuration du fichier .env
 
 > ⚠️ Il est important que le fichier .env soit rempli avec toutes ses variables avant la suite de l'installation !
+
 ```bash
 # SERVER INFOS
 SERVER_IP=LAN_ip_of_the_server
@@ -116,6 +117,7 @@ DB_PORT=3306
 DB_USER=your_user
 DB_PASSWORD=your_db_password_here
 DB_NAME=asset_vuln_manager
+
 ```
 
 
@@ -164,20 +166,23 @@ python3 -m venv /opt/asset-manager/venv
 source /opt/asset-manager/.env
 ```
 
+### 2. Setup de la base de données
 
-```bash
-mariadb -u root -e "CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; \
-CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD'; \
-CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD'; \
-GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' WITH GRANT OPTION; \
-GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' WITH GRANT OPTION; \
-FLUSH PRIVILEGES;"
+Se connecter via `sudo mysql`puis taper les commandes suivantes en adaptant les variables par celles notées dans votre fichier `.env` :
+
+```sql
+CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
+CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD';
+GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
 ```
 
-### 2. Import du schéma SQL
+### 3. Import du schéma SQL
 
 ```bash
-mariadb -u $DB_USER -p"$DB_PASSWORD" $DB_NAME < /opt/asset-manager/sql/schema.sql
+sudo mysql < /opt/asset-manager/sql/schema.sql
 ```
 
 ### 3. Test de connexion
@@ -271,8 +276,8 @@ curl -sf http://localhost:8000/health && echo "OK - FastAPI est operationnel" ||
 | Probleme | Solution |
 |----------|----------|
 | Port 8000 occupé | ss -tunlp | grep 8000 -> Tuez le processus avec kill -9 <PID> |
-| MariaDB ne démarre pas | journalctl -u mariadb -n 50 |
-| FastAPI ne répond pas | journalctl -u asset-manager -n 50 |
+| MariaDB ne démarre pas, affichage des logs | journalctl -u mariadb -n 50 |
+| FastAPI ne répond pas, affichage des logs | journalctl -u asset-manager -n 50 |
 | Dépendances Python manquantes | /opt/asset-manager/venv/bin/pip install -r /opt/asset-manager/requirements.txt |
 | Permission refusée | Exécutez les commandes en sudo |
 
@@ -296,3 +301,4 @@ rm -rf /opt/asset-manager
 rm -f /etc/profile.d/asset-manager.sh
 sed -i '/# Ajoute par install.sh - AirGappedCVE/,/export PATH.*asset-manager/d' ~/.bashrc
 ```
+La suppression de la Base de données n'est pas obligatoire car il est possible qu'il reste un autre composant qui utilise une base de données mariaDB sur le système.

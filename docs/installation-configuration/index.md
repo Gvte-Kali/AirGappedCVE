@@ -14,3 +14,4 @@ has_children: true
 
 - [📋 Prérequis]({{ site.baseurl }}/installation-configuration/prerequis) — Configuration système requise
 - [🛠️ Guide d'installation]({{ site.baseurl }}/installation-configuration/installation) — Procédure d'installation étape par étape
+- [1️⃣ Première Utilisation]({{ site.baseurl }}/installation-configuration/premiere-utilisation) - Procédure de démarrage
