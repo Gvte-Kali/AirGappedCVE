@@ -224,6 +224,13 @@ FLUSH PRIVILEGES;
 mariadb -u $DB_USER -p"$DB_PASSWORD" -e "SELECT 1;" && echo "OK - Connexion reussie" || echo "ERREUR - Echec de la connexion"
 ```
 
+### 4. Import schéma SQL
+
+```bash
+venv/bin/python3 ./setup_database.py
+```
+
+
 ---
 
 ## 📌 Etape 6 : Configuration du service systemd
@@ -276,12 +283,6 @@ Pour sortir de l'éditeur et sauvegarder le fichier, faire "CTRL + X" puis "CTRL
 ---
 
 ## 📌 Etape 8 : Vérifications finales
-
-### 0. Import du schéma SQL
-
-```bash
-asset-manager db import-schema /opt/asset-manager/sql/schema.sql
-```
 
 
 ### 1. Test du health endpoint FastAPI
