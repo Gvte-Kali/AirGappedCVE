@@ -117,7 +117,7 @@ try:
     tables = cursor.fetchall()
     print(f"   ✅ Connexion réussie avec '{DB_USER}' sur '{DB_NAME}' !")
     if tables:
-        print(f"   Tables présentes : {', '.join([t[0] for t in tables])}")
+        print(f"   Tables présentes : {', '.join([t[f'Tables_in_{DB_NAME}'] for t in tables])}")
     else:
         print("   ⚠️  Aucune table trouvée.")
     test_conn.close()
