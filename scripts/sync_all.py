@@ -1,17 +1,9 @@
 #!/usr/bin/env python3
+
 """
-sync_all.py — Script consolidé pour synchroniser toutes les données CVE
-
-Ordre d'exécution :
-1. download_nvd.py - Télécharge les données NVD et CWE
-2. import_vendors_models.py - Import les vendors et modèles depuis les fichiers NVD
-3. cve_sync.py - Synchronise les CVE dans la base de données
-4. extract_os_versions.py - Extrait les versions OS depuis les CVE
-
+Sync pipeline: Download NVD/CWE, import vendors/models, sync CVE, extract OS versions.
 Usage:
-    python3 scripts/sync_all.py
-    python3 scripts/sync_all.py --verbose
-    python3 scripts/sync_all.py --dry-run
+    python3 scripts/sync_all.py [--verbose] [--dry-run]
 """
 
 import argparse

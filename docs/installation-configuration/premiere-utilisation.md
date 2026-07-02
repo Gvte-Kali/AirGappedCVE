@@ -12,7 +12,7 @@ parent: Installation & Configuration
 
 En une seule commande : 
 ```bash
-bash /opt/asset-manager/scripts/run_all.sh
+bash /opt/asset-manager/scripts/sync_all.sh
 ```
 
 Pour résumer, ce script exécute dans l'ordre : 
