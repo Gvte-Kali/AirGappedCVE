@@ -32,7 +32,9 @@ Pour résumer, ce script exécute dans l'ordre :
 
 Le script de corrélation se trouve à cet emplacement `/opt/asset-manager/scripts/correlate_and_analyze.py`.
 Il peut se lancer de manière simple avec l'outil **asset-manager** : 
-`asset-manager corr launch`
+```bash
+asset-manager corr launch
+```
 
 ---
 
