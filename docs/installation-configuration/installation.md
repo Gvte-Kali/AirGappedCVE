@@ -207,7 +207,7 @@ sudo /opt/asset-manager/venv/bin/python3 /opt/asset-manager/setup_database.py
 
 #### Si le script échoue, il va falloir manuellement gérer le setup en faisant ceci : 
 
-Se connecter via `sudo mysql`puis taper les commandes suivantes en adaptant les variables par celles notées dans votre fichier `.env` :
+Se connecter via `sudo mysql`puis taper les commandes suivantes en adaptant les variables (commençant par "$") par celles notées dans votre fichier `.env` :
 
 ```sql
 CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
