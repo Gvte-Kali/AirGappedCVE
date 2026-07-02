@@ -172,17 +172,22 @@ def download_cve_page(start_index, params, logger):
                 headers=headers,
                 timeout=60
             )
-            # Debug: Afficher l'URL complète en cas d'erreur
-            if resp.status_code != 200:
-                full_url = f"{NVD_API_URL}?{urllib.parse.urlencode(full_params)}"
-                logger.warning(f"HTTP {resp.status_code} | URL: {full_url}")
+            full_url = f"{NVD_API_URL}?{urllib.parse.urlencode(full_params)}"
+
             if resp.status_code == 200:
                 data = resp.json()
                 logger.log(f"Page OK: {len(data.get('vulnerabilities',[]))} CVE, total={data.get('totalResults','?')}")
                 return data
-            elif resp.status_code in (403, 503):
-                time.sleep(RETRY_DELAY * attempt * (2 if resp.status_code == 403 else 1))
+            elif resp.status_code == 404:
+                # L'API retourne 404 si AUCUNE CVE n'est trouvée dans la plage
+                logger.log(f"HTTP 404: Aucune CVE trouvée pour cette plage de dates (URL: {full_url})")
+                return {"vulnerabilities": [], "totalResults": 0}  # <-- Retourne un objet vide au lieu de None
+            elif resp.status_code in (403, 503, 500, 429):
+                retry_after = int(resp.headers.get("Retry-After", 10)) if resp.status_code == 429 else RETRY_DELAY * attempt
+                logger.warning(f"HTTP {resp.status_code} (attempt {attempt}/{MAX_RETRIES}) | Retry after: {retry_after}s")
+                time.sleep(retry_after)
             else:
+                logger.warning(f"HTTP {resp.status_code} (attempt {attempt}/{MAX_RETRIES}) | URL: {full_url}")
                 time.sleep(RETRY_DELAY)
         except Exception as e:
             logger.warning(f"Attempt {attempt}/{MAX_RETRIES}: {e}")
@@ -265,9 +270,9 @@ def download_cve_incremental(last_sync, logger):
         logger.warning(f"Limiting start date to 120 days ago: {last_sync_dt}")
 
     params = {
-        "lastModStartDate": last_sync_dt.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",  # Format ISO 8601 avec Z
-        "lastModEndDate": last_mod_end_date.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-    }
+    "lastModStartDate": last_sync_dt.strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+    "lastModEndDate": last_mod_end_date.strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+}
     logger.log(f"Requesting CVE modified between {params['lastModStartDate']} and {params['lastModEndDate']}")  # Debug
     data = download_cve_page(0, params, logger)
     if not data:

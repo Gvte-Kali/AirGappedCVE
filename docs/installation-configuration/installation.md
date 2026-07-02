@@ -51,7 +51,7 @@ sudo apt-get install -y mariadb-server mariadb-client
 ### 2. Démarrage et activation du service
 
 ```bash
-sudo systemctl enable mariadb && systemctl start mariadb
+sudo systemctl enable --now mariadb
 ```
 
 ### 3. Sécurisation de MariaDB
