@@ -3,7 +3,7 @@
 """
 Sync pipeline: Download NVD/CWE, import vendors/models, sync CVE, extract OS versions.
 Usage:
-    python3 scripts/sync_all.py [--verbose] [--dry-run]
+    python3 scripts/sync_all.py [--verbose] [--dry-run] [--help]
 """
 
 import argparse
