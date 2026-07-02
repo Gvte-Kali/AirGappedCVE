@@ -23,19 +23,19 @@ parent: Installation & Configuration
 ### 1. Mise à jour du système
 
 ```bash
-apt-get update && apt-get upgrade -y
+sudo apt-get update && apt-get upgrade -y
 ```
 
 ### 2. Installation des outils de base
 
 ```bash
-apt-get install -y curl wget git bc iproute2 procps software-properties-common
+sudo apt-get install -y curl wget git bc iproute2 procps software-properties-common
 ```
 
 ### 3. Installation des dépendances Python
 
 ```bash
-apt-get install -y python3-venv python3-pip python3-dev build-essential
+sudo apt-get install -y python3-venv python3-pip python3-dev build-essential
 ```
 
 ---
@@ -45,20 +45,29 @@ apt-get install -y python3-venv python3-pip python3-dev build-essential
 ### 1. Installation de MariaDB
 
 ```bash
-apt-get install -y mariadb-server mariadb-client
+sudo apt-get install -y mariadb-server mariadb-client
 ```
 
 ### 2. Démarrage et activation du service
 
 ```bash
-systemctl enable mariadb && systemctl start mariadb
+sudo systemctl enable mariadb && systemctl start mariadb
 ```
 
 ### 3. Sécurisation de MariaDB
-
+Suivre les recommendations dans cette commande
 ```bash
-mariadb -u root -e "DELETE FROM mysql.user WHERE User=''; DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1'); DROP DATABASE IF EXISTS test; DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'; FLUSH PRIVILEGES;"
+sudo mariadb-secure-installation
 ```
+
+Pour une installation plutôt sécurisée, je conseille ces choix : 
+
+- Ne pas switcher sur l'authentification unix_socket
+- Ne pas changer le mot de passe d'accès root
+- Enlever l'utilisateur 'anonymous'
+- Enlever le remote login de l'utilisateur root ( accès uniquement en sudo mysql )
+- Enlever la base de test
+- Recharger la table des privilèges
 
 ### 4. Vérification
 
@@ -66,6 +75,7 @@ mariadb -u root -e "DELETE FROM mysql.user WHERE User=''; DELETE FROM mysql.user
 sudo systemctl status mariadb
 ```
 Si vous voyez "active" c'est que le service tourne. ( fermer en appuyant sur 'q' )
+
 ---
 
 ## 📌 Etape 2 : Clone du dépôt
@@ -94,13 +104,25 @@ git clone https://github.com/Gvte-Kali/AirGappedCVE.git /opt/asset-manager
 ls /opt/asset-manager/main.py /opt/asset-manager/requirements.txt /opt/asset-manager/sql/schema.sql
 ```
 
+### 5. Aller dans le dossier d'installation
+
+```bash
+cd /opt/asset-manager
+```
+
 ---
 
 ## 📌 Etape 3 : Configuration de l'environnement (.env)
 
-### 1. Configuration du fichier .env
+### 1. Configuration du fichier .env 
 
 > ⚠️ Il est important que le fichier .env soit rempli avec toutes ses variables avant la suite de l'installation !
+
+Pour modifier le fichier, vous pouvez taper 
+```bash 
+nano .env
+```
+Il faudra modifier toutes les variables suivantes
 
 ```bash
 # SERVER INFOS
@@ -122,7 +144,9 @@ DB_NAME=asset_vuln_manager
 
 
 ### 2. Sécurisation du fichier .env
-Donne l'accès au fichier uniquement à l'utilisateur ayant fait l'installation.
+Donne l'accès en lecture et en écriture uniquement au groupe ayant accès à sudo.
+Cette étape est optionnelle mais permet principalement de sécuriser les clés API si le serveur est compromis.
+
 ```bash
 chmod 600 /opt/asset-manager/.env
 ```
@@ -137,22 +161,28 @@ chmod 600 /opt/asset-manager/.env
 python3 -m venv /opt/asset-manager/venv
 ```
 
-### 2. Mise à jour de pip
+### 2. Activation du virtualenv
 
 ```bash
-/opt/asset-manager/venv/bin/pip install --upgrade pip
+source /opt/asset-manager/venv/bin/activate
 ```
 
-### 3. Installation des dépendances dans le venv
+### 3. Mise à jour de pip
 
 ```bash
-source /opt/asset-manager/venv/bin/activate && /opt/asset-manager/venv/bin/pip install -r /opt/asset-manager/requirements.txt
+pip install --upgrade pip
 ```
 
-### 4. Vérification des dépendances critiques du venv
+### 4. Installation des dépendances dans le venv
 
 ```bash
-source /opt/asset-manager/venv/bin/activate && /opt/asset-manager/venv/bin/pip show fastapi pymysql reportlab uvicorn python-dotenv >/dev/null && echo "OK - Toutes les dependances sont installees" || echo "ERREUR - Dependances manquantes"
+pip install -r /opt/asset-manager/requirements.txt
+```
+
+### 5. Vérification des dépendances critiques du venv
+
+```bash
+pip show fastapi pymysql reportlab uvicorn python-dotenv >/dev/null && echo "OK - Toutes les dependances sont installees" || echo "ERREUR - Dependances manquantes"
 ```
 
 ---
@@ -170,7 +200,7 @@ source /opt/asset-manager/.env
 
 Un script va gérer le setup de la base de données : 
 ```bash
-sudo python3 /opt/asset-manager/scripts/setup_database.py
+sudo /opt/asset-manager/venv/bin/python3 /opt/asset-manager/setup_database.py
 ```
 
 #### Si le script fonctionne, passer à l'étape 3
@@ -188,12 +218,6 @@ GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
 ```
 
-### 3. Import du schéma SQL
-
-```bash
-asset-manager db import-schema /opt/asset-manager/sql/schema.sql
-```
-
 ### 3. Test de connexion
 
 ```bash
@@ -207,26 +231,26 @@ mariadb -u $DB_USER -p"$DB_PASSWORD" -e "SELECT 1;" && echo "OK - Connexion reus
 ### 1. Copie du service dans le système de services du serveur
 
 ```bash
-cp /opt/asset-manager/asset-manager.service /etc/systemd/system/asset-manager.service
+sudo cp /opt/asset-manager/asset-manager.service /etc/systemd/system/asset-manager.service
 ```
 
 ### 2. Rechargement de systemd
 
 ```bash
-systemctl daemon-reload
+sudo systemctl daemon-reload
 ```
 
 ### 3. Activation et démarrage du service
 
 ```bash
-systemctl enable asset-manager && systemctl start asset-manager
+sudo systemctl enable --now asset-manager
 ```
 
 ### 4. Vérification du service
 
 ```bash
-systemctl status asset-manager
-journalctl -u asset-manager -n 20
+sudo systemctl status asset-manager
+sudo journalctl -u asset-manager -n 20
 ```
 
 ---
@@ -252,6 +276,13 @@ Pour sortir de l'éditeur et sauvegarder le fichier, faire "CTRL + X" puis "CTRL
 ---
 
 ## 📌 Etape 8 : Vérifications finales
+
+### 0. Import du schéma SQL
+
+```bash
+asset-manager db import-schema /opt/asset-manager/sql/schema.sql
+```
+
 
 ### 1. Test du health endpoint FastAPI
 

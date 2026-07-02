@@ -9,6 +9,9 @@ parent: Installation & Configuration
 **Configuration système requise avant l'installation**
 
 ---
+## Utilisateur
+
+### !!! Utilisateur avec les droits sudo !!!
 
 ## Exigences matérielles et logicielles
 
