@@ -146,13 +146,13 @@ python3 -m venv /opt/asset-manager/venv
 ### 3. Installation des dépendances
 
 ```bash
-/opt/asset-manager/venv/bin/pip install -r /opt/asset-manager/requirements.txt
+source /opt/asset-manager/venv/bin/activate && /opt/asset-manager/venv/bin/pip install -r /opt/asset-manager/requirements.txt
 ```
 
 ### 4. Vérification des dépendances critiques
 
 ```bash
-/opt/asset-manager/venv/bin/pip show fastapi pymysql reportlab uvicorn python-dotenv >/dev/null && echo "OK - Toutes les dependances sont installees" || echo "ERREUR - Dependances manquantes"
+source /opt/asset-manager/venv/bin/activate && /opt/asset-manager/venv/bin/pip show fastapi pymysql reportlab uvicorn python-dotenv >/dev/null && echo "OK - Toutes les dependances sont installees" || echo "ERREUR - Dependances manquantes"
 ```
 
 ---
@@ -168,6 +168,15 @@ source /opt/asset-manager/.env
 
 ### 2. Setup de la base de données
 
+Un script va gérer le setup de la base de données : 
+```bash
+sudo python3 /opt/asset-manager/scripts/setup_database.py
+```
+
+#### Si le script fonctionne, passer à l'étape 3
+
+#### Si le script échoue, il va falloir manuellement gérer le setup en faisant ceci : 
+
 Se connecter via `sudo mysql`puis taper les commandes suivantes en adaptant les variables par celles notées dans votre fichier `.env` :
 
 ```sql
@@ -182,7 +191,7 @@ FLUSH PRIVILEGES;
 ### 3. Import du schéma SQL
 
 ```bash
-sudo mysql < /opt/asset-manager/sql/schema.sql
+asset-manager db import-schema /opt/asset-manager/sql/schema.sql
 ```
 
 ### 3. Test de connexion
