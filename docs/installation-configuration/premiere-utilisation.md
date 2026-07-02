@@ -10,18 +10,21 @@ parent: Installation & Configuration
 
 ## 📌 Etape 1 : Lancement des scripts de setup
 
-En une seule commande : `bash /opt/asset-manager/scripts/run_all.sh`
+En une seule commande : 
+```bash
+bash /opt/asset-manager/scripts/run_all.sh
+```
 
 Pour résumer, ce script exécute dans l'ordre : 
 
 1. Téléchargement de la base NVD
-    `bash /opt/asset-manager/scripts/download_nvd.py`
+    `/opt/asset-manager/scripts/download_nvd.py`
 2. Importer les fabriquants NVD et les modèles : 
-    `bash /opt/asset-manager/scripts/import_vendors_models.py`
+    `/opt/asset-manager/scripts/import_vendors_models.py`
 3. Parser et Importer les CVE correspondant aux frabricant/modèles 
-    `bash /opt/asset-manager/scripts/cve_sync.py`
+    `/opt/asset-manager/scripts/cve_sync.py`
 4. Importer les OS et les versions d'OS
-    `bash /opt/asset-manager/scripts/extract_os_versions.py`
+    `/opt/asset-manager/scripts/extract_os_versions.py`
 
 ---
 

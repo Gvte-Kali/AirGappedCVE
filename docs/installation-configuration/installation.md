@@ -227,7 +227,7 @@ journalctl -u asset-manager -n 20
 ### 1. Création d'un lien du script asset-manager vers /usr/local/bin/
 
 ```bash
-sudo ln -sf /opt/asset-manager/scripts/asset-manager.sh /usr/local/bin/asset-manager
+sudo ln -sf /opt/asset-manager/scripts/asset-manager.sh /usr/local/bin/asset-manager && sudo chmod +x /usr/local/bin/asset-manager
 ```
 
 ### 2. Solution de repli en cas de non fonctionnement
@@ -302,3 +302,6 @@ rm -f /etc/profile.d/asset-manager.sh
 sed -i '/# Ajoute par install.sh - AirGappedCVE/,/export PATH.*asset-manager/d' ~/.bashrc
 ```
 La suppression de la Base de données n'est pas obligatoire car il est possible qu'il reste un autre composant qui utilise une base de données mariaDB sur le système.
+
+Maintenant, vous pouvez faire la procédure de démarrage : 
+- [1️⃣ Première Utilisation]({{ site.baseurl }}/installation-configuration/premiere-utilisation) - Procédure de démarrage
