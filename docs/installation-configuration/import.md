@@ -1,3 +1,8 @@
+---
+title: Import
+nav_order: 4
+parent: Installation & Configuration
+---
 
 # 📥 Import des informations depuis votre logiciel de gestion
 
