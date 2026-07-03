@@ -2,13 +2,6 @@
 """
 Téléchargement des données NVD (CVE) et MITRE (CWE).
 Ne touche PAS à la base de données. Stocke les fichiers bruts sur disque.
-
-Logique de reprise :
-- Si sync_state.json contient last_cve_sync → mode incrémental
-- Sinon, compte les fichiers cve_full_page_*.json existants :
-  - S'il y en a N → re-télécharge la dernière page puis continue
-  - Sinon → part de zéro
-- sync_state.json est mis à jour à chaque page téléchargée
 """
 
 import os
@@ -19,10 +12,9 @@ import glob
 import re
 import requests
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 # ── Forcer le flush de stdout pour la console web ─────────────
-# Sans ça, les print restent dans le buffer et n'apparaissent jamais
 import functools
 print = functools.partial(print, flush=True)
 
@@ -30,7 +22,6 @@ print = functools.partial(print, flush=True)
 BASE_DIR = Path(__file__).resolve().parent.parent / "data" / "nvd"
 RAW_DIR = BASE_DIR / "raw"
 CWE_DIR = BASE_DIR / "cwe"
-STATE_FILE = BASE_DIR / "sync_state.json"
 
 NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 CWE_URL = "https://cwe.mitre.org/data/xml/cwec_latest.xml.zip"
@@ -44,14 +35,12 @@ RETRY_DELAY = 10
 
 DELAY = DELAY_WITH_KEY if NVD_API_KEY else DELAY_WITHOUT_KEY
 
-
 # ── Utilitaires ───────────────────────────────────────────────
 
 def log(msg):
     """Log avec timestamp."""
     ts = datetime.now(timezone.utc).strftime("%H:%M:%S")
     print(f"  [{ts}] {msg}")
-
 
 def ensure_dirs():
     """Crée les répertoires nécessaires."""
@@ -60,29 +49,6 @@ def ensure_dirs():
     log(f"Vérification répertoire CWE: {CWE_DIR}")
     CWE_DIR.mkdir(parents=True, exist_ok=True)
     log("Répertoires OK ✓")
-
-
-def load_state():
-    """Charge l'état de synchronisation."""
-    log(f"Lecture état: {STATE_FILE}")
-    if STATE_FILE.exists():
-        try:
-            with open(STATE_FILE, "r") as f:
-                state = json.load(f)
-            log(f"État chargé: {json.dumps(state, indent=None, default=str)}")
-            return state
-        except (json.JSONDecodeError, IOError) as e:
-            log(f"⚠ Erreur lecture état: {e}")
-            return {}
-    log("Aucun fichier d'état trouvé (premier lancement)")
-    return {}
-
-
-def save_state(state):
-    """Sauvegarde l'état de synchronisation."""
-    with open(STATE_FILE, "w") as f:
-        json.dump(state, f, indent=2, default=str)
-
 
 def count_existing_full_pages():
     """Compte les fichiers cve_full_page_*.json et retourne le nombre et le plus grand index."""
@@ -106,6 +72,32 @@ def count_existing_full_pages():
     log(f"Plus grand index: {max_index}")
     return len(files), max_index
 
+def get_last_raw_file():
+    """Retourne le chemin du dernier fichier cve_*_page_*.json."""
+    files = glob.glob(str(RAW_DIR / "cve_*_page_*.json"))
+    if not files:
+        return None
+    return Path(max(files, key=lambda f: int(re.search(r'cve_\w+_page_(\d+)\.json', f).group(1))))
+
+def get_last_cve_date_from_file(file_path):
+    """Retourne la date de la dernière CVE dans le fichier JSON (toujours en UTC)."""
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            vulns = data.get("vulnerabilities", [])
+            if not vulns:
+                return None
+            last_modified = vulns[-1].get("cve", {}).get("lastModified")
+            if last_modified:
+                # Parser la date et forcer le fuseau horaire UTC
+                dt = datetime.fromisoformat(last_modified.replace("Z", "+00:00") if "Z" in last_modified else last_modified)
+                # Si la date est naive (sans timezone), on l'associe à UTC
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                return dt
+    except Exception:
+        return None
+    return None
 
 def print_progress(downloaded, total, start_time, page):
     """Affiche la progression."""
@@ -125,9 +117,7 @@ def print_progress(downloaded, total, start_time, page):
     bar_len = 30
     filled = int(bar_len * downloaded // total) if total > 0 else 0
     bar = "█" * filled + "░" * (bar_len - filled)
-
     log(f"[{bar}] {downloaded:,}/{total:,} ({pct:.1f}%) | page {page} | {rate_str} | {time_str}")
-
 
 # ── Téléchargement CVE ────────────────────────────────────────
 
@@ -183,11 +173,8 @@ def download_cve_page(start_index, params):
     log(f"✗ ÉCHEC DÉFINITIF après {MAX_RETRIES} tentatives pour startIndex={start_index}")
     return None
 
-
 def download_cve_full():
     """Télécharge toutes les CVE. Reprend là où ça s'est arrêté."""
-    state = load_state()
-
     # Vérifier les pages existantes
     nb_files, max_index = count_existing_full_pages()
 
@@ -201,6 +188,77 @@ def download_cve_full():
         start_index = 0
         log("DÉPART À ZÉRO: aucun fichier existant")
 
+    # --- Lire la date de la dernière CVE dans le dernier fichier raw ---
+    last_raw_file = get_last_raw_file()
+    last_cve_date = None
+    if last_raw_file:
+        last_cve_date = get_last_cve_date_from_file(last_raw_file)
+        if last_cve_date:
+            log(f"Dernière CVE dans {last_raw_file.name}: {last_cve_date}")
+
+    # --- Déterminer la plage de dates ---
+    now = datetime.now(timezone.utc) - timedelta(seconds=1)
+    params = {}
+
+    if last_cve_date:
+        delta_seconds = (now - last_cve_date).total_seconds()
+        if delta_seconds < 60:
+            log("Plage trop courte (<1min). Full sync sans filtre de date.")
+        else:
+            if delta_seconds > 120 * 24 * 3600:
+                log(f"Plage trop grande ({int(delta_seconds//86400)} jours). Découpage en sous-plages de 30 jours.")
+                # Découper en sous-plages de 30 jours
+                date_ranges = []
+                current_start = last_cve_date
+                while current_start < now:
+                    current_end = min(current_start + timedelta(days=30), now)
+                    date_ranges.append((current_start, current_end))
+                    current_start = current_end
+
+                page = resume_page
+                total_downloaded = start_index
+                for i, (range_start, range_end) in enumerate(date_ranges):
+                    sub_params = {
+                        "lastModStartDate": range_start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        "lastModEndDate": range_end.strftime("%Y-%m-%dT%H:%M:%SZ")
+                    }
+                    log(f"Sous-plage {i+1}: {sub_params['lastModStartDate']} → {sub_params['lastModEndDate']}")
+
+                    sub_start_index = 0
+                    while True:
+                        data = download_cve_page(sub_start_index, sub_params)
+                        if not data:
+                            log(f"✗ Échec pour la sous-plage {i+1} à startIndex={sub_start_index}")
+                            return False
+
+                        vulns = data.get("vulnerabilities", [])
+                        if not vulns:
+                            break
+
+                        filename = RAW_DIR / f"cve_full_page_{page:04d}.json"
+                        log(f"Écriture: {filename} ({len(vulns)} CVE)")
+                        with open(filename, "w", encoding="utf-8") as f:
+                            json.dump(data, f, ensure_ascii=False)
+
+                        total_downloaded += len(vulns)
+                        sub_start_index += len(vulns)
+                        page += 1
+                        time.sleep(DELAY)
+
+                print(f"\n============================================================")
+                print(f"  ✓ TÉLÉCHARGEMENT PAR SOUS-PLAGES TERMINÉ !")
+                print(f"  → {total_downloaded:,} CVE en {page} pages")
+                print(f"============================================================")
+                return True
+            else:
+                params = {
+                    "lastModStartDate": last_cve_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "lastModEndDate": now.strftime("%Y-%m-%dT%H:%M:%SZ")
+                }
+                log(f"Plage de dates: {params['lastModStartDate']} → {params['lastModEndDate']}")
+    else:
+        log("Aucune date de dernière CVE trouvée. Full sync sans filtre de date.")
+
     print(f"============================================================")
     print(f"  MODE FULL — Toutes les CVE")
     print(f"  Délai entre requêtes: {DELAY}s")
@@ -208,7 +266,6 @@ def download_cve_full():
     print(f"  startIndex de départ: {start_index}")
     print(f"============================================================")
 
-    params = {}
     batch_start = time.time()
 
     # Première requête pour connaître le total
@@ -241,15 +298,6 @@ def download_cve_full():
     total_downloaded += len(vulns)
     print_progress(total_downloaded, total_results, batch_start, page)
 
-    # Mise à jour état
-    state["mode"] = "full"
-    state["total_results"] = total_results
-    state["last_page_downloaded"] = page
-    state["total_downloaded"] = total_downloaded
-    state["last_update"] = datetime.now(timezone.utc).isoformat()
-    save_state(state)
-    log(f"État sauvegardé (page {page})")
-
     start_index += len(vulns)
     page += 1
 
@@ -262,9 +310,6 @@ def download_cve_full():
         if not data:
             log(f"✗ ERREUR à startIndex={start_index}. Arrêt.")
             log(f"→ {page} pages sauvegardées. Relancez pour reprendre.")
-            state["error"] = f"Arrêt à startIndex={start_index}"
-            state["last_update"] = datetime.now(timezone.utc).isoformat()
-            save_state(state)
             return False
 
         vulns = data.get("vulnerabilities", [])
@@ -281,15 +326,6 @@ def download_cve_full():
         total_downloaded += len(vulns)
         print_progress(total_downloaded, total_results, batch_start, page)
 
-        # Mise à jour état à chaque page
-        state["last_page_downloaded"] = page
-        state["total_downloaded"] = total_downloaded
-        state["last_update"] = datetime.now(timezone.utc).isoformat()
-        if "error" in state:
-            del state["error"]
-        save_state(state)
-        log(f"État sauvegardé (page {page})")
-
         start_index += len(vulns)
         page += 1
 
@@ -304,126 +340,7 @@ def download_cve_full():
     print(f"  → Durée: {elapsed_min}m{elapsed_sec:02d}s")
     print(f"============================================================")
 
-    state["last_cve_sync"] = datetime.now(timezone.utc).isoformat()
-    state["full_complete"] = True
-    state["last_page_downloaded"] = page - 1
-    state["total_downloaded"] = total_downloaded
-    state["last_update"] = datetime.now(timezone.utc).isoformat()
-    if "error" in state:
-        del state["error"]
-    save_state(state)
-    log("État final sauvegardé")
-
     return True
-
-
-def download_cve_incremental(last_sync):
-    """Télécharge les CVE modifiées depuis la dernière synchronisation."""
-    print(f"============================================================")
-    print(f"  MODE INCRÉMENTAL — Depuis {last_sync}")
-    print(f"  Délai entre requêtes: {DELAY}s")
-    print(f"============================================================")
-
-    # Nettoyer les anciens fichiers delta
-    old_deltas = glob.glob(str(RAW_DIR / "cve_delta_page_*.json"))
-    log(f"Nettoyage: {len(old_deltas)} anciens fichiers delta")
-    for f in old_deltas:
-        os.remove(f)
-
-    params = {
-        "lastModStartDate": last_sync,
-        "lastModEndDate": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000+00:00")
-    }
-    log(f"Plage de dates: {params['lastModStartDate']} → {params['lastModEndDate']}")
-
-    start_index = 0
-    page = 0
-    total_downloaded = 0
-    batch_start = time.time()
-    state = load_state()
-
-    # Première requête
-    log("Première requête incrémentale...")
-    data = download_cve_page(start_index, params)
-    if not data:
-        log("✗ FATAL: Impossible de contacter l'API NVD.")
-        return False
-
-    total_results = data.get("totalResults", 0)
-    log(f"CVE modifiées depuis dernière sync: {total_results:,}")
-
-    if total_results == 0:
-        log("✓ Aucune mise à jour nécessaire.")
-        state["last_cve_sync"] = datetime.now(timezone.utc).isoformat()
-        state["last_update"] = datetime.now(timezone.utc).isoformat()
-        save_state(state)
-        return True
-
-    # Première page
-    vulns = data.get("vulnerabilities", [])
-    filename = RAW_DIR / f"cve_delta_page_{page:04d}.json"
-    log(f"Écriture: {filename} ({len(vulns)} CVE)")
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False)
-
-    total_downloaded += len(vulns)
-    print_progress(total_downloaded, total_results, batch_start, page)
-
-    state["delta_pages"] = page
-    state["delta_downloaded"] = total_downloaded
-    state["last_update"] = datetime.now(timezone.utc).isoformat()
-    save_state(state)
-
-    start_index += len(vulns)
-    page += 1
-
-    # Pages suivantes
-    while start_index < total_results:
-        log(f"Attente {DELAY}s...")
-        time.sleep(DELAY)
-
-        data = download_cve_page(start_index, params)
-        if not data:
-            log(f"✗ Erreur à startIndex={start_index}")
-            return False
-
-        vulns = data.get("vulnerabilities", [])
-        if not vulns:
-            log("Page vide. Fin.")
-            break
-
-        filename = RAW_DIR / f"cve_delta_page_{page:04d}.json"
-        log(f"Écriture: {filename} ({len(vulns)} CVE)")
-        with open(filename, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False)
-
-        total_downloaded += len(vulns)
-        print_progress(total_downloaded, total_results, batch_start, page)
-
-        state["delta_pages"] = page
-        state["delta_downloaded"] = total_downloaded
-        state["last_update"] = datetime.now(timezone.utc).isoformat()
-        save_state(state)
-
-        start_index += len(vulns)
-        page += 1
-
-    elapsed = time.time() - batch_start
-    elapsed_min = int(elapsed // 60)
-    elapsed_sec = int(elapsed % 60)
-
-    print(f"\n============================================================")
-    print(f"  ✓ SYNC INCRÉMENTALE TERMINÉE !")
-    print(f"  → {total_downloaded:,} CVE en {page} pages")
-    print(f"  → Durée: {elapsed_min}m{elapsed_sec:02d}s")
-    print(f"============================================================")
-
-    state["last_cve_sync"] = datetime.now(timezone.utc).isoformat()
-    state["last_update"] = datetime.now(timezone.utc).isoformat()
-    save_state(state)
-
-    return True
-
 
 # ── Téléchargement CWE ────────────────────────────────────────
 
@@ -465,18 +382,11 @@ def download_cwe():
             f.write(xml_content)
 
         log("✓ CWE téléchargé avec succès")
-
-        state = load_state()
-        state["last_cwe_sync"] = datetime.now(timezone.utc).isoformat()
-        state["last_update"] = datetime.now(timezone.utc).isoformat()
-        save_state(state)
-
         return True
 
     except Exception as e:
         log(f"✗ Erreur: {type(e).__name__}: {e}")
         return False
-
 
 # ── Point d'entrée ────────────────────────────────────────────
 
@@ -491,47 +401,18 @@ def main():
     print(f"============================================================")
 
     ensure_dirs()
-    state = load_state()
-
-    # Décider du mode CVE
-    last_sync = state.get("last_cve_sync")
-
-    if last_sync:
-        # Mode incrémental : un full a déjà été complété avant
-        log(f"Mode INCRÉMENTAL détecté")
-        log(f"Dernière sync complète: {last_sync}")
-        cve_ok = download_cve_incremental(last_sync)
-    else:
-        # Pas de sync complète → mode full (avec reprise si fichiers existants)
-        nb_files, max_index = count_existing_full_pages()
-        if nb_files > 0:
-            log(f"Mode FULL avec REPRISE détecté")
-            log(f"{nb_files} fichier(s) existant(s), dernier index: {max_index}")
-        else:
-            log(f"Mode FULL depuis ZÉRO détecté")
-            log(f"Aucun fichier CVE existant")
-        cve_ok = download_cve_full()
-
-    # Télécharger les CWE
+    cve_ok = download_cve_full()
     cwe_ok = download_cwe()
 
     # Résumé final
-    state = load_state()
     print(f"\n============================================================")
     print(f"  RÉSUMÉ FINAL")
     print(f"  CVE: {'✓ OK' if cve_ok else '✗ ERREUR'}")
     print(f"  CWE: {'✓ OK' if cwe_ok else '✗ ERREUR'}")
-    if state.get("total_downloaded"):
-        print(f"  CVE total en base locale: {state['total_downloaded']:,}")
-    if state.get("last_cve_sync"):
-        print(f"  Dernière sync CVE: {state['last_cve_sync']}")
-    if state.get("last_cwe_sync"):
-        print(f"  Dernière sync CWE: {state['last_cwe_sync']}")
     print(f"  Fin: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC")
     print(f"============================================================")
 
     return 0 if (cve_ok and cwe_ok) else 1
-
 
 if __name__ == "__main__":
     sys.exit(main())
