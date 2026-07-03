@@ -18,6 +18,20 @@ parent: Installation & Configuration
 
 ---
 
+# 🛠️ Installation automatisée 
+
+### 1. Télécharger le fichier .env et modifier les variables 
+```bash
+wget https://raw.githubusercontent.com/Gvte-Kali/AirGappedCVE/refs/heads/main/.env.example && mv .env.example .env && nano .env
+```
+
+### 2. Lancer l'installateur automatique
+```bash 
+curl -s https://raw.githubusercontent.com/Gvte-Kali/AirGappedCVE/refs/heads/main/install.sh | sudo bash
+```
+
+# Si l'installateur par défaut ne fonctionne pas, veuillez passer aux instruction manuelles ci-dessous
+
 ## 📌 Etape 0 : Préparation de l'environnement
 
 ### 1. Mise à jour du système
