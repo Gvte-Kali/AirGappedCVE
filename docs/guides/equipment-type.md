@@ -10,106 +10,25 @@ nav_order: 3
 
 ---
 
-## ❓ **2 Questions fondamentales**
+# Worflow
 
-### 1️⃣ **Quelle est la source du vendor NVD ?**
+Pour configurer un type d'équipement, naviguez dans outils > Paramètres corrélation ( __http://URL/ui/parametres__ )
 
-| Source | `vendor_source` | Exemples |
-|--------|-----------------|----------|
-| **OS** | `os_fk` | PC, serveurs, laptops |
-| **Firmware** | `fw_fk` | Switches, routeurs |
-| **Matériel** | `materiel` | NAS, caméras, lecteurs biométriques |
-| **Auto** | `detection_auto` | Essaie os_fk → fw_fk → OS textuel → vendor matériel |
+Dépliez le menu déroulant "Types d'équipements"
 
-### 2️⃣ **Quel champ de version utiliser ?**
+Ici vous avez un menu qui va vous permettre de gérer tous les types d'équipements des assets de votre inventaire.
+Vous pouvez ajouter un nouveau type d'équipement via le bouton "+ nouveau type".
 
-| Champ | Option | Exemples |
-|-------|--------|----------|
-| OS normalisé FK | `use_os_version = 1` | Ubuntu 22.04, DSM 7.2 |
-| Version OS texte libre | `use_version_os = 1` | "Windows Server 2019" |
-| Firmware FK | `use_version_firmware = 1` | Firmware switch |
-| BIOS FK | `use_version_bios = 1` | BIOS UEFI |
+Les champs renseignés ici sont très importants car ils vont permettre de gérer une grosse partie de la corrélation.
+Les champs qui sont cochés sont les champs qui seront analysés par le moteur de corrélation.
 
----
+Explication des champs à renseigner : 
 
-## 🌳 **Arbre de décision**
-
-```
-L'équipement a un OS installé (Windows, Linux, DSM…) ?
-│
-├── OUI
-│     ├── L'OS est la source principale de CVE ?
-│     │     ├── OUI → vendor_source = "os_fk"
-│     │     │         use_os_version = 1
-│     │     │         use_version_os = 1 (sauf Windows Server)
-│     │     └── NON → vendor_source = "materiel"
-│     │               use_os_version = 1
-│     │
-│     └── Ex: serveur Windows → os_fk, os=1, version_os=0
-│           NAS Synology → materiel, os=1, version_os=1
-│
-└── NON (équipement réseau, caméra, lecteur…)
-      ├── A un firmware versionné ?
-      │     ├── OUI → vendor_source = "fw_fk" ou "materiel"
-      │     │         use_version_firmware = 1
-      │     └── NON → vendor_source = "materiel"
-      │               aucun champ version à activer
-      │
-      └── Ex: switch → materiel, firmware=1
-            caméra → materiel, firmware=1
-```
-
----
-
-## 📋 **Configurations types**
-
-### Serveur Windows / Linux
-
-```yaml
-vendor_source: os_fk
-use_os_version: 1
-use_version_os: 0  # builds Windows non comparables
-use_version_firmware: 0
-use_version_bios: 0
-```
-
-### NAS Synology / QNAP
-
-```yaml
-vendor_source: materiel
-use_os_version: 1
-use_version_os: 1
-use_version_firmware: 0
-use_version_bios: 0
-```
-
-### Switch / Routeur
-
-```yaml
-vendor_source: fw_fk  # ou materiel
-use_os_version: 0
-use_version_os: 0
-use_version_firmware: 1
-use_version_bios: 0
-```
-
-### Caméra IP / Lecteur biométrique
-
-```yaml
-vendor_source: materiel
-use_os_version: 0
-use_version_os: 0
-use_version_firmware: 1
-use_version_bios: 0
-```
-
----
-
-## 🎯 **Options avancées**
-
-| Option | Description | Défaut |
-|--------|-------------|--------|
-| `correlation_enabled` | Activer la corrélation pour ce type | 1 |
-| `auto_correlate` | Lancer automatiquement la corrélation | 1 |
-| `default_criticite` | Criticité par défaut | moyen |
-| `default_statut` | Statut par défaut | actif |
+| Nom du champ | Explication | Commentaire |
+| ------------ | ----------- | -------- |
+| Code | Le nom en base de données | C'est plus sympa si vous mettez des underscores `_`au lieu de mettre des espaces |
+| Label | Le nom qui sera affiché au niveau de tous les menus déroulants | Choisir un nom compréhensible et simple |
+| OS (normalisé NVD) | OS déjà existant dans les référentiels NVD | Vérifier l'existence dans `http://URL/ui/os-versions` avant de cocher|
+| Version OS | Vérification de la version de l'OS, qu'il soit normé ou non.  | Si vous avez coché OS, il est pertinent de cocher Version OS aussi |
+| Firmware | Vérification de la version du firmware renseignée | A cocher pour tout ce qui va être IoT, equipements réseaux,... |
+| BIOS | Vérification de la version du BIOS renseignée | A voir au cas par cas |
