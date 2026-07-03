@@ -26,16 +26,10 @@ parent: Installation & Configuration
 sudo apt-get update && apt-get upgrade -y
 ```
 
-### 2. Installation des outils de base
+### 2. Installation des outils de base et des dépendances python
 
 ```bash
-sudo apt-get install -y curl wget git bc iproute2 procps software-properties-common
-```
-
-### 3. Installation des dépendances Python
-
-```bash
-sudo apt-get install -y python3-venv python3-pip python3-dev build-essential
+sudo apt-get install -y curl wget git bc iproute2 procps software-properties-common rsync openssh-client gzip cifs-utils python3-venv python3-pip python3-dev build-essential
 ```
 
 ---

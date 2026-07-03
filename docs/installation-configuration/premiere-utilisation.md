@@ -8,37 +8,17 @@ parent: Installation & Configuration
 
 ## ⚠️ Avant de commencer quoi que ce soit, il faut que les clés API dans le fichier .env soient fonctionnelles
 
-## 📌 Etape 1 : Lancement des scripts de setup
+## 📌 Etape 1 : Lancement du script de setup
 
-En une seule commande : 
-```bash
-bash /opt/asset-manager/scripts/sync_all.sh
-```
+Ce script fais ces étapes : 
+1. Lancement de tous les scripts de téléchargement des bases nvd et import des cve, fabricant, modèles et autres dans la abse de données.
+2. Lancement du script de corrélation
+3. Création d'un dump de la base de données
 
-Pour résumer, ce script exécute dans l'ordre : 
-
-1. Téléchargement de la base NVD
-    `/opt/asset-manager/scripts/download_nvd.py`
-2. Importer les fabriquants NVD et les modèles : 
-    `/opt/asset-manager/scripts/import_vendors_models.py`
-3. Parser et Importer les CVE correspondant aux frabricant/modèles 
-    `/opt/asset-manager/scripts/cve_sync.py`
-4. Importer les OS et les versions d'OS
-    `/opt/asset-manager/scripts/extract_os_versions.py`
 
 ---
 
-## 📌 Etape 2 : Lancement de la première corrélation ( uniquement si vous avez des assets )
-
-Le script de corrélation se trouve à cet emplacement `/opt/asset-manager/scripts/correlate_and_analyze.py`.
-Il peut se lancer de manière simple avec l'outil **asset-manager** : 
-```bash
-asset-manager corr launch
-```
-
----
-
-## 📌 Etape 3 : Création du Cron job 
+## 📌 Etape 2 : Création du Cron job 
 Il faut ajouter un cron job du script `/opt/asset-manager/scripts/run_scheduled_tasks.sh` quotidien.
 Cela va lancer les scripts de téléchargement tous les jours et lancer la corr"lation automatique.
 Pour ajouter le cronjob `sudo crotab -e`et ajouter cette ligne :  
