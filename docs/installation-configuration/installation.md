@@ -118,7 +118,12 @@ cd /opt/asset-manager
 
 > ⚠️ Il est important que le fichier .env soit rempli avec toutes ses variables avant la suite de l'installation !
 
-Pour modifier le fichier, vous pouvez taper 
+Il faut déjà renommer le fichier'.env.example' en '.env'
+```bash
+mv /opt/asset-manager/.env.example /opt/asset-manager/.env
+```
+
+Pour modifier le fichier : 
 ```bash 
 nano .env
 ```

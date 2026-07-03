@@ -3,10 +3,10 @@
   "total_results": 346937,
   "last_page_downloaded": 173,
   "total_downloaded": 346937,
-  "last_update": "2026-07-03T07:41:53.547424+00:00",
-  "last_cwe_sync": "2026-07-03T07:41:53.547413+00:00",
-  "last_cve_sync": "2026-07-03T07:41:51.658192+00:00",
+  "last_update": "2026-07-03T09:27:52.475172+00:00",
+  "last_cwe_sync": "2026-07-03T09:27:52.475153+00:00",
+  "last_cve_sync": "2026-07-03T09:27:50.422116+00:00",
   "full_complete": true,
   "delta_pages": 0,
-  "delta_downloaded": 1632
+  "delta_downloaded": 15
 }
