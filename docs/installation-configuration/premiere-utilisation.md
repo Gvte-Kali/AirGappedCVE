@@ -20,8 +20,13 @@ Ce script fais ces étapes :
 
 ## 📌 Etape 2 : Création du Cron job 
 Il faut ajouter un cron job du script `/opt/asset-manager/scripts/run_scheduled_tasks.sh` quotidien.
-Cela va lancer les scripts de téléchargement tous les jours et lancer la corr"lation automatique.
-Pour ajouter le cronjob `sudo crotab -e`et ajouter cette ligne :  
+Cela va lancer les scripts de téléchargement tous les jours et lancer la corrélation automatique.
+Pour ajouter le cronjob : 
+```bash
+sudo crotab -e
+```
+et ajouter cette ligne :  
+
 ```bash 
 0 2 * * * /bin/bash /opt/asset-manager/scripts/run_scheduled_tasks.sh
 ```

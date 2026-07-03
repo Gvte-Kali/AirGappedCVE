@@ -4,7 +4,7 @@ nav_order: 5
 parent: Installation & Configuration
 ---
 
-# ⚙️ Script de Backup — AirGappedCVE
+# ⚙️ Script de Backup
 
 ---
 
