@@ -151,9 +151,8 @@ DB_NAME=asset_vuln_manager
 ### 2. Sécurisation du fichier .env
 Donne l'accès en lecture et en écriture uniquement au groupe ayant accès à sudo.
 Cette étape est optionnelle mais permet principalement de sécuriser les clés API si le serveur est compromis.
-
 ```bash
-chmod 600 /opt/asset-manager/.env
+chmod 640 /opt/asset-manager/.env
 ```
 
 ---
