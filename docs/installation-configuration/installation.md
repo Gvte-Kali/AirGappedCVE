@@ -30,7 +30,7 @@ wget https://raw.githubusercontent.com/Gvte-Kali/AirGappedCVE/refs/heads/main/.e
 curl -s https://raw.githubusercontent.com/Gvte-Kali/AirGappedCVE/refs/heads/main/install.sh | sudo bash
 ```
 
-# Si l'installateur par défaut ne fonctionne pas, veuillez passer aux instruction manuelles ci-dessous
+# ⚠️ Si l'installateur par défaut ne fonctionne pas, veuillez passer aux instruction manuelles ci-dessous ⚠️
 
 ## 📌 Etape 0 : Préparation de l'environnement
 

@@ -185,8 +185,8 @@ run_with_spinner "Copie du fichier .env vers $INSTALL_DIR/" \
     cp "./.env" "$INSTALL_DIR/.env"
 
 # Sécuriser le fichier .env
-run_with_spinner "Sécurisation du fichier .env (chmod 600)" \
-    chmod 600 "$INSTALL_DIR/.env"
+run_with_spinner "Sécurisation du fichier .env (chmod 640) (user actuel + root)" \
+    chmod 640 "$INSTALL_DIR/.env"
 
 success "Fichier .env copié et sécurisé dans $INSTALL_DIR/."
 
