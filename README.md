@@ -6,7 +6,7 @@ Système de gestion d'assets informatiques et de vulnérabilités de sécurité,
 
 ## 📚 Documentation
 
-🔗 **Documentation complète disponible ici :** [https://gvte-kali.github.io/AirGappedCVE/](https://gvte-kali.github.io/AirGappedCVE/)
+🔗 [https://gvte-kali.github.io/AirGappedCVE/](https://gvte-kali.github.io/AirGappedCVE/)
 
 ---
 
