@@ -25,3 +25,4 @@ documents/*
 schema_export.sql
 routers/__pycache__/*
 backups/*
+.env
