@@ -28,12 +28,10 @@ Solution conçue pour les prestataires IT gérant des environnements **air-gapp�
 ## 🔒 **Contrainte Air-Gap**
 
 Impact sur le scoring des vulnérabilités :
-   Type CVE       | Impact          | Explication                          |
- |----------------|-----------------|--------------------------------------|
- | `AV:N` (Network) | ❌ Pénalisé     | Moins critique en air-gap (pas d'accès Internet) |
- | `AV:L` (Local)   | ✅ Bonifié      | Exploitable localement               |
- | `AV:P` (Physical)| ✅ Bonifié      | Exploitable physiquement             |
+   Type CVE | Impact | Explication |
+ |---------|-------|-------------|
+ | `AV:N` (Network) | ❌ Pénalisé | Moins critique en air-gap (pas d'accès Internet) |
+ | `AV:L` (Local) | ✅ Bonifié  | Exploitable localement |
+ | `AV:P` (Physical) | ✅ Bonifié  | Exploitable physiquement |
 
 ---
-
-## 💻 **Architecture**

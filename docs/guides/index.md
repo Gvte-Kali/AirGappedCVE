@@ -1,6 +1,6 @@
 ---
 title: Guides opérationnels
-nav_order: 8
+nav_order: 3
 has_children: true
 ---
 
