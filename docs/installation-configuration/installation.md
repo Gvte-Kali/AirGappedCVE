@@ -8,6 +8,18 @@ parent: Installation & Configuration
 
 **Procédure d'installation étape par étape avec commandes one-liner**
 
+Overview des étapes :
+
+0. Préparation de l'environnement
+1. Installation de MariaDB
+2. Cloner le dépôt
+3. Configuration de l'environnement (.env)
+4. Création du virtualenv et installation des dépendances Python
+5. Configuration de la base de données
+6. Configuration du service systemd
+7. Ajout au PATH
+8. Vérifications finales
+
 ---
 
 ## ⚠️ Avant de commencer
@@ -196,7 +208,7 @@ source /opt/asset-manager/.env
 
 ### 2. Setup de la base de données
 
-Un script va gérer le setup de la base de données : 
+Un script va gérer le setup de la base de données avec l'import automatique : 
 ```bash
 sudo /opt/asset-manager/venv/bin/python3 /opt/asset-manager/setup_database.py
 ```
@@ -221,13 +233,6 @@ FLUSH PRIVILEGES;
 ```bash
 mariadb -u $DB_USER -p"$DB_PASSWORD" -e "SELECT 1;" && echo "OK - Connexion reussie" || echo "ERREUR - Echec de la connexion"
 ```
-
-### 4. Import schéma SQL
-
-```bash
-venv/bin/python3 ./setup_database.py
-```
-
 
 ---
 
