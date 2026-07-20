@@ -23,15 +23,6 @@ Solution conçue pour les prestataires IT gérant des environnements **air-gapp�
 
 **Particularité** : Fonctionne **sans agent** chez le client. Toutes les données sont saisies manuellement ou importées.
 
----
-
-## 🔒 **Contrainte Air-Gap**
-
-Impact sur le scoring des vulnérabilités :
-| Type CVE | Impact | Explication |
-|----------|--------|-------------|
-| `AV:N` (Network) | ❌ Pénalisé | Moins critique en air-gap (pas d'accès Internet) |
-| `AV:L` (Local) | ✅ Bonifié  | Exploitable localement |
-| `AV:P` (Physical) | ✅ Bonifié  | Exploitable physiquement |
+🔒 Contrainte Air-Gap prise en compte
 
 ---
