@@ -12,6 +12,7 @@ Système de gestion d'assets informatiques et de vulnérabilités de sécurité,
 
 ## 🚀 Installation
 
+**Voir la documentation**
 https://gvte-kali.github.io/AirGappedCVE/installation-configuration/
 
 ---
