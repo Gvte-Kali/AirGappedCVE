@@ -25,12 +25,9 @@ Deux clés API sont nécessaires pour le fonctionnement complet :
 - **Utilité** : Synchronisation des CVE depuis la base NVD
 - **Limite sans clé** : 5 requêtes/30s (au lieu de 50)
 
-### 2. Clé API Mistral AI (payante)
+### 2. Clé API Mistral AI (gratuite)
 - **Obtenir** : [https://console.mistral.ai/api-keys](https://console.mistral.ai/api-keys)
 - **Utilité** : Analyse IA des corrélations CVE/asset
-- **Modèle recommandé** : `mistral-large-latest`
-- **Coût** : Gratuit avec clé API gratuite
-- **Crédits gratuits** : Offerts à la création du compte
 
 ---
 
@@ -54,98 +51,48 @@ Le système tourne sur une seule machine avec les composants suivants :
 - ✅ **Centralisation** : Tous les assets (serveurs, PCs, switches, caméras, NAS...) de tous les clients dans une base unique
 - ✅ **Synchronisation** : Mise à jour automatique des CVE depuis le NVD
 - ✅ **Corrélation** : Détection automatique des CVE concernant vos assets
-- ✅ **Analyse IA** : Évaluation du risque réel avec Mistral AI (contexte air-gap pris en compte)
+- ✅ **Analyse IA** : Évaluation du risque réel avec Mistral AI sur un prompt personnalisable
 - ✅ **Pondération** : Score de risque adapté aux environnements isolés
-- ✅ **API REST** : Interface programmatique complète (FastAPI + Swagger)
-- ✅ **CLI** : Interface en ligne de commande pour les opérations quotidiennes
+- ✅ **API CRUD** : Interface web qui interagit avec une API personnalisée
+- ✅ **CLI** : Interface en ligne de commande pour les opérations quotidiennes et la maintenance
 
 ---
 
 ## 📁 Structure du projet
 
 ```
-/opt/asset-manager/
-├── main.py                    # Point d'entrée FastAPI
-├── database.py                # Connexion MariaDB
-├── requirements.txt           # Dépendances Python
-├── install.sh                # Script d'installation automatique
-├── backup.sh                 # Script de sauvegarde
-├── .env.example               # Template de configuration
+📁/opt/asset-manager/
+├──📁 backups/        # Backups de la base de donnée
 │
-├── routers/                   # Endpoints FastAPI
-│   ├── clients.py
-│   ├── sites.py
-│   ├── assets.py
-│   └── correlations.py
+├──📁 data/           # Toutes les données NVD
 │
-├── scripts/                   # Moteur logique
-│   ├── sync_nvd.py            # Synchronisation CVE/CWE
-│   └── correlate_and_analyze.py # Corrélation + analyse Mistral
+├──📁 docs/           # La documentation de l'application (https://gvte-kali.github.io/AirGappedCVE/)
 │
-├── ui/                        # CLI Typer
-│   └── main.py
+├──📁 documents/      # Les documents générés par l'application et accessibles via la page /documents
 │
-├── sql/
-│   └── schema.sql             # Schéma de la base de données
+├──📁 grafana/        # Fonctionnalité à venir
 │
-├── logs/                      # Logs (non commité)
-│   └── FastAPI.log
+├──📁 logs/           # Les différents fichiers de log
 │
-├── data/                      # Données temporaires (non commité)
-├── documents/                 # Documents générés (non commité)
-└── venv/                      # Virtualenv Python (non commité)
+├──📁 routers/        # Les endpoints de FastAPI
+│
+├──📁 scripts/        # Les scripts lancés par l'app web et par le cron job
+│
+├──📁 sql/            # Le dossier contenant le schema.sql, et autres au besoin
+│
+├──📁 ui/             # Le dossier contenant toutes les pages web
+│
+├──📁 venv/           # Le virtual environment de Python créé lors du setup
+│
+├──📄 asset-manager.service     # Fichier de service créé pour lancer l'app au lancement de l'OS
+├──📄 database.py               # Script de connexion à MariaDB, utilisé par l'API et les pages web
+├──📄 main.py                   # Point d'entrée FastAPI
+├──📄 README.md                 # Ce fichier
+├──📄 requirements.txt          # Dépendances Python
+├──📄 setup_database.py         # Script de mise en place de la base de données
+├──📄 suivi.txt                 # Avancement du développement, fonctionnalités en cours de développement, bugs connus,...
+├──📄 uninstall.sh              # Script de désinstallation de tout le système
 ```
-
----
-
-## 🔧 Gestion quotidienne
-
-### Vérifier le service
-
-```bash
-# État du service FastAPI
-asset-manager status
-
-# Logs FastAPI
-asset-manager logs show
-```
-
-### Redémarrer le service
-
-```bash
-asset-manager fastapi restart
-```
-
-### Accéder à la base de données
-
-```bash
-# En tant que root (unix socket, sans mot de passe)
-asset-manager db connect
-
-```
-
-### Documentation API interactive
-
-Ouvrir dans un navigateur :
-```
-http://<IP_SERVEUR>:8000/docs
-```
-
-### Sauvegarde
-
-```bash
-asset-manager db backup
-```
-
-Crée un dossier `backups_YYYYMMDD_HHMMSS/` avec le projet, le dump SQL, le service systemd et le `.env`.
-
----
-
-## 📖 Documentation complète
-
-Pour plus de détails, consultez la documentation complète :
-
-🔗 **[https://gvte-kali.github.io/AirGappedCVE/](https://gvte-kali.github.io/AirGappedCVE/)**
 
 ---
 
