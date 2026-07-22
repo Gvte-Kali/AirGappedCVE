@@ -35,7 +35,7 @@ NAS_PROTOCOL=smb  # ou ssh, rsync, local
 #### **🔹 Protocole SMB (partage Windows/NAS)**
 
 | Variable | Description | Exemple |
-|----------|-------------|---------|
+|----------|--------|
 | NAS_SMB_SERVER | Adresse IP ou nom du serveur SMB | 192.168.1.100 |
 | NAS_SMB_SHARE | Nom du partage SMB | backup |
 | NAS_SMB_USER | Utilisateur SMB | admin |
