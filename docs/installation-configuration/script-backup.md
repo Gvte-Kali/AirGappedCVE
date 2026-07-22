@@ -33,14 +33,15 @@ NAS_PROTOCOL=smb  # ou ssh, rsync, local
 ```
 
 #### **🔹 Protocole SMB (partage Windows/NAS)**
-| Variable            | Description                          | Exemple                     |
-|---------------------|--------------------------------------|-----------------------------|
-| `NAS_SMB_SERVER`    | Adresse IP ou nom du serveur SMB     | `192.168.1.100`            |
-| `NAS_SMB_SHARE`     | Nom du partage SMB                   | `backup`                   |
-| `NAS_SMB_USER`      | Utilisateur SMB                      | `admin`                    |
-| `NAS_SMB_PASSWORD`  | Mot de passe SMB                     | `votre_mdp`                |
-| `NAS_SMB_DIR`       | Dossier de destination sur le NAS     | `AirGappedCVE`             |
-| `NAS_SMB_MOUNT`     | Point de montage local temporaire    | `/mnt/nas_backup`          |
+
+| Variable | Description | Exemple |
+|----------|-------------|---------|
+| NAS_SMB_SERVER | Adresse IP ou nom du serveur SMB | 192.168.1.100 |
+| NAS_SMB_SHARE | Nom du partage SMB | backup |
+| NAS_SMB_USER | Utilisateur SMB | admin |
+| NAS_SMB_PASSWORD | Mot de passe SMB | votre_mdp |
+| NAS_SMB_DIR | Dossier de destination sur le NAS | AirGappedCVE |
+| NAS_SMB_MOUNT | Point de montage local temporaire    | /mnt/nas_backup |
 
 **Prérequis** :
 ```bash
