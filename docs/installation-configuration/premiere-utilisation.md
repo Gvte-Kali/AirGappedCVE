@@ -10,10 +10,18 @@ parent: Installation & Configuration
 
 ## 📌 Etape 1 : Lancement du script de setup
 
+```bash
+sudo bash /opt/asset-manager/scripts/run_scheduled_tasks.sh
+```
+
 Ce script fais ces étapes : 
 1. Lancement de tous les scripts de téléchargement des bases nvd et import des cve, fabricant, modèles et autres dans la abse de données.
 2. Lancement du script de corrélation
 3. Création d'un dump de la base de données
+
+```bash
+sudo bash /opt/asset-manager/scripts/run_scheduled_tasks.sh
+```
 
 
 ---
