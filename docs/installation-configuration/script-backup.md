@@ -1,4 +1,4 @@
----
+--- 
 title: Script de backup de base de données
 nav_order: 5
 parent: Installation & Configuration
@@ -35,13 +35,13 @@ NAS_PROTOCOL=smb  # ou ssh, rsync, local
 #### **🔹 Protocole SMB (partage Windows/NAS)**
 
 | Variable | Description | Exemple |
-|----------|--------|
-| NAS_SMB_SERVER | Adresse IP ou nom du serveur SMB | 192.168.1.100 |
-| NAS_SMB_SHARE | Nom du partage SMB | backup |
-| NAS_SMB_USER | Utilisateur SMB | admin |
-| NAS_SMB_PASSWORD | Mot de passe SMB | votre_mdp |
-| NAS_SMB_DIR | Dossier de destination sur le NAS | AirGappedCVE |
-| NAS_SMB_MOUNT | Point de montage local temporaire    | /mnt/nas_backup |
+|----------|-------------|---------|
+| `NAS_SMB_SERVER` | Adresse IP ou nom du serveur SMB | 192.168.1.100 |
+| `NAS_SMB_SHARE` | Nom du partage SMB | backup |
+| `NAS_SMB_USER` | Utilisateur SMB | admin |
+| `NAS_SMB_PASSWORD` | Mot de passe SMB | votre_mdp |
+| `NAS_SMB_DIR` | Dossier de destination sur le NAS | AirGappedCVE |
+| `NAS_SMB_MOUNT` | Point de montage local temporaire | /mnt/nas_backup |
 
 **Prérequis** :
 ```bash
@@ -51,13 +51,14 @@ sudo apt install cifs-utils  # Pour mount.cifs
 ---
 
 #### **🔹 Protocole SSH/SCP**
-| Variable            | Description                          | Exemple                     |
-|---------------------|--------------------------------------|-----------------------------|
-| `NAS_SSH_SERVER`    | Adresse IP ou nom du serveur SSH     | `192.168.1.100`            |
-| `NAS_SSH_USER`      | Utilisateur SSH                       | `backup_user`              |
-| `NAS_SSH_PASSWORD`  | Mot de passe SSH (optionnel*)         | `votre_mdp`                |
-| `NAS_SSH_PORT`      | Port SSH                             | `22`                       |
-| `NAS_SSH_DIR`       | Chemin de destination sur le NAS      | `/backup/AirGappedCVE`     |
+
+| Variable | Description | Exemple |
+|----------|-------------|---------|
+| `NAS_SSH_SERVER` | Adresse IP ou nom du serveur SSH | 192.168.1.100 |
+| `NAS_SSH_USER` | Utilisateur SSH | backup_user |
+| `NAS_SSH_PASSWORD` | Mot de passe SSH (optionnel) | votre_mdp |
+| `NAS_SSH_PORT` | Port SSH | 22 |
+| `NAS_SSH_DIR` | Chemin de destination sur le NAS | /backup/AirGappedCVE |
 
 > ⚠️ **Pour éviter de stocker le mot de passe en clair** :
 > Utilisez une **clé SSH** (recommandé) :
@@ -74,11 +75,12 @@ sudo apt install openssh-client
 ---
 
 #### **🔹 Protocole RSYNC**
-| Variable            | Description                          | Exemple                     |
-|---------------------|--------------------------------------|-----------------------------|
-| `NAS_RSYNC_SERVER`   | Adresse IP ou nom du serveur RSYNC   | `192.168.1.100`            |
-| `NAS_RSYNC_USER`     | Utilisateur RSYNC                    | `backup_user`              |
-| `NAS_RSYNC_DIR`      | Chemin de destination (module RSYNC) | `backup/AirGappedCVE`      |
+
+| Variable | Description | Exemple |
+|----------|-------------|---------|
+| `NAS_RSYNC_SERVER` | Adresse IP ou nom du serveur RSYNC | 192.168.1.100 |
+| `NAS_RSYNC_USER` | Utilisateur RSYNC | backup_user |
+| `NAS_RSYNC_DIR` | Chemin de destination (module RSYNC) | backup/AirGappedCVE |
 
 **Prérequis** :
 ```bash
@@ -86,10 +88,12 @@ sudo apt install rsync
 ```
 
 ---
+
 #### **🔹 Dossier local monté (NAS monté via NFS/FUSE)**
-| Variable            | Description                          | Exemple                     |
-|---------------------|--------------------------------------|-----------------------------|
-| `NAS_LOCAL_MOUNT`   | Chemin du dossier monté localement   | `/mnt/nas/backup/AirGappedCVE` |
+
+| Variable | Description | Exemple |
+|----------|-------------|---------|
+| `NAS_LOCAL_MOUNT` | Chemin du dossier monté localement | /mnt/nas/backup/AirGappedCVE |
 
 **Prérequis** :
 Montez manuellement le NAS avant d'exécuter le script :
@@ -98,12 +102,15 @@ sudo mount -t nfs NAS_SERVER:/chemin/partage /mnt/nas
 ```
 
 ---
+
 ### **3. Autres options**
-| Variable          | Description                          | Exemple | Défaut |
-|-------------------|--------------------------------------|---------|--------|
-| `MAX_BACKUPS`     | Nombre max de backups conservés      | `10`    | `5`    |
+
+| Variable | Description | Exemple | Défaut |
+|----------|-------------|---------|--------|
+| `MAX_BACKUPS` | Nombre max de backups conservés | 10 | 5 |
 
 ---
+
 ## **✅ Prérequis système**
 Installez les outils nécessaires selon votre protocole :
 ```bash
@@ -121,6 +128,7 @@ sudo apt install rsync
 ```
 
 ---
+
 ## **🔄 Exécution**
 ```bash
 # Depuis le dossier du projet
