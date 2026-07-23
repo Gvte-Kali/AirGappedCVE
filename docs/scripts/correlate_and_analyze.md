@@ -4,7 +4,7 @@ nav_order: 2
 parent: Scripts
 ---
 
-# **correlate\_and\_analyze.py** — Pipeline de corrélation et analyse Mistral
+# **correlate\_and\_analyze.py**
 
 Pipeline complet de **corrélation CVE/asset** et **analyse contextuelle**.  
 Le script suit une **architecture en 3 phases** :
@@ -172,6 +172,7 @@ python correlate_and_analyze.py analyze [--batch-max N] [--asset-id ID] [--force
 ## **Configuration**
 
 ### **Fichiers de configuration**
+- __Ces paramètres clés sont modifiables dans la page web paramètres__
 
 
 | Fichier          | Description                                                            |
@@ -180,8 +181,6 @@ python correlate_and_analyze.py analyze [--batch-max N] [--asset-id ID] [--force
 | `vuln_types.yml` | Définition des **types de vulnérabilités** (CWE, mots-clés, priorité). |
 | `.env`           | Variables d'environnement (clé API Mistral, accès BDD).                |
 
-
-**Ces Paramètres clés modifiables dans la page web paramètres**
 
 ---
 

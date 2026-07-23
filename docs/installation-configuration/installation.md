@@ -10,15 +10,15 @@ parent: Installation & Configuration
 
 Overview des étapes :
 
-0. Préparation de l'environnement
-1. Installation de MariaDB
-2. Cloner le dépôt
-3. Configuration de l'environnement (.env)
-4. Création du virtualenv et installation des dépendances Python
-5. Configuration de la base de données
-6. Configuration du service systemd
-7. Ajout au PATH
-8. Vérifications finales
+1. Préparation de l'environnement
+2. Installation de MariaDB
+3. Cloner le dépôt
+4. Configuration de l'environnement (.env)
+5. Création du virtualenv et installation des dépendances Python
+6. Configuration de la base de données
+7. Configuration du service systemd
+8. Ajout au PATH
+9. Vérifications finales
 
 ---
 
@@ -30,7 +30,7 @@ Overview des étapes :
 
 ---
 
-## 📌 Etape 0 : Préparation de l'environnement
+## 📌 Etape 1 : Préparation de l'environnement
 
 ### 1. Mise à jour du système
 
@@ -46,7 +46,7 @@ sudo apt-get install -y curl wget git bc iproute2 procps software-properties-com
 
 ---
 
-## 📌 Etape 1 : Installation de MariaDB
+## 📌 Etape 2 : Installation de MariaDB
 
 ### 1. Installation de MariaDB
 
@@ -84,7 +84,7 @@ Si vous voyez "active" c'est que le service tourne. ( fermer en appuyant sur 'q'
 
 ---
 
-## 📌 Etape 2 : Clone du dépôt
+## 📌 Etape 3 : Clone du dépôt
 
 ### 1. Suppression du dossier existant (si précédente installation présente sur le système)
 
@@ -118,7 +118,7 @@ cd /opt/asset-manager
 
 ---
 
-## 📌 Etape 3 : Configuration de l'environnement (.env)
+## 📌 Etape 4 : Configuration de l'environnement (.env)
 
 ### 1. Configuration du fichier .env 
 
@@ -163,7 +163,7 @@ chmod 640 /opt/asset-manager/.env
 
 ---
 
-## 📌 Etape 4 : Création du virtualenv et installation des dépendances Python
+## 📌 Etape 5 : Création du virtualenv et installation des dépendances Python
 
 ### 1. Création du virtualenv
 
@@ -197,7 +197,7 @@ pip show fastapi pymysql reportlab uvicorn python-dotenv >/dev/null && echo "OK 
 
 ---
 
-## 📌 Etape 5 : Configuration de la base de données
+## 📌 Etape 6 : Configuration de la base de données
 
 > ⚠️ Si le fichier `.env` n'est pas correctement rempli, allez le remplir maintenant
 
@@ -236,7 +236,7 @@ mariadb -u $DB_USER -p"$DB_PASSWORD" -e "SELECT 1;" && echo "OK - Connexion reus
 
 ---
 
-## 📌 Etape 6 : Configuration du service systemd
+## 📌 Etape 7 : Configuration du service systemd
 
 ### 1. Copie du service dans le système de services du serveur
 
@@ -265,7 +265,7 @@ sudo journalctl -u asset-manager -n 20
 
 ---
 
-## 📌 Etape 7 : Ajout au PATH
+## 📌 Etape 8 : Ajout au PATH
 
 ### 1. Création d'un lien du script asset-manager vers /usr/local/bin/
 
@@ -285,7 +285,7 @@ Pour sortir de l'éditeur et sauvegarder le fichier, faire "CTRL + X" puis "CTRL
 
 ---
 
-## 📌 Etape 8 : Vérifications finales
+## 📌 Etape 9 : Vérifications finales
 
 
 ### 1. Test du health endpoint FastAPI

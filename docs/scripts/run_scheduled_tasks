@@ -1,0 +1,129 @@
+---
+title: Run Scheduled Tasks
+nav_order: 4
+parent: Scripts
+---
+
+## title: run\_scheduled\_tasks.sh  
+nav\_order: 1  
+parent: Scripts
+
+# **run\_scheduled\_tasks.sh** — Exécution des tâches planifiées
+
+Script **Bash** (version **1.6.0**) conçu pour être exécuté via **cron**.  
+Il orchestrer l'exécution séquentielle des scripts Python et Bash du projet **AirGappedCVE**.
+
+---
+
+## **Fonctionnalités principales**
+
+- **Orchestration centralisée** : Exécute les scripts dans un ordre prédéfini pour garantir la cohérence des données.
+- **Logging simplifié** : Seule la date, l'heure de lancement et le **statut (succès/échec)** sont logués dans `scheduled_tasks.log`.
+- **Logs détaillés délégués** : Chaque script gère ses propres logs dans `$PROJECT_DIR/logs/`.
+
+---
+
+## **Ordre d'exécution**
+
+Le script suit un **ordre strict** pour assurer la validité des données :
+
+
+| Tâche | Script                     | Description                                                                   |
+| ----- | -------------------------- | ----------------------------------------------------------------------------- |
+| **1** | `download_nvd.py`          | Télécharge les données NVD (CVE/CWE) depuis les APIs officielles.             |
+| **1** | `import_vendors_models.py` | Import les vendors et modèles dans MariaDB depuis les fichiers NVD.           |
+| **1** | `cve_sync.py`              | Synchronise les CVE dans la base de données avec filtrage par vendor/product. |
+| **1** | `extract_os_versions.py`   | Extrait et normalise les versions OS depuis les CVE.                          |
+| **2** | `correlate_and_analyze.py` | Effectue la corrélation CVE/assets + analyse IA (Mistral).                    |
+| **3** | `backup.sh`                | Effectue une sauvegarde complète de la base de données.                       |
+
+
+---
+
+## **Comportement**
+
+### **Gestion des logs**
+
+- **Fichier principal** : `$PROJECT_DIR/logs/scheduled_tasks.log`  
+Contient uniquement :
+  - Horodatage de début/fin.
+  - Statut global (succès/échec) de chaque script.
+- **Logs détaillés** :  
+Chaque script (ex: `download_nvd.py`, `backup.sh`) écrit ses propres logs dans un fichier dédié (ex: `logs/download_nvd.log`).
+
+### **Gestion des erreurs**
+
+- Si un script échoue, son **code de sortie** est capturé et logué dans `scheduled_tasks.log`.
+- Les scripts suivants **s'exécutent quand même** (sauf si `set -e` est activé, mais ici `set -euo pipefail` est utilisé avec une gestion explicite des erreurs).
+
+---
+
+## **Utilisation**
+
+### **Planification via cron**
+
+Pour exécuter le script **tous les jours à 2h du matin** :
+
+```bash
+0 2 * * * /opt/asset-manager/scripts/run_scheduled_tasks.sh >> /opt/asset-manager/logs/cron_execution.log 2>&1
+```
+
+---
+
+## **Variables et chemins**
+
+
+| Variable        | Description                 | Valeur par défaut                               |
+| --------------- | --------------------------- | ----------------------------------------------- |
+| `SCRIPT_DIR`    | Répertoire du script        | `$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)` |
+| `PROJECT_DIR`   | Répertoire racine du projet | `$(dirname "$SCRIPT_DIR")`                      |
+| `LOG_DIR`       | Dossier des logs            | `$PROJECT_DIR/logs`                             |
+| `MAIN_LOG_FILE` | Fichier de log principal    | `$LOG_DIR/scheduled_tasks.log`                  |
+
+
+---
+
+## **Fonctions internes**
+
+### **`log_main()`**
+
+- **Rôle** : Log un message dans `MAIN_LOG_FILE` avec horodatage.
+- **Format** : `[YYYY-MM-DD HH:MM:SS] message`
+
+### **`error_main()`**
+
+- **Rôle** : Log une erreur dans `MAIN_LOG_FILE` avec horodatage et préfixe `ERREUR:`.
+- **Format** : `[YYYY-MM-DD HH:MM:SS] ERREUR: message`
+
+### **`run_script()`**
+
+- **Rôle** : Exécute un script et log son statut (succès/échec).
+- **Paramètres** :
+  - `script_name` : Nom du script (pour les logs).
+  - `script_command` : Commande à exécuter.
+- **Comportement** :
+  - Log le début de l'exécution.
+  - Exécute la commande.
+  - Log le succès ou l'échec (avec code de sortie).
+
+
+---
+
+## **Dépannage**
+
+
+| Problème                             | Solution                                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------------------------- |
+| **Script ne s'exécute pas via cron** | Vérifiez les permissions (`chmod +x run_scheduled_tasks.sh`) et le chemin absolu dans cron. |
+| **Logs manquants**                   | Vérifiez que `$PROJECT_DIR/logs` existe et est accessible en écriture.                      |
+| **Script bloqué sur une tâche**      | Vérifiez les logs détaillés du script concerné (ex: `logs/download_nvd.log`).               |
+| **Échec silencieux**                 | Activez le mode debug en ajoutant `set -x` en début de script.                              |
+
+
+---
+
+## **Fichiers liés**
+
+- **Emplacement** : `/opt/asset-manager/scripts/run_scheduled_tasks.sh`
+- **Logs principaux** : `/opt/asset-manager/logs/scheduled_tasks.log`
+- **Logs détaillés** : `/opt/asset-manager/logs/<nom_du_script>.log`

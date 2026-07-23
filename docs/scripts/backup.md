@@ -4,8 +4,8 @@ nav_order: 3
 parent: Scripts
 ---
 
-# Résumé du script `backup.sh` — AirGappedCVE
-**⚠️ Ce script n'a pas été testé sur les backup à distance, si vous voulez vous assurer que les backups fonctionnent correctement, montez un dossier directement via votre système de backup !!**
+# Résumé du script `backup.sh`
+**⚠️ Ce script n'a pas été testé sur les backup à distance, si vous voulez vous assurer que les backups fonctionnent correctement, montez un dossier directement via votre système de backup**
 
 ---
 
