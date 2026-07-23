@@ -32,7 +32,9 @@ Ces scripts sont détaillés en profondeur sur [ cette page ]({{ site.baseurl }}
 ## 📌 Etape 2 : Import de vos assets
 
 Il est impératif d'importer vos assets avant que l'on puisse continuer sur la suite.
+
 Si vous n'avez pas d'assets à importer, vous pouvez continuer.
+
 Pour cela, voir [ cette page ]({{ site.baseurl }}/installation-configuration/import).
 
 ---
@@ -42,7 +44,9 @@ Pour cela, voir [ cette page ]({{ site.baseurl }}/installation-configuration/imp
 **⚠️ Avant de continuer, il faut que l'import de vos assets ait eu lieu**
 
 Il faut ajouter un cron job du script `/opt/asset-manager/scripts/run_scheduled_tasks.sh` quotidien.
+
 Cela va lancer les scripts de téléchargement tous les jours et lancer la corrélation automatique.
+
 Pour ajouter le cronjob : 
 ```bash
 sudo crotab -e
@@ -53,6 +57,7 @@ et ajouter cette ligne :
 0 2 * * * /bin/bash /opt/asset-manager/scripts/run_scheduled_tasks.sh
 ```
 Ce cronjob s'exécute tous les jours à 2H00 du matin ( heure du serveur ). 
+
 Si l'heure ne vous convient pas, vous pouvez toujours la changer avant de sauvegarder.
 
 ---
