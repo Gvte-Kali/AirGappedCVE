@@ -8,25 +8,39 @@ parent: Installation & Configuration
 
 ## ⚠️ Avant de commencer quoi que ce soit, il faut que les clés API dans le fichier .env soient fonctionnelles
 
-## 📌 Etape 1 : Lancement du script de setup
+## 📌 Etape 1 : Lancement des scripts de synchronisation de la base NVD et import en BDD
+
+Lancer ces scripts dans l'ordre : 
 
 ```bash
-sudo bash /opt/asset-manager/scripts/run_scheduled_tasks.sh
+source /opt/asset-manager/venv/bin/activate && python3 /opt/asset-manager/scripts/download_nvd.py
 ```
-
-Ce script fais ces étapes : 
-1. Lancement de tous les scripts de téléchargement des bases nvd et import des cve, fabricant, modèles et autres dans la abse de données.
-2. Lancement du script de corrélation
-3. Création d'un dump de la base de données
-
 ```bash
-sudo bash /opt/asset-manager/scripts/run_scheduled_tasks.sh
+source /opt/asset-manager/venv/bin/activate && python3 /opt/asset-manager/scripts/import_vendors_models.py
+```
+```bash
+source /opt/asset-manager/venv/bin/activate && python3 /opt/asset-manager/scripts/cve_sync.py
+```
+```bash
+source /opt/asset-manager/venv/bin/activate && python3 /opt/asset-manager/scripts/extract_os_versions.py
 ```
 
+Ces scripts sont détaillés en profondeur sur [ cette page ]({{ site.baseurl }}/scripts/nvd_sync).
 
 ---
 
-## 📌 Etape 2 : Création du Cron job 
+## 📌 Etape 2 : Import de vos assets
+
+Il est impératif d'importer vos assets avant que l'on puisse continuer sur la suite.
+Si vous n'avez pas d'assets à importer, vous pouvez continuer.
+Pour cela, voir [ cette page ]({{ site.baseurl }}/installation-configuration/import).
+
+---
+
+## 📌 Etape 3 : Création du cronjob
+
+**⚠️ Avant de continuer, il faut que l'import de vos assets ait eu lieu**
+
 Il faut ajouter un cron job du script `/opt/asset-manager/scripts/run_scheduled_tasks.sh` quotidien.
 Cela va lancer les scripts de téléchargement tous les jours et lancer la corrélation automatique.
 Pour ajouter le cronjob : 
