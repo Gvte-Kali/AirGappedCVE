@@ -31,6 +31,21 @@ from dotenv import load_dotenv
 LOG_PATH = Path("logs/import_vendors_models.log")
 LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
+# Fonction de tronquage des logs
+def truncate_log_keep_last_lines(log_file, max_size_mb=25, lines_to_keep=10000):
+    """Tronque le fichier de log en gardant les dernières `lines_to_keep` lignes si > max_size_mb Mo."""
+    max_size = max_size_mb * 1024 * 1024
+    if not log_file.exists() or log_file.stat().st_size <= max_size:
+        return
+    with open(log_file, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+    lines_to_write = lines[-lines_to_keep:] if len(lines) > lines_to_keep else lines
+    with open(log_file, 'w', encoding='utf-8') as f:
+        f.writelines(lines_to_write)
+
+# Appel pour tronquer le fichier avant de logger
+truncate_log_keep_last_lines(LOG_PATH)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s  %(levelname)-8s  %(message)s",

@@ -5,12 +5,4 @@
 
 A FAIRE : 
 
-Vérifier le fonctionnement de : 
-/scripts/download_nvd.py --> faire un source du venv et ensuite faire python3 /scripts/download_nvd.py
-/scripts/run_scheduled_tasks.sh
-
-Et faire en sorte que tout fonctionne dans le script bash. 
-Si ce n'est pas le cas, faire un script python (launcher) qui fait : 
-1. Les 4 étapes des scripts
-2. Lance la corrélation
-3. Lance le script de backup
+Mettre la doc à jour

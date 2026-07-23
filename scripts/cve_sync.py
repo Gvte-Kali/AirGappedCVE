@@ -18,6 +18,41 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from datetime import datetime
 from database import get_connection
 
+import logging
+
+# Configuration du logging
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOG_DIR = os.path.join(_PROJECT_ROOT, "logs")
+LOG_FILE = os.path.join(LOG_DIR, "cve_sync.log")
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# Fonction de tronquage des logs
+def truncate_log_keep_last_lines(log_file, max_size_mb=25, lines_to_keep=10000):
+    """Tronque le fichier de log en gardant les dernières `lines_to_keep` lignes si > max_size_mb Mo."""
+    max_size = max_size_mb * 1024 * 1024
+    if not os.path.exists(log_file) or os.path.getsize(log_file) <= max_size:
+        return
+    with open(log_file, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+    lines_to_write = lines[-lines_to_keep:] if len(lines) > lines_to_keep else lines
+    with open(log_file, 'w', encoding='utf-8') as f:
+        f.writelines(lines_to_write)
+
+# Appel pour tronquer le fichier avant de logger
+truncate_log_keep_last_lines(LOG_FILE)
+
+# Configurer le logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+file_handler = logging.FileHandler(LOG_FILE)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
 # ──────────────────────────────────────────────
@@ -62,9 +97,9 @@ def load_filters(conn):
         if vname not in vendors_with_models:
             vendor_all.add(vname)
 
-    print(f"[FILTRES] Vendors complets (tout prendre) : {vendor_all or 'aucun'}")
+    logger.info(f"[FILTRES] Vendors complets (tout prendre) : {vendor_all or 'aucun'}")
     for v, ps in vendor_products.items():
-        print(f"[FILTRES] {v} → {ps}")
+        logger.info(f"[FILTRES] {v} → {ps}")
 
     return vendor_all, vendor_products
 
@@ -265,7 +300,7 @@ def process_file(filepath, conn, vendor_all, vendor_products, stats):
         try:
             data = json.load(f)
         except json.JSONDecodeError as e:
-            print(f"  [IGNORÉ] Fichier JSON invalide ou vide : {os.path.basename(filepath)} ({e})")
+            logger.info(f"  [IGNORÉ] Fichier JSON invalide ou vide : {os.path.basename(filepath)} ({e})")
             return
 
     vulnerabilities = data.get("vulnerabilities", [])
@@ -294,37 +329,37 @@ def main():
     nvd_dir = os.getenv("NVD_DATA_DIR", str(BASE_DIR / "data" / "nvd" / "raw"))
 
     if not os.path.isdir(nvd_dir):
-        print(f"[ERREUR] Répertoire NVD introuvable : {nvd_dir}")
-        print("Télécharge les fichiers depuis https://nvd.nist.gov/feeds/json/cve/1.1/")
+        logger.info(f"[ERREUR] Répertoire NVD introuvable : {nvd_dir}")
+        logger.info("Télécharge les fichiers depuis https://nvd.nist.gov/feeds/json/cve/1.1/")
         sys.exit(1)
 
     json_files = sorted(glob.glob(os.path.join(nvd_dir, "*.json")))
     if not json_files:
-        print(f"[ERREUR] Aucun fichier JSON dans {nvd_dir}")
+        logger.info(f"[ERREUR] Aucun fichier JSON dans {nvd_dir}")
         sys.exit(1)
 
-    print(f"[NVD SYNC] {len(json_files)} fichiers trouvés dans {nvd_dir}")
+    logger.info(f"[NVD SYNC] {len(json_files)} fichiers trouvés dans {nvd_dir}")
 
     conn = get_connection()
     try:
         vendor_all, vendor_products = load_filters(conn)
 
         if not vendor_all and not vendor_products:
-            print("[ERREUR] Aucun vendor/product en base. Ajoute des entrées dans product_vendors/product_models.")
+            logger.info("[ERREUR] Aucun vendor/product en base. Ajoute des entrées dans product_vendors/product_models.")
             sys.exit(1)
 
         stats = {"total_cve": 0, "imported": 0, "skipped": 0}
 
         for i, filepath in enumerate(json_files, 1):
             filename = os.path.basename(filepath)
-            print(f"[{i}/{len(json_files)}] {filename}...", end=" ", flush=True)
+            logger.info(f"[{i}/{len(json_files)}] {filename}...")
             process_file(filepath, conn, vendor_all, vendor_products, stats)
-            print(f"OK")
+            logger.info(f"OK")
 
-        print(f"\n[RÉSULTAT]")
-        print(f"  CVE parcourues : {stats['total_cve']}")
-        print(f"  CVE importées  : {stats['imported']}")
-        print(f"  CVE ignorées   : {stats['skipped']}")
+        logger.info(f"\n[RÉSULTAT]")
+        logger.info(f"  CVE parcourues : {stats['total_cve']}")
+        logger.info(f"  CVE importées  : {stats['imported']}")
+        logger.info(f"  CVE ignorées   : {stats['skipped']}")
 
     finally:
         conn.close()

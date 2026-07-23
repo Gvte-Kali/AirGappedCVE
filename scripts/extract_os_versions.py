@@ -23,6 +23,39 @@ if _PROJECT_ROOT not in sys.path:
 from database import get_connection
 import argparse
 import re
+import logging
+
+# Configuration du logging
+LOG_DIR = os.path.join(_PROJECT_ROOT, "logs")
+LOG_FILE = os.path.join(LOG_DIR, "extract_os_versions.log")
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# Fonction de tronquage des logs
+def truncate_log_keep_last_lines(log_file, max_size_mb=25, lines_to_keep=10000):
+    """Tronque le fichier de log en gardant les dernières `lines_to_keep` lignes si > max_size_mb Mo."""
+    max_size = max_size_mb * 1024 * 1024
+    if not os.path.exists(log_file) or os.path.getsize(log_file) <= max_size:
+        return
+    with open(log_file, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+    lines_to_write = lines[-lines_to_keep:] if len(lines) > lines_to_keep else lines
+    with open(log_file, 'w', encoding='utf-8') as f:
+        f.writelines(lines_to_write)
+
+# Appel pour tronquer le fichier avant de logger
+truncate_log_keep_last_lines(LOG_FILE)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+file_handler = logging.FileHandler(LOG_FILE)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -180,9 +213,9 @@ def main():
                         help="Limiter à un vendor spécifique (ex: microsoft)")
     args = parser.parse_args()
 
-    print("\n" + "=" * 65)
-    print("  EXTRACT OS VERSIONS — Depuis les CVE NVD")
-    print("=" * 65 + "\n")
+    logger.info("\n" + "=" * 65)
+    logger.info("  EXTRACT OS VERSIONS — Depuis les CVE NVD")
+    logger.info("=" * 65 + "\n")
 
     conn = get_connection()
     cur = conn.cursor()
@@ -208,7 +241,7 @@ def main():
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     """)
     conn.commit()
-    print("[TABLE] os_versions vérifiée/créée\n")
+    logger.info("[TABLE] os_versions vérifiée/créée\n")
 
     # ── Charger les couples distincts (fabricant, produit) des CVE ───
     vendor_filter = "AND fabricant = %s" if args.vendor else ""
@@ -224,7 +257,7 @@ def main():
     """, query_params)
 
     pairs = cur.fetchall()
-    print(f"Couples (fabricant, produit) distincts : {len(pairs)}\n")
+    logger.info(f"Couples (fabricant, produit) distincts : {len(pairs)}\n")
 
     inserted = 0
     skipped = 0
@@ -239,12 +272,12 @@ def main():
         if entry is None:
             no_match += 1
             if args.verbose:
-                print(f"  [NO MATCH] {vendor} / {product}")
+                logger.info(f"  [NO MATCH] {vendor} / {product}")
             continue
 
         if args.verbose:
             version_str = f" v{entry['version']}" if entry['version'] else ""
-            print(f"  [OK] {vendor}/{product}"
+            logger.info(f"  [OK] {vendor}/{product}"
                   f" → {entry['os_nom']}{version_str}"
                   f" ({entry['type_produit']})")
 
@@ -270,17 +303,17 @@ def main():
 
     conn.close()
 
-    print(f"\n{'='*65}")
+    logger.info(f"\n{'='*65}")
     if args.dry_run:
-        print(f"  DRY-RUN — rien n'a été écrit en base")
+        logger.info(f"  DRY-RUN — rien n'a été écrit en base")
     else:
-        print(f"  ✅ Insérés  : {inserted}")
-        print(f"  ⏭️  Ignorés  : {skipped} (déjà présents)")
-    print(f"  ❓ Sans règle : {no_match} produits non normalisés")
-    print(f"{'='*65}\n")
+        logger.info(f"  ✅ Insérés  : {inserted}")
+        logger.info(f"  ⏭️  Ignorés  : {skipped} (déjà présents)")
+    logger.info(f"  ❓ Sans règle : {no_match} produits non normalisés")
+    logger.info(f"{'='*65}\n")
 
     if no_match > 0 and args.verbose:
-        print(
+        logger.info(
             f"→ Pour couvrir plus de produits, ajoute des règles dans NORMALIZATION_RULES")
 
 
