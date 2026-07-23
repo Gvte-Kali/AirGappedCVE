@@ -1,10 +1,10 @@
 ---
-title: Guides opérationnels
+title: Guides d'utilisation
 nav_order: 3
 has_children: true
 ---
 
-# 🎯 Guides opérationnels
+# 🎯 Guides d'utilisation
 
 **Workflows pratiques pour les opérations courantes**
 

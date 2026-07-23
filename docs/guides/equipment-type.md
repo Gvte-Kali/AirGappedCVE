@@ -1,6 +1,6 @@
 ---
 title: Configurer un type d'équipement
-parent: Guides opérationnels
+parent: Guides d'utilisation
 nav_order: 3
 ---
 

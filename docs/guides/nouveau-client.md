@@ -1,6 +1,6 @@
 ---
 title: Ajouter un client, site et asset
-parent: Guides opérationnels
+parent: Guides d'utilisation
 nav_order: 1
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: Ajouter un fabricant
-parent: Guides opérationnels
+parent: Guides d'utilisation
 nav_order: 2
 ---
 
