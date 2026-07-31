@@ -1,6 +1,6 @@
 ---
-title: Ajouter un client, site et asset
-parent: Guides d'utilisation
+title: Gestion : Clients / Sites / Assets
+parent: Pages "Inventaire"
 nav_order: 1
 ---
 
@@ -11,9 +11,13 @@ nav_order: 1
 ---
 ## 1️⃣ **Créer le client**
 
+![Page Clients](https://raw.githubusercontent.com/Gvte-Kali/AirGappedCVE/refs/heads/main/docs/images/Clients.png)
+
 ## 2️⃣ **Créer le site**
 
-Tous les sites du clients devront être renseignés avant de renseigner les assets
+Tous les sites du clients devront être renseignés avant de renseigner les assets.
+
+![Page Sites](https://raw.githubusercontent.com/Gvte-Kali/AirGappedCVE/refs/heads/main/docs/images/Sites.png)
 
 ---
 
@@ -40,3 +44,5 @@ Un asset a l'obligation d'être assigné à :
 4. Un site ( qui est lié au client )
 
 On pourra donc assigner les assets à toutes ces caractéristiques si elles existent.
+
+![Page Assets](https://raw.githubusercontent.com/Gvte-Kali/AirGappedCVE/refs/heads/main/docs/images/Assets.png)

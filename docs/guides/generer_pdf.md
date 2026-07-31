@@ -19,4 +19,6 @@ Une fois le filtre appliqué, lorsque vous cliquez sur le bouton **'Générer PD
 - Le type de rapport
 - Le nom du fichier
 
-une fois le rapport généré, vous pouvez le retrouver dans l'onglet `http://URL/ui/documents` ou dans le menu **Inventaire** puis **Documents** en haut de la page.
+Une fois le rapport généré, vous pouvez le retrouver dans l'onglet `http://URL/ui/documents` ou dans le menu **Inventaire** puis **Documents** en haut de la page.
+
+![Générer PDF](https://raw.githubusercontent.com/Gvte-Kali/AirGappedCVE/refs/heads/main/docs/images/Vulns_pdf.png)

@@ -15,7 +15,6 @@ La première chose à faire est donc de filtrer.
 En cliquant sur 'Critères de recherche' vous pouvez filtrer l'affichage de la page web.
 
 ![Page Vulnérabilités](https://raw.githubusercontent.com/Gvte-Kali/AirGappedCVE/refs/heads/main/docs/images/Vulns_1.png)
-![Test Local]({{ site.baseurl }}/images/Vunls1.png)
 
 - [Modification des status des CVE]({{ site.baseurl }}/guides/statuts_cve) | Changer les statuts des CVE |
 - [Génération d'un rapport de vulnérabilités]({{ site.baseurl }}/guides/generer_pdf) | Comment générer un rapport en PDF |

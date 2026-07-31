@@ -1,7 +1,7 @@
 ---
 title: Ajouter un fabricant
 parent: Guides d'utilisation
-nav_order: 2
+nav_order: 10
 ---
 
 # 🏭 Ajouter un fabricant

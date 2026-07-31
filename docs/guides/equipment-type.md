@@ -1,7 +1,7 @@
 ---
 title: Configurer un type d'équipement
 parent: Guides d'utilisation
-nav_order: 3
+nav_order: 11
 ---
 
 # ⚙️ Configurer un type d'équipement

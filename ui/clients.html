@@ -473,7 +473,7 @@
         // ── Suppression ────────────────────────────────────────────
         async function supprimerClient(id, nom) {
             if (!confirm(`Supprimer le client "${nom}" ?`)) return;
-            const resp = await fetch(`${API}/${id}`, { method: 'DELETE' });
+            const resp = await fetch(`${API}${id}`, { method: 'DELETE' });
             if (resp.ok) {
                 chargerClients();
             } else {
