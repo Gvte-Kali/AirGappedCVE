@@ -5,7 +5,17 @@ parent: Scripts
 ---
 
 # Résumé du script `backup.sh`
-**⚠️ Ce script n'a pas été testé sur les backup à distance, si vous voulez vous assurer que les backups fonctionnent correctement, montez un dossier directement via votre système de backup**
+
+## **⚠️ Ce script n'a pas été testé sur les backup à distance, si vous voulez vous assurer que les backups fonctionnent correctement, montez un dossier directement via votre système de backup**
+
+Une fois le dossier distant monté, on va faire la sauvegarde dedans.
+Les sauvegardes peuvent s'effectuer depuis l'utilitaire **'asset-manager'** : 
+
+```bash
+asset-manager db backup /path/to/file/file_name
+```
+
+Il est possible de mettre cette commande en cron job dans le cas où 
 
 ---
 
