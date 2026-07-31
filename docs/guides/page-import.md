@@ -1,5 +1,5 @@
 ---
-title: ¨Page d'Import Assets
+title: Page d'Import Assets
 parent: Pages "Inventaire"
 nav_order: 2
 ---
