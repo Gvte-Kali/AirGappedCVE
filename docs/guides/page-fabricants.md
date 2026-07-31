@@ -1,7 +1,17 @@
 ---
 title: Pages de gestion des fabricants
-parent: Pages "Référentiels"
+parent: Pages Référentiels
 nav_order: 1
+---
+
+
+# ⚠️ **Pourquoi c'est critique**
+
+Le `nvd_vendor` est la **clé primaire** de la corrélation CVE.
+
+- ❌ Identifiant incorrect ou absent = **aucune CVE trouvée**
+- ✅ Identifiant exact = corrélation fonctionnelle
+
 ---
 
 # 🏭 Fabricants

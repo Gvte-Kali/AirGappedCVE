@@ -1,6 +1,6 @@
 ---
 title: Pages de gestion des OS et des versions
-parent: Pages "Référentiels"
+parent: Pages Référentiels
 nav_order: 3
 ---
 

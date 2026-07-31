@@ -1,6 +1,6 @@
 ---
 title: Pages de gestion des modèles
-parent: Pages "Référentiels"
+parent: Pages Référentiels
 nav_order: 2
 ---
 

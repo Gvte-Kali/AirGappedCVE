@@ -1,5 +1,5 @@
 ---
-title: Pages "Référentiels"
+title: Pages Référentiels
 parent: Guides d'utilisation
 nav_order: 2
 has_children: true
