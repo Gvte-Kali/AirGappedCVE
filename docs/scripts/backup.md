@@ -7,7 +7,8 @@ parent: Scripts
 # Résumé du script `backup.sh`
 
 **⚠️ Ce script n'a pas été testé sur les backup à distance, si vous voulez vous assurer que les backups fonctionnent correctement, montez un dossier directement via votre système de backup.**
-_Voir la section **Fallback** en pied de page_
+_Voir la section **[ Fallback ]({{ site.baseurl }}/scripts/backup#fallback-sauvegarde-sur-dossier-distant-en-cas-de-non-fonctionnement-de-backupsh)** en pied de page_
+
 
 ## **Aperçu général**
 
