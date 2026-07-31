@@ -27,11 +27,19 @@ Il centralise l'exécution des scripts Python et Bash, et propose une interface 
 ```bash
 asset-manager help
 ```
+ou
+```bash
+asset-manager
+```
 
 ### **Afficher l'aide pour une catégorie**
 
 ```bash
 asset-manager <catégorie> help
+```
+ou
+```bash
+asset-manager <catégorie>
 ```
 
 ### **Exécuter une commande**
@@ -65,34 +73,34 @@ asset-manager <catégorie> <commande> [options]
 
 | Catégorie           | Commande                       | Description                                                 |
 | ------------------- | ------------------------------ | ----------------------------------------------------------- |
-| **FastAPI**         | `fastapi:start`                | Démarre le service FastAPI                                  |
-| **FastAPI**         | `fastapi:stop`                 | Arrête le service FastAPI                                   |
-| **FastAPI**         | `fastapi:restart`              | Redémarre le service FastAPI                                |
-| **FastAPI**         | `fastapi:status`               | Affiche le statut du service FastAPI                        |
-| **Logs**            | `logs:show`                    | Affiche les logs (FastAPI.log) en temps réel                |
-| **Base de données** | `db:connect`                   | Se connecte directement à MariaDB                           |
-| **Base de données** | `db:backup`                    | Effectue un dump complet de la BDD (compressé en .gz)       |
-| **Base de données** | `db:backup --no-compress`      | Effectue un dump non compressé                              |
-| **Base de données** | `db:import <fichier.sql[.gz]>` | Importe un fichier SQL vers la BDD                          |
-| **Base de données** | `db:import-schema`             | Importe le schéma SQL par défaut                            |
-| **Base de données** | `db:schema`                    | Génère le schéma SQL de la BDD                              |
-| **Base de données** | `db:size`                      | Affiche la taille des tables en Mo                          |
-| **Base de données** | `db:vacuum`                    | Optimise les tables `correlations` et `cve`                 |
-| **Base de données** | `db:check`                     | Vérifie l'intégrité des tables                              |
-| **Corrélations**    | `corr:launch`                  | Lance le pipeline de corrélation + analyse (Mistral)        |
-| **Corrélations**    | `corr:clean`                   | Supprime toutes les corrélations (avec double confirmation) |
-| **Documents**       | `docs:list`                    | Liste les PDFs avec taille et date                          |
-| **Documents**       | `docs:clear`                   | Supprime TOUS les PDFs (avec confirmation)                  |
-| **Documents**       | `docs:size`                    | Affiche la taille totale du dossier documents               |
-| **CVE**             | `cve:show`                     | Affiche le COUNT des CVE par statut                         |
-| **Système**         | `sys:info`                     | Affiche RAM, CPU, température, uptime                       |
-| **Système**         | `sys:ports`                    | Vérifie les ports 3000 (Grafana) et 8000 (FastAPI)          |
-| **Système**         | `sys:services`                 | Affiche le statut des services (FastAPI, MariaDB, Grafana)  |
-| **Système**         | `sys:check-env`                | Vérifie que les variables `.env` sont présentes             |
-| **Système**         | `sys:check-db`                 | Vérifie la connexion à la BDD + COUNT des tables            |
-| **Système**         | `sys:check-disk`               | Affiche l'espace disque (documents + logs)                  |
-| **Système**         | `sys:update-deps`              | Met à jour les dépendances Python (`requirements.txt`)      |
-| **Système**         | `sys:version`                  | Affiche les versions de Python, FastAPI, MariaDB            |
+| **FastAPI**         | _fastapi start_                | Démarre le service FastAPI                                  |
+| **FastAPI**         | _fastapi stop_                 | Arrête le service FastAPI                                   |
+| **FastAPI**         | _fastapi restart_              | Redémarre le service FastAPI                                |
+| **FastAPI**         | _fastapi status_               | Affiche le statut du service FastAPI                        |
+| **Logs**            | _logs show_                    | Affiche les logs (FastAPI.log) en temps réel                |
+| **Base de données** | _db connect_                   | Se connecte directement à MariaDB                           |
+| **Base de données** | _db backup <path_to_file>_     | Effectue un dump complet de la BDD (compressé en .gz)       |
+| **Base de données** | _db backup --no-compress_      | Effectue un dump non compressé                              |
+| **Base de données** | _db import <fichier.sql[.gz]>_ | Importe un fichier SQL vers la BDD                          |
+| **Base de données** | _db import-schema_             | Importe le schéma SQL par défaut                            |
+| **Base de données** | _db schema_                    | Génère le schéma SQL de la BDD                              |
+| **Base de données** | _db size_                      | Affiche la taille des tables en Mo                          |
+| **Base de données** | _db vacuum_                    | Optimise les tables `correlations` et `cve`                 |
+| **Base de données** | _db check_                     | Vérifie l'intégrité des tables                              |
+| **Corrélations**    | _corr launch_                  | Lance le pipeline de corrélation + analyse (Mistral)        |
+| **Corrélations**    | _corr clean_                   | Supprime toutes les corrélations (avec double confirmation) |
+| **Documents**       | _docs list_                    | Liste les PDFs avec taille et date                          |
+| **Documents**       | _docs clear_                   | Supprime TOUS les PDFs (avec confirmation)                  |
+| **Documents**       | _docs size_                    | Affiche la taille totale du dossier documents               |
+| **CVE**             | _cve show_                     | Affiche le COUNT des CVE par statut                         |
+| **Système**         | _sys info_                     | Affiche RAM, CPU, température, uptime                       |
+| **Système**         | _sys ports_                    | Vérifie les ports 3000 (Grafana) et 8000 (FastAPI)          |
+| **Système**         | _sys services_                 | Affiche le statut des services (FastAPI, MariaDB, Grafana)  |
+| **Système**         | _sys check-env_                | Vérifie que les variables `.env` sont présentes             |
+| **Système**         | _sys check-db_                 | Vérifie la connexion à la BDD + COUNT des tables            |
+| **Système**         | _sys check-disk_               | Affiche l'espace disque (documents + logs)                  |
+| **Système**         | _sys update-deps_              | Met à jour les dépendances Python (`requirements.txt`)      |
+| **Système**         | _sys version_                  | Affiche les versions de Python, FastAPI, MariaDB            |
 
 
 ---
