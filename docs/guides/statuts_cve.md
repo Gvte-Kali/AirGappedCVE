@@ -6,14 +6,16 @@ nav_order: 1
 
 # Page Vulnérabilités
 
-## Modifier le statut d'une CVE
+## Les statuts
 
-Les CVE sont classées en 5 catégories, dont 4 catégories appliquées après la corrélation de Mistral AI : 
-1. __Mistral AI__ **Nouveau** : La CVE vient d'être assignée mais n'a pas encore été traitée par Mistral AI
-2. __Mistral AI__ **En analyse** : Mistral AI est en train d'analyser la CVE afin de la classer
-3. __Mistral AI__ **Confirmé** : La CVE a été confirmée par Mistral AI, l'asset est donc à patcher
-4. __Mistral AI__ **Faux-Positif** : La CVE a été classée en faux-positif par Mistral AI
-5. __utilisateur__ **Patché** : La CVE a été patchée car l'asset a été mis à jour
+Les CVE sont classées en 3 catégories : 
+
+1. __Mistral AI__ | **Confirmé** : La CVE a été confirmée par Mistral AI, l'asset est donc à patcher
+2. __Mistral AI__ | **Faux-Positif** : La CVE a été classée en faux-positif par Mistral AI
+3. __utilisateur__ | **Patché** : La CVE a été patchée car l'asset a été mis à jour
+
+
+## Modifier le statut d'une CVE
 
 Il est possible de changer le statut de la CVE, l'état n'est pas figé.
 

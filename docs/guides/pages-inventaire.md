@@ -1,5 +1,5 @@
 ---
-title: Pages "Inventaire"
+title: Pages Inventaire
 parent: Guides d'utilisation
 nav_order: 1
 has_children: true

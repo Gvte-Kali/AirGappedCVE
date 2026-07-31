@@ -1,7 +1,7 @@
 ---
 title: Page Documents
-parent: Pages "Inventaire"
-nav_order: 3
+parent: Pages Inventaire
+nav_order: 4
 ---
 
 **Sur cette page, vous avez tous les documents PDF générés par la page "Vulnérabiltés"**. 
