@@ -6,18 +6,8 @@ parent: Scripts
 
 # Résumé du script `backup.sh`
 
-## **⚠️ Ce script n'a pas été testé sur les backup à distance, si vous voulez vous assurer que les backups fonctionnent correctement, montez un dossier directement via votre système de backup**
-
-Une fois le dossier distant monté, on va faire la sauvegarde dedans.
-Les sauvegardes peuvent s'effectuer depuis l'utilitaire **'asset-manager'** : 
-
-```bash
-asset-manager db backup /path/to/file/file_name
-```
-
-Il est possible de mettre cette commande en cron job dans le cas où 
-
----
+**⚠️ Ce script n'a pas été testé sur les backup à distance, si vous voulez vous assurer que les backups fonctionnent correctement, montez un dossier directement via votre système de backup.**
+_Voir la section **Fallback** en pied de page_
 
 ## **Aperçu général**
 
@@ -146,5 +136,18 @@ NAS_PROTOCOL=smb  # ou ssh, rsync, local
 - Le script s'arrête immédiatement en cas d'erreur critique (ex: `mysqldump` introuvable, `DB_PASSWORD` manquant).
 - Les avertissements n'arrêtent pas l'exécution (ex: impossibilité de démonter un partage SMB).
 - Les logs détaillés sont écrits dans `backup.log` et affichés en console.
+
+---
+
+## **Fallback sauvegarde sur dossier distant en cas de non fonctionnement de backup.sh**
+
+Une fois le dossier distant monté, on va faire la sauvegarde dedans.
+Les sauvegardes peuvent s'effectuer depuis l'utilitaire **'asset-manager'** : 
+
+```bash
+asset-manager db backup /path/to/file/file_name
+```
+
+Il est possible de mettre cette commande en cron job ou dans un script "maison" afin d'automatiser la sauvegarde dans le cas où **backup.sh** ne fonctionne pas sur l'enregistrement sur dossier distant.
 
 ---
