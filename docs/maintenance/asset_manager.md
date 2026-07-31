@@ -79,7 +79,7 @@ asset-manager <catégorie> <commande> [options]
 | **FastAPI**         | _fastapi status_               | Affiche le statut du service FastAPI                        |
 | **Logs**            | _logs show_                    | Affiche les logs (FastAPI.log) en temps réel                |
 | **Base de données** | _db connect_                   | Se connecte directement à MariaDB                           |
-| **Base de données** | _db backup <path_to_file>_     | Effectue un dump complet de la BDD (compressé en .gz)       |
+| **Base de données** | _db backup <chemin/vers/fichier.sql[.gz]>_ | Effectue un dump complet de la BDD (compressé en .gz)       |
 | **Base de données** | _db backup --no-compress_      | Effectue un dump non compressé                              |
 | **Base de données** | _db import <fichier.sql[.gz]>_ | Importe un fichier SQL vers la BDD                          |
 | **Base de données** | _db import-schema_             | Importe le schéma SQL par défaut                            |
