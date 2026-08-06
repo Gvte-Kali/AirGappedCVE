@@ -4,7 +4,7 @@ parent: Pages Inventaire
 nav_order: 2
 ---
 
-# 🎯 Ajouter un client, site et asset
+# Ajouter un client, site et asset
 
 **Workflow complet**
 
