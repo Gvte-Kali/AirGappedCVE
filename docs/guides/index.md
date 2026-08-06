@@ -18,3 +18,5 @@ has_children: true
 | [Pages Référentiels]({{ site.baseurl }}/guides/pages-referentiels) | Pages de la catégorie "Référentiels" |
 | [Page Vulnérabilités]({{ site.baseurl }}/guides/vulnerabilites) | Pages de la catégorie "Référentiels" |
 | [🔧 Paramètres corrélation]({{ site.baseurl }}/guides/parametres) | Choisir les bonnes options pour la corrélation |
+
+---
