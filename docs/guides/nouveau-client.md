@@ -1,7 +1,7 @@
 ---
 title: Gestion : Clients - Sites - Assets
 parent: Pages Inventaire
-nav_order: 11
+nav_order: 6
 ---
 
 # Ajouter un client, site et asset
