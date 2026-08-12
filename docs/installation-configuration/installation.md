@@ -43,6 +43,12 @@ sudo apt-get update && apt-get upgrade -y
 ```bash
 sudo apt-get install -y curl wget git bc iproute2 procps software-properties-common rsync openssh-client gzip cifs-utils python3-venv python3-pip python3-dev build-essential
 ```
+**⚠️ Il est possible que certains paquets ne soient pas dans la bonne version sur des machines ARM.** 
+
+Si c'est le cas, je vous conseille d'installer aptitude, et de l'utiliser à la place de _apt-get_ afin qu'il propose des solutions en cas de conflit de versions.
+
+De ce que j'ai pu tester, la meilleure solution est de downgrade les paquets vers la version correspondante ( répondre 'y' au choix 2 normalement ).
+
 
 ---
 
@@ -267,21 +273,26 @@ sudo journalctl -u asset-manager -n 20
 
 ## 📌 Etape 8 : Ajout au PATH
 
-### 1. Création d'un lien du script asset-manager vers /usr/local/bin/
+### 1. Identification du shell
 
 ```bash
-sudo ln -sf /opt/asset-manager/scripts/asset-manager.sh /usr/local/bin/asset-manager && sudo chmod +x /usr/local/bin/asset-manager
+echo $SHELL
 ```
 
-### 2. Solution de repli en cas de non fonctionnement
+Sur Ubuntu Server, par défaut, c'est **/bin/bash**.
 
-Ajouter un alias dans votre fichier ~/.bashrc : 
-Il faudra ajouter une ligne à la fin du fichier 
-Cette ligne est `alias asset-manager='bash /opt/asset-manager/scripts/asset-manager.sh'`
+### 2. Création d'un alias lié au shell
 
-Pour modifier le fichier : 
-`nano ~/.bashrc` 
-Pour sortir de l'éditeur et sauvegarder le fichier, faire "CTRL + X" puis "CTRL + Y" ( ou "CTRL + O" pour les configurations françaises)
+Pour **/bin/bash**, on a deux choix : 
+1. Ajouter l'alias au fichier **~/.bash_aliases** ( créer le fichier si celui-ci n'existe pas encore ) --> **Solution la plus propre**
+```bash
+echo "alias asset-manager='bash /opt/asset-manager/scripts/asset-manager.sh'" >> ~/.bash_aliases
+```
+
+2. Ajouter l'alias à la fin du fichier **~/.bashrc** ( moins propre )
+```bash
+echo "alias asset-manager='bash /opt/asset-manager/scripts/asset-manager.sh'" >> ~/.bashrc
+```
 
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: Gestion : Clients - Sites - Assets
+title: Gestion des Clients & Sites & Assets
 parent: Pages Inventaire
 nav_order: 6
 ---
