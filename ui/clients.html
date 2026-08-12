@@ -452,7 +452,7 @@
                 return;
             }
 
-            const url = id ? `${API}/${id}` : `${API}/`;
+            const url = id ? `${API}/${id}` : `${API}`;
             const method = id ? 'PUT' : 'POST';
 
             const resp = await fetch(url, {
