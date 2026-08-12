@@ -55,7 +55,7 @@ Cela va lancer les scripts de téléchargement tous les jours et lancer la corr�
 
 Pour ajouter le cronjob : 
 ```bash
-sudo crotab -e
+sudo crontab -e
 ```
 et ajouter cette ligne :  
 
