@@ -10,6 +10,12 @@ parent: Installation & Configuration
 
 ## 📌 Etape 1 : Lancement des scripts de synchronisation de la base NVD et import en BDD
 
+Aller dans le répertoire du projet
+
+```bash
+cd /opt/asset-manager
+```
+
 Lancer ces scripts dans l'ordre : 
 
 ```bash

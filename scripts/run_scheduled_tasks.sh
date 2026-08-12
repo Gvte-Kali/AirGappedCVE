@@ -82,31 +82,31 @@ main() {
 
     run_script \
         "download_nvd" \
-        "$PROJECT_DIR/venv/bin/python $PROJECT_DIR/scripts/download_nvd.py"
+        "cd $PROJECT_DIR && $PROJECT_DIR/venv/bin/python $PROJECT_DIR/scripts/download_nvd.py"
 
     run_script \
         "import_vendors_models" \
-        "$PROJECT_DIR/venv/bin/python $PROJECT_DIR/scripts/import_vendors_models.py"
+        "cd $PROJECT_DIR && $PROJECT_DIR/venv/bin/python $PROJECT_DIR/scripts/import_vendors_models.py"
 
     run_script \
         "cve_sync" \
-        "$PROJECT_DIR/venv/bin/python $PROJECT_DIR/scripts/cve_sync.py"
+        "cd $PROJECT_DIR && $PROJECT_DIR/venv/bin/python $PROJECT_DIR/scripts/cve_sync.py"
 
     run_script \
         "extract_os_versions" \
-        "$PROJECT_DIR/venv/bin/python $PROJECT_DIR/scripts/extract_os_versions.py"
+        "cd $PROJECT_DIR && $PROJECT_DIR/venv/bin/python $PROJECT_DIR/scripts/extract_os_versions.py"
 
     # TÂCHE 2: CORRÉLATION ET ANALYSE IA
     log_main "Début de la TÂCHE 2: Corrélation et analyse IA"
     run_script \
         "correlate_and_analyze" \
-        "$PROJECT_DIR/venv/bin/python $PROJECT_DIR/scripts/correlate_and_analyze.py"
+        "cd $PROJECT_DIR && $PROJECT_DIR/venv/bin/python $PROJECT_DIR/scripts/correlate_and_analyze.py"
 
     # TÂCHE 3: BACKUP DE LA BASE DE DONNÉES
     log_main "Début de la TÂCHE 3: Backup de la base de données"
     run_script \
         "backup" \
-        "bash $PROJECT_DIR/scripts/backup.sh"
+        "cd $PROJECT_DIR && bash $PROJECT_DIR/scripts/backup.sh"
 
     local end_time="$(date '+%Y-%m-%d %H:%M:%S')"
     log_main "========================================"
