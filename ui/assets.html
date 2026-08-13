@@ -384,7 +384,7 @@
                                 <input type="hidden" id="assetOsVersionId">
                                 <div class="suggestion-box" id="assetOsVersionSuggestions"></div>
                             </div>
-                            <div id="wrapVersionOsLibre" style="display:none; margin-top: 6px;">
+                            <div id="wrapVersionOsLibre" style="margin-top: 6px;">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <small class="text-muted">Version exacte</small>
                                     <a href="#" class="text-info" style="font-size:0.75rem;"
@@ -1069,14 +1069,6 @@
             new bootstrap.Modal(document.getElementById('modalAideVersion')).show();
         }
 
-        function toggleVersionOsLibre() {
-            const hasFK = document.getElementById('assetOsVersionId').value;
-            const osNom = document.getElementById('assetOsNomSearch').value.trim();
-            const wrap = document.getElementById('wrapVersionOsLibre');
-            wrap.style.display = (osNom && !hasFK) ? 'block' : 'none';
-            if (hasFK) document.getElementById('assetVersionOsLibre').value = '';
-        }
-
         // ═══════════════════════════════════════════════════════════
         //  TYPEAHEAD : OS NOM (MODAL, niveau 1)
         // ═══════════════════════════════════════════════════════════
@@ -1103,7 +1095,6 @@
                             hidden.value = item.nom;
                             versionInput.disabled = false;
                             versionInput.placeholder = 'Rechercher une version…';
-                            toggleVersionOsLibre();
                         });
                     } catch (e) { console.error('Erreur OS nom typeahead:', e); }
                 }, 100);
@@ -1115,7 +1106,6 @@
                 versionInput.disabled = true;
                 versionInput.value = '';
                 versionId.value = '';
-                toggleVersionOsLibre();
                 doSearch();
             });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
@@ -1150,7 +1140,6 @@
                                     ? `${item.version} (${item.nvd_product})`
                                     : `— (${item.nvd_product})`;
                                 hidden.value = item.id;
-                                toggleVersionOsLibre();
                             }
                         );
                     } catch (e) { console.error('Erreur OS version typeahead:', e); }
@@ -1161,7 +1150,6 @@
             input.addEventListener('input', () => {
                 input.dataset.autoFilled = 'false';
                 hidden.value = '';
-                toggleVersionOsLibre();
                 doSearch();
             });
             input.addEventListener('blur', () => setTimeout(() => hideSuggestionBox(box), 200));
@@ -1266,7 +1254,6 @@
             document.getElementById('assetOsVersionSearch').placeholder = 'Choisir d\'abord un OS…';
             document.getElementById('assetOsVersionId').value = '';
             document.getElementById('assetVersionOsLibre').value = '';
-            document.getElementById('wrapVersionOsLibre').style.display = 'none';
             // Firmware typeahead
             document.getElementById('assetFwSearch').value = '';
             document.getElementById('assetFwVersionId').value = '';
@@ -1340,7 +1327,6 @@
                 document.getElementById('assetOsVersionSearch').dataset.autoFilled = 'true';
                 document.getElementById('assetOsVersionSearch').disabled = false;
                 document.getElementById('assetOsVersionSearch').placeholder = 'Rechercher une version…';
-                toggleVersionOsLibre();
             } else {
                 document.getElementById('assetOsNomSearch').value = a.systeme_exploitation || '';
                 document.getElementById('assetOsNom').value = a.systeme_exploitation || '';
@@ -1352,8 +1338,8 @@
                     ? versionRaw.slice(nomOs.length).trim()
                     : versionRaw;
                 document.getElementById('assetVersionOsLibre').value = versionLibre;
-                toggleVersionOsLibre();
             }
+            document.getElementById('wrapVersionOsLibre').style.display = 'block';
             // Firmware typeahead
             document.getElementById('assetFwVersionId').value = a.fw_version_id ? String(a.fw_version_id) : '';
             if (a.fw_version_id && a.fw_version_nom) {
