@@ -404,7 +404,7 @@
 
         // ── Ouvrir modal en mode édition ───────────────────────────
         async function editerClient(id) {
-            const resp = await fetch(`${API}/${id}`);
+            const resp = await fetch(`${API}${id}`);
             const c = await resp.json();
 
             document.getElementById('clientId').value = c.id;
@@ -452,7 +452,7 @@
                 return;
             }
 
-            const url = id ? `${API}/${id}` : `${API}/`;
+            const url = id ? `${API}${id}` : `${API}`;
             const method = id ? 'PUT' : 'POST';
 
             const resp = await fetch(url, {

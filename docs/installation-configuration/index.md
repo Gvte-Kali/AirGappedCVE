@@ -15,5 +15,6 @@ has_children: true
 - [📋 Prérequis]({{ site.baseurl }}/installation-configuration/prerequis) — Configuration système requise
 - [🛠️ Guide d'installation]({{ site.baseurl }}/installation-configuration/installation) — Procédure d'installation étape par étape
 - [1️⃣ Première Utilisation]({{ site.baseurl }}/installation-configuration/premiere-utilisation) - Procédure de démarrage
-- [📥 Import des informations depuis votre logiciel de gestion]({{ site.baseurl }}/installation-configuration/import) - Procédure d'import des clients
-- [⚙️ Script de Backup]({{ site.baseurl }}/installation-configuration/script-backup) - Procédure de backup de la base de données
+- [📥 Import des informations depuis votre logiciel de gestion]({{ site.baseurl }}/installation-configuration/import) - Procédure d'import des client
+
+---

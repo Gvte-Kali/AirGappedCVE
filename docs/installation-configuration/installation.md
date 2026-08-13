@@ -167,6 +167,11 @@ Cette étape est optionnelle mais permet principalement de sécuriser les clés 
 chmod 640 /opt/asset-manager/.env
 ```
 
+### 3. Création du dossier backups
+```bash
+cd /opt/asset-manager && mkdir backups
+```
+
 ---
 
 ## 📌 Etape 5 : Création du virtualenv et installation des dépendances Python

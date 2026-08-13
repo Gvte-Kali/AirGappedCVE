@@ -37,6 +37,12 @@ Ces scripts sont détaillés en profondeur sur [ cette page ]({{ site.baseurl }}
 
 ## 📌 Etape 2 : Import de vos assets
 
+**⚠️ Avant de continuer, créez les types d'équipement**
+
+Pour cela, se référer à la page [Paramètres corrélation]({{ site.baseurl }}/guides/parametres), dans la catégorie **⚙️ Types d’équipements** qui reprend toute la logique.
+
+Si aucun type d'équipement n'est créé, **vous ne pourrez pas importer d'asset car les assets ne seront pas associés à un type d'équipement.**
+
 Il est impératif d'importer vos assets avant que l'on puisse continuer sur la suite.
 
 Si vous n'avez pas d'assets à importer, vous pouvez continuer.
@@ -55,7 +61,7 @@ Cela va lancer les scripts de téléchargement tous les jours et lancer la corr�
 
 Pour ajouter le cronjob : 
 ```bash
-sudo crotab -e
+sudo crontab -e
 ```
 et ajouter cette ligne :  
 

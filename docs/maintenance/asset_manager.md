@@ -122,14 +122,7 @@ asset-manager <catégorie> <commande> [options]
 
 ## **Alias recommandé**
 
-Pour faciliter l'utilisation, on a 2 choix : 
-
-1. Ajouter au PATH via un lien (symlink) de __/opt/asset-manager/scripts/asset-manager.sh__ vers __/usr/local/bin/asset-manager__.
-```bash
-sudo ln -sf /opt/asset-manager/scripts/asset-manager.sh /usr/local/bin/asset-manager && sudo chmod +x /usr/local/bin/asset-manager
-```
-
-2. Ajoutez=r cet alias à votre `~/.bashrc` ou `~/.zshrc` :
+Pour faciliter l'utilisation, on a installé un alias dans le shell dans la page d'installation : 
 
 ```bash
 alias asset-manager="bash /opt/asset-manager/scripts/asset-manager.sh"

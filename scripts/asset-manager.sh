@@ -128,16 +128,6 @@ EOF
 📌 USAGE :
    $0 <catégorie> [commande|help]
 
-📌 EXEMPLES :
-   $0 help                 # Affiche cette aide
-   $0 logs help            # Affiche l'aide pour la catégorie "logs"
-   $0 logs logs-err        # Filtre les erreurs dans les logs
-   $0 db db-backup         # Effectue une sauvegarde de la BDD
-
-📌 ALIAS RECOMMANDÉ :
-   Ajoutez ceci à votre ~/.bashrc ou ~/.zshrc :
-   alias asset-manager="$SCRIPT_DIR/asset-manager.sh"
-
 EOF
 }
 
