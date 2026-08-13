@@ -1327,6 +1327,12 @@
                 document.getElementById('assetOsVersionSearch').dataset.autoFilled = 'true';
                 document.getElementById('assetOsVersionSearch').disabled = false;
                 document.getElementById('assetOsVersionSearch').placeholder = 'Rechercher une version…';
+                const nomOsNorm = a.os_version_nom || '';
+                const versionRawNorm = a.version_os || '';
+                const versionLibreNorm = (nomOsNorm && versionRawNorm.startsWith(nomOsNorm))
+                    ? versionRawNorm.slice(nomOsNorm.length).trim()
+                    : versionRawNorm;
+                document.getElementById('assetVersionOsLibre').value = versionLibreNorm;
             } else {
                 document.getElementById('assetOsNomSearch').value = a.systeme_exploitation || '';
                 document.getElementById('assetOsNom').value = a.systeme_exploitation || '';
@@ -1416,10 +1422,8 @@
         model_id: document.getElementById('assetModeleId').value ? parseInt(document.getElementById('assetModeleId').value) : null,
         os_version_id: document.getElementById('assetOsVersionId').value ? parseInt(document.getElementById('assetOsVersionId').value) : null,
         version_os: (() => {
-            const osVersionId = document.getElementById('assetOsVersionId').value;
             const versionLibre = document.getElementById('assetVersionOsLibre').value.trim();
             const osNom = document.getElementById('assetOsNomSearch').value.trim();
-            if (osVersionId) return null;
             if (!versionLibre) return null;
             if (versionLibre.toLowerCase().startsWith(osNom.toLowerCase())) return versionLibre;
             return osNom ? `${osNom} ${versionLibre}`.trim() : versionLibre;
